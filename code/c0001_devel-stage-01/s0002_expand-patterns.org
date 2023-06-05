@@ -1,0 +1,359 @@
+#+title: Expand Patterns
+
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+#+LATEX_CMD:   xelatex
+#+LATEX_CLASS: article
+
+#+LATEX_CLASS_OPTIONS: [a4paper,10pt,onecolumn,oneside,openright]
+
+#+JIKO-CONFIG: use-minted
+#+JIKO-CONFIG: use-biblatex-apa7
+#+JIKO-CONFIG: use-hyperref-setup
+#+JIKO-CONFIG: use-threeparttable
+
+#+LATEX_HEADER_EXTRA: \IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+#+LATEX_HEADER_EXTRA: \IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+
+#+OPTIONS: author:nil
+#+OPTIONS: email:nil
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: ^:{}
+
+* Boilerplate
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_01/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_01/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/d0004_sources-merged-and-deduped/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"merged"
+extn0 = ".yaml"
+if0 = (dir0/name0).with_suffix(extn0)
+data0 = srsly.read_yaml(if0)
+data0 = sorted(list(data0))
+
+log0.info(f"{type(data0) = }")
+log0.info(f"{type(data0[42]) = }")
+log0.info(f"{data0[42] = }")
+log0.info(f"{len(data0) = }")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: type(data0) = <class 'list'>
+I: type(data0[42]) = <class 'str'>
+I: data0[42] = 'accura*'
+I: len(data0) = 4618
+#+end_example
+
+** prod: Load frequency rank data
+#+begin_src jupyter-python :async yes
+dir2 = "../../data/d0000_word2vec-freq-ranks/"
+dir2 = pathlib.Path(dir2)
+# dir2.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir2.exists(), f"The data directory dir2={str(dir2)} not found!"
+
+name0 = f"word2vec_freq_ranks_raw"
+extn0 = ".jsonl"
+if0 = (dir2/name0).with_suffix(extn0)
+
+log0.info(f"loading: {if0}...")
+data4 = list(srsly.read_jsonl(if0))
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{len(data4) = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: loading: ../../data/d0000_word2vec-freq-ranks/word2vec_freq_ranks_raw.jsonl...
+I: loading: ../../data/d0000_word2vec-freq-ranks/word2vec_freq_ranks_raw.jsonl... DONE
+I: len(data4) = 3000000
+#+end_example
+
+** prod: Frequency rank data dataframe
+#+begin_src jupyter-python :async yes
+df4 = pd.DataFrame.from_records(data4)
+
+df4["freq_idx"] = df4.freq_idx.apply(int)
+df4 = df4.sort_values(by="freq_idx", ascending=False)
+log0.info(f"{df4.shape = } [orig]")
+
+df4["word"] = df4.word.str.lower()
+df4["word"] = df4.word.apply(clean_str)
+df4 = df4.drop_duplicates(subset="word", keep="first")
+log0.info(f"{df4.shape = } [uniq]")
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", message="This pattern is interpreted as a regular expression, and has match groups. ")
+    cond4 = df4.word.str.contains(re0.pattern, regex=True, na=False, flags=re.IGNORECASE, case=False)
+
+df5 = df4[cond4]
+df6 = df4[~cond4]
+
+log0.info(f"{df5.shape = } [keep]")
+log0.info(f"{df6.shape = } [drop]")
+disp_df(df4.head(n=8))
+disp_df(df4.tail(n=8))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df4.shape = (3000000, 2) [orig]
+I: df4.shape = (2702147, 2) [uniq]
+I: df5.shape = (700056, 2) [keep]
+I: df6.shape = (2002091, 2) [drop]
+#+end_example
+#+begin_example
+   word  freq_idx
+0  </s>   3000000
+1    in   2999999
+2   for   2999998
+3  that   2999997
+4    is   2999996
+5    on   2999995
+6    ##   2999994
+7   the   2999993
+#+end_example
+#+begin_example
+                            word  freq_idx
+2999991            shilpa_goenka         9
+2999992          divider_pistons         8
+2999993              thirsty_owl         7
+2999994  righthander_kyle_drabek         6
+2999996            bim_skala_bim         4
+2999997               mezze_cafe         3
+2999998      pulverizes_boulders         2
+2999999      snowcapped_caucasus         1
+#+end_example
+:END:
+** test: Check character set for sources
+#+begin_src jupyter-python :async yes
+log0.info(f"{len(data0) = }")
+chars0 = "".join(sorted(list(set("".join(data0)))))
+log0.info(f"{len(chars0) = }")
+log0.info(f"{chars0 = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: len(data0) = 4618
+I: len(chars0) = 28
+I: chars0 = '*-abcdefghijklmnopqrstuvwxyz'
+#+end_example
+
+** test: Check character set for word frequency data (KEEP)
+#+begin_src jupyter-python :async yes
+log0.info(f"{df5.shape = }")
+chars5 = "".join(sorted(list(set("".join(df5.word.to_list())))))
+log0.info(f"{len(chars5) = }")
+log0.info(f"{chars5 = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df5.shape = (700056, 2)
+I: len(chars5) = 28
+I: chars5 = '-abcdefghijklmnopqrstuvwxyzı'
+#+end_example
+
+** test: Check character set for word frequency data (DROP)
+#+begin_src jupyter-python :async yes
+log0.info(f"{df6.shape = }")
+chars6 = "".join(sorted(list(set("".join(df6.word.to_list())))))
+log0.info(f"{len(chars6) = }")
+# log0.info(f"{chars6 = }")
+log0.info(f"{chars6[:44]}")
+log0.info(f"{chars6[-44:]}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df6.shape = (2002091, 2)
+I: len(chars6) = 1216
+I: !"#$%&'()*+,-./0123456789:;<=>?@^_`abcdefghi
+I: ﷓﾿￯￼􀂃
+#+end_example
+
+** prod: Expand patterns
+#+begin_src jupyter-python :async yes
+n = 25
+n = 12  # CAUTION
+n = 10
+
+df7 = df4.copy()
+df7 = df5.copy()  # CAUTION
+
+data7 = []
+with Timer() as elapsed:
+    for item0 in tqdm(data0):
+        if item0.endswith("*"):
+            pt7 = r"^" + item0.replace("*", r"[a-z\-]*") + r"$"
+            cond7 = df7.word.str.contains(pt7, regex=True, na=False, flags=re.IGNORECASE, case=False)
+            words = df7[cond7].head(n=n).word.tolist()
+            for word in words:
+                if word not in data7:
+                    data7.append(word)
+        else:
+            if item0 not in data7:
+                data7.append(item0)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+log0.info(f"{len(data0) = }")
+log0.info(f"{len(data7) = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+100% 4618/4618 [02:43<00:00, 28.30it/s]
+I: 2 minutes and 43.15 seconds
+I: len(data0) = 4618
+I: len(data7) = 10138
+#+end_example
+
+** prod: Save
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/d0006_sources-expanded/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+bfn0 = dir0/"expanded"
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, data7)
+
+xtn0 = ".yaml"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_yaml(ofn0, data7)
+
+log0.info("DONE")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/d0006_sources-expanded/expanded.jsonl...
+I: saving: ../../data/d0006_sources-expanded/expanded.yaml...
+I: DONE
+#+end_example

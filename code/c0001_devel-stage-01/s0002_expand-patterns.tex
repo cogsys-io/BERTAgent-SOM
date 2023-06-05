@@ -1,0 +1,353 @@
+% Created 2023-06-05 Mon 03:32
+% Intended LaTeX compiler: xelatex
+\documentclass[a4paper,10pt,onecolumn,oneside,openright]{article}
+\usepackage[no-math]{fontspec}
+\newfontfamily\cyrillicfont{CMU Serif}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Linux Libertine O}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Hack}
+\setmainfont[
+  Ligatures=TeX,
+  Extension=.otf,
+  BoldFont=cmunbx,
+  ItalicFont=cmunti,
+  BoldItalicFont=cmunbi,
+]{cmunrm}
+\usepackage[Latin,Cyrillics]{ucharclasses}
+\setTransitionsForCyrillics{\begingroup\cyrillicfont}{\endgroup}
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{latin}
+\setotherlanguage{greek}
+\setotherlanguage{russian}
+\setotherlanguage{polish}
+\setotherlanguage{german}
+\setotherlanguage{ukrainian}
+\newcommand{\RU}[1]{\foreignlanguage{russian}{#1}}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{tabularx}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \begin{tabular}{>{$}l<{$} @{} >{${}}c<{{}$} @{} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\newenvironment{conditions*}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \tabularx{\columnwidth}{>{$}l<{$} @{}>{${}}c<{{}$}@{} >{\raggedright\arraybackslash}X}}
+  {\endtabularx\par\vspace{\belowdisplayskip}}
+\usepackage[tableposition=t]{caption}
+\captionsetup[table]{skip=8pt}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+\usepackage[tableposition=t]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{fixltx2e}
+\usepackage[unicode]{hyperref}
+\usepackage{cleveref}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullRef}[1]{\nameCref{#1} \hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullREF}[1]{\nameCref{#1} \ref{#1}: \nameref*{#1}}
+\newcommand*{\FullREF}[1]{\nameCref{#1} \ref{#1} (\nameref*{#1})}
+\newcommand*{\eqnCref}[1]{\nameCref{#1} \ref{#1}}
+\newcommand*{\EqnCref}[1]{\nameCref{#1} \ref*{#1}}
+\newcommand{\citinf}{{\newline\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citfix}{{\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citsrc}{{\vadjust{\vspace{8pt}}\nolinebreak\hspace{\fill}\mbox{}\linebreak\hspace*{\fill}\textemdash\space}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{amscd}
+\usepackage{amstext}
+\usepackage{threeparttable}
+\AtBeginDocument{\hypersetup{pdfauthor={Jan Nikadon},pdftitle={\thetitle},pdfsubject={subject},pdfkeywords={keyword1,}{keyword2},}}
+\hypersetup{xetex,colorlinks=true,linktocpage=true,linkcolor=RoyalPurple,citecolor=RoyalPurple,filecolor=RoyalBlue,urlcolor=RoyalBlue,pagebackref=true,plainpages=false,pdfpagelabels=true,bookmarksnumbered=true,}
+\PassOptionsToPackage{dateabbrev=false,natbib=true,style=apa,backref=true,backrefstyle=two,dashed=false,hyperref=true,backend=biber,maxbibnames=99,firstinits=true,giveninits=false,uniquename=init,citetracker=true,parentracker=true,url=false,doi=true,}{biblatex}
+\usepackage{biblatex}
+\usepackage[newfloat]{minted}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{titling}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\definecolor{fuchsiapink}{rgb}{1.0, 0.47, 1.0}
+\definecolor{cream}{rgb}{1.00, 0.99, 0.82}
+\definecolor{champagne}{rgb}{0.97, 0.91, 0.81}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{blanchedalmond}{rgb}{1.0, 0.92, 0.8}
+\definecolor{brilliantlavender}{rgb}{0.96, 0.73, 1.0}
+\IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+\IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+\date{}
+\title{Expand Patterns}
+\begin{document}
+
+\maketitle
+
+\section{Boilerplate}
+\label{sec:orgba3b580}
+\section{Imports}
+\label{sec:org7583c97}
+\subsection{prod: NVM}
+\label{sec:org13cb1d0}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from nvm import disp_df
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+\end{minted}
+
+\subsection{prod: Basics}
+\label{sec:org43b2e3b}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+\end{minted}
+
+\subsection{prod: Extra imports and settings}
+\label{sec:org61b2e72}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+\end{minted}
+
+\section{Extra Imports}
+\label{sec:orgdb71a95}
+\subsection{prod: More extra imports and settings}
+\label{sec:org94137ec}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+
+log0.info("DONE: more extra imports and settings")
+\end{minted}
+
+\begin{verbatim}
+I: DONE: more extra imports and settings
+\end{verbatim}
+
+\section{Process}
+\label{sec:org5675c38}
+\subsection{prod: Load data}
+\label{sec:orge4681d9}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+dir0 = "../../data/d0004_sources-merged-and-deduped/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"merged"
+extn0 = ".yaml"
+if0 = (dir0/name0).with_suffix(extn0)
+data0 = srsly.read_yaml(if0)
+data0 = sorted(list(data0))
+
+log0.info(f"{type(data0) = }")
+log0.info(f"{type(data0[42]) = }")
+log0.info(f"{data0[42] = }")
+log0.info(f"{len(data0) = }")
+
+\end{minted}
+
+\begin{verbatim}
+I: type(data0) = <class 'list'>
+I: type(data0[42]) = <class 'str'>
+I: data0[42] = 'accura*'
+I: len(data0) = 4618
+\end{verbatim}
+
+\subsection{prod: Load frequency rank data}
+\label{sec:org3c47303}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+dir2 = "../../data/d0000_word2vec-freq-ranks/"
+dir2 = pathlib.Path(dir2)
+# dir2.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir2.exists(), f"The data directory dir2={str(dir2)} not found!"
+
+name0 = f"word2vec_freq_ranks_raw"
+extn0 = ".jsonl"
+if0 = (dir2/name0).with_suffix(extn0)
+
+log0.info(f"loading: {if0}...")
+data4 = list(srsly.read_jsonl(if0))
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{len(data4) = }")
+\end{minted}
+
+\begin{verbatim}
+I: loading: ../../data/d0000_word2vec-freq-ranks/word2vec_freq_ranks_raw.jsonl...
+I: loading: ../../data/d0000_word2vec-freq-ranks/word2vec_freq_ranks_raw.jsonl... DONE
+I: len(data4) = 3000000
+\end{verbatim}
+
+\subsection{prod: Frequency rank data dataframe}
+\label{sec:org4fb9a97}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+df4 = pd.DataFrame.from_records(data4)
+
+df4["freq_idx"] = df4.freq_idx.apply(int)
+df4 = df4.sort_values(by="freq_idx", ascending=False)
+log0.info(f"{df4.shape = } [orig]")
+
+df4["word"] = df4.word.str.lower()
+df4["word"] = df4.word.apply(clean_str)
+df4 = df4.drop_duplicates(subset="word", keep="first")
+log0.info(f"{df4.shape = } [uniq]")
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", message="This pattern is interpreted as a regular expression, and has match groups. ")
+    cond4 = df4.word.str.contains(re0.pattern, regex=True, na=False, flags=re.IGNORECASE, case=False)
+
+df5 = df4[cond4]
+df6 = df4[~cond4]
+
+log0.info(f"{df5.shape = } [keep]")
+log0.info(f"{df6.shape = } [drop]")
+disp_df(df4.head(n=8))
+disp_df(df4.tail(n=8))
+\end{minted}
+
+\begin{verbatim}
+I: df4.shape = (3000000, 2) [orig]
+I: df4.shape = (2702147, 2) [uniq]
+I: df5.shape = (700056, 2) [keep]
+I: df6.shape = (2002091, 2) [drop]
+\end{verbatim}
+\begin{verbatim}
+   word  freq_idx
+0  </s>   3000000
+1    in   2999999
+2   for   2999998
+3  that   2999997
+4    is   2999996
+5    on   2999995
+6    ##   2999994
+7   the   2999993
+\end{verbatim}
+\begin{verbatim}
+                            word  freq_idx
+2999991            shilpa_goenka         9
+2999992          divider_pistons         8
+2999993              thirsty_owl         7
+2999994  righthander_kyle_drabek         6
+2999996            bim_skala_bim         4
+2999997               mezze_cafe         3
+2999998      pulverizes_boulders         2
+2999999      snowcapped_caucasus         1
+\end{verbatim}
+\subsection{prod: Expand patterns}
+\label{sec:org502c2ed}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+n = 25
+n = 12  # CAUTION
+n = 10
+
+df7 = df4.copy()
+df7 = df5.copy()  # CAUTION
+
+data7 = []
+with Timer() as elapsed:
+    for item0 in tqdm(data0):
+        if item0.endswith("*"):
+            pt7 = r"^" + item0.replace("*", r"[a-z\-]*") + r"$"
+            cond7 = df7.word.str.contains(pt7, regex=True, na=False, flags=re.IGNORECASE, case=False)
+            words = df7[cond7].head(n=n).word.tolist()
+            for word in words:
+                if word not in data7:
+                    data7.append(word)
+        else:
+            if item0 not in data7:
+                data7.append(item0)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+log0.info(f"{len(data0) = }")
+log0.info(f"{len(data7) = }")
+\end{minted}
+
+\begin{verbatim}
+100% 4618/4618 [02:43<00:00, 28.30it/s]
+I: 2 minutes and 43.15 seconds
+I: len(data0) = 4618
+I: len(data7) = 10138
+\end{verbatim}
+
+\subsection{prod: Save}
+\label{sec:orgac4d904}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+dir0 = "../../data/d0006_sources-expanded/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+bfn0 = dir0/"expanded"
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, data7)
+
+xtn0 = ".yaml"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_yaml(ofn0, data7)
+
+log0.info("DONE")
+\end{minted}
+
+\begin{verbatim}
+I: saving: ../../data/d0006_sources-expanded/expanded.jsonl...
+I: saving: ../../data/d0006_sources-expanded/expanded.yaml...
+I: DONE
+\end{verbatim}
+\end{document}

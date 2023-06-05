@@ -1,0 +1,334 @@
+% Created 2023-06-05 Mon 03:30
+% Intended LaTeX compiler: xelatex
+\documentclass[a4paper,10pt,onecolumn,oneside,openright]{article}
+\usepackage[no-math]{fontspec}
+\newfontfamily\cyrillicfont{CMU Serif}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Linux Libertine O}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Hack}
+\setmainfont[
+  Ligatures=TeX,
+  Extension=.otf,
+  BoldFont=cmunbx,
+  ItalicFont=cmunti,
+  BoldItalicFont=cmunbi,
+]{cmunrm}
+\usepackage[Latin,Cyrillics]{ucharclasses}
+\setTransitionsForCyrillics{\begingroup\cyrillicfont}{\endgroup}
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{latin}
+\setotherlanguage{greek}
+\setotherlanguage{russian}
+\setotherlanguage{polish}
+\setotherlanguage{german}
+\setotherlanguage{ukrainian}
+\newcommand{\RU}[1]{\foreignlanguage{russian}{#1}}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{tabularx}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \begin{tabular}{>{$}l<{$} @{} >{${}}c<{{}$} @{} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\newenvironment{conditions*}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \tabularx{\columnwidth}{>{$}l<{$} @{}>{${}}c<{{}$}@{} >{\raggedright\arraybackslash}X}}
+  {\endtabularx\par\vspace{\belowdisplayskip}}
+\usepackage[tableposition=t]{caption}
+\captionsetup[table]{skip=8pt}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+\usepackage[tableposition=t]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{fixltx2e}
+\usepackage[unicode]{hyperref}
+\usepackage{cleveref}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullRef}[1]{\nameCref{#1} \hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullREF}[1]{\nameCref{#1} \ref{#1}: \nameref*{#1}}
+\newcommand*{\FullREF}[1]{\nameCref{#1} \ref{#1} (\nameref*{#1})}
+\newcommand*{\eqnCref}[1]{\nameCref{#1} \ref{#1}}
+\newcommand*{\EqnCref}[1]{\nameCref{#1} \ref*{#1}}
+\newcommand{\citinf}{{\newline\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citfix}{{\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citsrc}{{\vadjust{\vspace{8pt}}\nolinebreak\hspace{\fill}\mbox{}\linebreak\hspace*{\fill}\textemdash\space}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{amscd}
+\usepackage{amstext}
+\usepackage{threeparttable}
+\AtBeginDocument{\hypersetup{pdfauthor={Jan Nikadon},pdftitle={\thetitle},pdfsubject={subject},pdfkeywords={keyword1,}{keyword2},}}
+\hypersetup{xetex,colorlinks=true,linktocpage=true,linkcolor=RoyalPurple,citecolor=RoyalPurple,filecolor=RoyalBlue,urlcolor=RoyalBlue,pagebackref=true,plainpages=false,pdfpagelabels=true,bookmarksnumbered=true,}
+\PassOptionsToPackage{dateabbrev=false,natbib=true,style=apa,backref=true,backrefstyle=two,dashed=false,hyperref=true,backend=biber,maxbibnames=99,firstinits=true,giveninits=false,uniquename=init,citetracker=true,parentracker=true,url=false,doi=true,}{biblatex}
+\usepackage{biblatex}
+\usepackage[newfloat]{minted}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{titling}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\definecolor{fuchsiapink}{rgb}{1.0, 0.47, 1.0}
+\definecolor{cream}{rgb}{1.00, 0.99, 0.82}
+\definecolor{champagne}{rgb}{0.97, 0.91, 0.81}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{blanchedalmond}{rgb}{1.0, 0.92, 0.8}
+\definecolor{brilliantlavender}{rgb}{0.96, 0.73, 1.0}
+\IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+\IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+\date{}
+\title{Lowercase and Merge}
+\begin{document}
+
+\maketitle
+
+\section{Data sources}
+\label{sec:org1e87c1d}
+\subsection{prod: DWC-Based Frameworks}
+\label{sec:orgaacd131}
+\begin{itemize}
+\item \textcite{PennebakerEtAl2015a}
+\begin{itemize}
+\item The General Inquirer (GI) data should be obtained from
+\url{https://inquirer.sites.fas.harvard.edu/}.
+\end{itemize}
+\item \textcite{StoneEtAl1966a}
+\begin{itemize}
+\item The Linguistic Inquiry and Word Count (LIWC) data should be obtained from
+\url{https://www.liwc.app/}.
+\end{itemize}
+\end{itemize}
+\subsection{prod: Full-Fledged Tools}
+\label{sec:orgb27c5b0}
+\begin{itemize}
+\item \textcite{PietraszkiewiczEtAl2019a}
+\begin{itemize}
+\item \texttt{PietraszkiewiczEtAl2019a\_agency\_A.yaml}
+\item \texttt{PietraszkiewiczEtAl2019a\_agency\_B.yaml}
+\item \texttt{PietraszkiewiczEtAl2019a\_agency\_C.yaml}
+\end{itemize}
+\item \textcite{NicolasEtAl2021a}
+\begin{itemize}
+\item \texttt{NicolasEtAl2019a\_full\_dict\_ability\_negat.yaml}
+\item \texttt{NicolasEtAl2019a\_full\_dict\_ability\_posit.yaml}
+\item \texttt{NicolasEtAl2019a\_full\_dict\_agency\_negat.yaml}
+\item \texttt{NicolasEtAl2019a\_full\_dict\_agency\_posit.yaml}
+\end{itemize}
+\end{itemize}
+\subsection{prod: Related Word Collections and Composite Dictionaries}
+\label{sec:orga2064ee}
+\begin{itemize}
+\item \textcite{AbeleEtAl2008a} (\cite{AbeleEtAl2008d})
+\begin{itemize}
+\item \texttt{AbeleEtAl2008a\_list\_agency\_negat.yaml}
+\item \texttt{AbeleEtAl2008a\_list\_agency\_posit.yaml}
+\end{itemize}
+\item \textcite{GaucherEtAl2011a}
+\begin{itemize}
+\item \texttt{GaucherEtAl2011a\_list\_masculinity\_pertaining.yaml}
+\end{itemize}
+\item \textcite{HartEtAl2011a}
+\begin{itemize}
+\item \texttt{HartEtAl2011a\_agency\_dict\_negat.yaml}
+\item \texttt{HartEtAl2011a\_agency\_dict\_posat.yaml}
+\end{itemize}
+\item \textcite{Decter-FrainFrimer2016a}
+\begin{itemize}
+\item \texttt{DecterFrainFrimer2016a\_selected\_liwc\_cats\_agency\_negat.yaml}
+\item \texttt{DecterFrainFrimer2016a\_selected\_liwc\_cats\_agency\_posit.yaml}
+\end{itemize}
+\item \textcite{MaderaEtAl2009a}
+\begin{itemize}
+\item \texttt{MaderaEtAl2009a\_madera\_agentic\_adj.yaml}
+\item \texttt{MaderaEtAl2009a\_madera\_agentic\_orient\_liwc.yaml}
+\end{itemize}
+\item \textcite{PietraszkiewiczEtAl2019a}
+\begin{itemize}
+\item \texttt{PietraszkiewiczEtAl2019a\_selected\_liwc\_cats.yaml}
+\end{itemize}
+\item \textcite{NicolasEtAl2021a}
+\begin{itemize}
+\item \texttt{NicolasEtAl2019a\_full\_dict\_status\_negat.yaml}
+\item \texttt{NicolasEtAl2019a\_full\_dict\_status\_posit.yaml}
+\item \texttt{NicolasEtAl2019a\_seed\_dict\_ability\_negat.yaml}
+\item \texttt{NicolasEtAl2019a\_seed\_dict\_ability\_posit.yaml}
+\item \texttt{NicolasEtAl2019a\_seed\_dict\_agency\_negat.yaml}
+\item \texttt{NicolasEtAl2019a\_seed\_dict\_agency\_posit.yaml}
+\item \texttt{NicolasEtAl2019a\_seed\_dict\_status\_negat.yaml}
+\item \texttt{NicolasEtAl2019a\_seed\_dict\_status\_posit.yaml}
+\end{itemize}
+\end{itemize}
+
+\section{Boilerplate}
+\label{sec:orga287f3c}
+\section{Imports}
+\label{sec:org0061c47}
+\subsection{prod: NVM}
+\label{sec:orgdc3846c}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from nvm import disp_df
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+\end{minted}
+
+\subsection{prod: Basics}
+\label{sec:org77e8a82}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+\end{minted}
+
+\subsection{prod: Extra imports and settings}
+\label{sec:org90eb10b}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+\end{minted}
+
+\section{Extra Imports}
+\label{sec:org257624d}
+\subsection{prod: More extra imports and settings}
+\label{sec:orgea109f6}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+
+log0.info("DONE: more extra imports and settings")
+\end{minted}
+
+\section{Process}
+\label{sec:org6e8c858}
+\subsection{prod: Load, process, merge and save}
+\label{sec:org2ecf0a8}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+dir0 = "../../data/d0001_sources/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+glob0 = dir0.glob("s*/c*/*.yaml")
+glob0 = sorted(list(glob0))
+
+log0.info(f"{len(glob0) = }")
+
+data4 = []
+for if0 in glob0:
+    of2 = pathlib.Path("../../data/d0002_sources-lowercased")/if0.relative_to("../../data/d0001_sources")
+    of2.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    data0 = srsly.read_yaml(if0)
+    # log0.info(f"r: {if0} ({len(data0)})")
+    data2 = [clean_str(item).lower() for item in data0]
+    data2 = list(filter(re0.search, data2))
+    data2 = sorted(list(set(data2)))
+    data4 += data2
+    log0.info(f"w: {of2} ({len(data2)}/{len(data0)} [{len(set(data0))}])")
+    srsly.write_yaml(of2, data2)
+
+of4 = pathlib.Path("../../data/d0004_sources-merged-and-deduped")/"merged.yaml"
+of4.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+log0.info(f"M: {of4} ({len(data4)})")
+data4 = sorted(list(set(data4)))
+log0.info(f"W: {of4} ({len(data4)})")
+srsly.write_yaml(of4, data4)
+\end{minted}
+
+\begin{verbatim}
+I: len(glob0) = 25
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2019_PietraszkiewiczEtAl2019a/PietraszkiewiczEtAl2019a_agency_A.yaml (189/192 [192])
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2019_PietraszkiewiczEtAl2019a/PietraszkiewiczEtAl2019a_agency_B.yaml (64/64 [64])
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2019_PietraszkiewiczEtAl2019a/PietraszkiewiczEtAl2019a_agency_C.yaml (185/187 [187])
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2021_NicolasEtAl2021a/NicolasEtAl2019a_full_dict_ability_negat.yaml (301/303 [303])
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2021_NicolasEtAl2021a/NicolasEtAl2019a_full_dict_ability_posit.yaml (579/611 [611])
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2021_NicolasEtAl2021a/NicolasEtAl2019a_full_dict_agency_negat.yaml (265/269 [269])
+I: w: ../../data/d0002_sources-lowercased/s0002_full-fledged-tools/c2021_NicolasEtAl2021a/NicolasEtAl2019a_full_dict_agency_posit.yaml (444/453 [453])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2008_AbeleEtAl2008a/AbeleEtAl2008a_list_agency_negat.yaml (4/4 [4])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2008_AbeleEtAl2008a/AbeleEtAl2008a_list_agency_posit.yaml (8/8 [8])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2011_GaucherEtAl2011a/GaucherEtAl2011a_list_masculinity_pertaining.yaml (42/42 [42])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2011_HartEtAl2011a/HartEtAl2011a_agency_dict_negat.yaml (7/7 [7])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2011_HartEtAl2011a/HartEtAl2011a_agency_dict_posat.yaml (177/177 [177])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2016_DecterFrainFrimer2016a/DecterFrainFrimer2016a_selected_liwc_cats_agency_negat.yaml (292/308 [296])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2016_DecterFrainFrimer2016a/DecterFrainFrimer2016a_selected_liwc_cats_agency_posit.yaml (1523/2076 [1559])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2019_MaderaEtAl2009a/MaderaEtAl2009a_madera_agentic_adj.yaml (355/364 [363])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2019_MaderaEtAl2009a/MaderaEtAl2009a_madera_agentic_orient_liwc.yaml (1254/1335 [1285])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2019_PietraszkiewiczEtAl2019a/PietraszkiewiczEtAl2019a_selected_liwc_cats.yaml (1403/1687 [1415])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_full_dict_status_negat.yaml (190/193 [193])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_full_dict_status_posit.yaml (277/291 [291])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_seed_dict_ability_negat.yaml (29/29 [29])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_seed_dict_ability_posit.yaml (33/33 [33])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_seed_dict_agency_negat.yaml (31/31 [31])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_seed_dict_agency_posit.yaml (35/35 [35])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_seed_dict_status_negat.yaml (9/9 [9])
+I: w: ../../data/d0002_sources-lowercased/s0003_related-word-collections-and-composite-dictionaries/c2021_NicolasEtAl2021a/NicolasEtAl2019a_seed_dict_status_posit.yaml (15/15 [15])
+I: M: ../../data/d0004_sources-merged-and-deduped/merged.yaml (7711)
+I: W: ../../data/d0004_sources-merged-and-deduped/merged.yaml (4618)
+\end{verbatim}
+\section{Checkup}
+\label{sec:orgbe82851}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+data0a = srsly.read_yaml("../../data/d0001_sources/s0003_related-word-collections-and-composite-dictionaries/c2016_DecterFrainFrimer2016a/DecterFrainFrimer2016a_selected_liwc_cats_agency_posit.yaml")
+data0b = srsly.read_yaml("../../data/d0001_sources/s0003_related-word-collections-and-composite-dictionaries/c2016_DecterFrainFrimer2016a/DecterFrainFrimer2016a_selected_liwc_cats_agency_negat.yaml")
+data0c = list(set(data0a+data0b))
+log0.info(f"{len(data0c) = }")
+\end{minted}
+
+\begin{verbatim}
+I: len(data0c) = 1672
+\end{verbatim}
+
+\section*{References}
+\label{sec:org7c2a15d}
+\addcontentsline{toc}{section}{References}
+
+\printbibliography[heading=none]
+\end{document}
