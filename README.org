@@ -1,11 +1,6 @@
 #+title: BERTAgent SOM
 
-This repository contains supplementary online material (SOM) for the
-development and validation of BERTAgent as described in [DOI].
-
-BERTAgent is a tool to quantify semantic agency in textual data that relies on
-[[https://huggingface.co/docs/transformers/model_doc/roberta][RoBERTa]].
-
-
-BERTAgent can be installed from https://pypi.org/project/bertagent/. Package
-documentation and tutorial available at https://bertagent.readthedocs.io/.
+- This repository contains supplementary online material (SOM) for the development and validation of BERTAgent as described in [DOI].
+- BERTAgent is a tool to quantify semantic agency in textual data that relies on [[https://huggingface.co/docs/transformers/model_doc/roberta][RoBERTa]].
+- BERTAgent can be installed from https://pypi.org/project/bertagent/.
+- Package documentation and tutorial are available at https://bertagent.readthedocs.io/.
