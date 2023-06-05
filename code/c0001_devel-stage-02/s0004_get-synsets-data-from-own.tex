@@ -1,0 +1,515 @@
+% Created 2023-06-05 Mon 03:35
+% Intended LaTeX compiler: xelatex
+\documentclass[a4paper,10pt,onecolumn,oneside,openright]{article}
+\usepackage[no-math]{fontspec}
+\newfontfamily\cyrillicfont{CMU Serif}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Linux Libertine O}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Hack}
+\setmainfont[
+  Ligatures=TeX,
+  Extension=.otf,
+  BoldFont=cmunbx,
+  ItalicFont=cmunti,
+  BoldItalicFont=cmunbi,
+]{cmunrm}
+\usepackage[Latin,Cyrillics]{ucharclasses}
+\setTransitionsForCyrillics{\begingroup\cyrillicfont}{\endgroup}
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{latin}
+\setotherlanguage{greek}
+\setotherlanguage{russian}
+\setotherlanguage{polish}
+\setotherlanguage{german}
+\setotherlanguage{ukrainian}
+\newcommand{\RU}[1]{\foreignlanguage{russian}{#1}}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{tabularx}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \begin{tabular}{>{$}l<{$} @{} >{${}}c<{{}$} @{} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\newenvironment{conditions*}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \tabularx{\columnwidth}{>{$}l<{$} @{}>{${}}c<{{}$}@{} >{\raggedright\arraybackslash}X}}
+  {\endtabularx\par\vspace{\belowdisplayskip}}
+\usepackage[tableposition=t]{caption}
+\captionsetup[table]{skip=8pt}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+\usepackage[tableposition=t]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{fixltx2e}
+\usepackage[unicode]{hyperref}
+\usepackage{cleveref}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullRef}[1]{\nameCref{#1} \hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullREF}[1]{\nameCref{#1} \ref{#1}: \nameref*{#1}}
+\newcommand*{\FullREF}[1]{\nameCref{#1} \ref{#1} (\nameref*{#1})}
+\newcommand*{\eqnCref}[1]{\nameCref{#1} \ref{#1}}
+\newcommand*{\EqnCref}[1]{\nameCref{#1} \ref*{#1}}
+\newcommand{\citinf}{{\newline\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citfix}{{\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citsrc}{{\vadjust{\vspace{8pt}}\nolinebreak\hspace{\fill}\mbox{}\linebreak\hspace*{\fill}\textemdash\space}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{amscd}
+\usepackage{amstext}
+\usepackage{threeparttable}
+\AtBeginDocument{\hypersetup{pdfauthor={Jan Nikadon},pdftitle={\thetitle},pdfsubject={subject},pdfkeywords={keyword1,}{keyword2},}}
+\hypersetup{xetex,colorlinks=true,linktocpage=true,linkcolor=RoyalPurple,citecolor=RoyalPurple,filecolor=RoyalBlue,urlcolor=RoyalBlue,pagebackref=true,plainpages=false,pdfpagelabels=true,bookmarksnumbered=true,}
+\PassOptionsToPackage{dateabbrev=false,natbib=true,style=apa,backref=true,backrefstyle=two,dashed=false,hyperref=true,backend=biber,maxbibnames=99,firstinits=true,giveninits=false,uniquename=init,citetracker=true,parentracker=true,url=false,doi=true,}{biblatex}
+\usepackage{biblatex}
+\usepackage[newfloat]{minted}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{titling}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\definecolor{fuchsiapink}{rgb}{1.0, 0.47, 1.0}
+\definecolor{cream}{rgb}{1.00, 0.99, 0.82}
+\definecolor{champagne}{rgb}{0.97, 0.91, 0.81}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{blanchedalmond}{rgb}{1.0, 0.92, 0.8}
+\definecolor{brilliantlavender}{rgb}{0.96, 0.73, 1.0}
+\IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+\IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+\date{}
+\title{Get Synsets Data From OEWN}
+\begin{document}
+
+\maketitle
+
+
+
+
+\section{Boilerplate}
+\label{sec:org9954c19}
+\section{Imports}
+\label{sec:org2af52a5}
+\subsection{prod: NVM}
+\label{sec:orgbb455db}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from nvm import disp_df
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+\end{minted}
+
+\subsection{prod: Basics}
+\label{sec:orge3f5707}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+\end{minted}
+
+\subsection{prod: Extra imports and settings}
+\label{sec:orgd5c415d}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+\end{minted}
+
+\section{Extra Imports}
+\label{sec:orga801448}
+\subsection{prod: More extra imports and settings}
+\label{sec:orgf769a54}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import wn
+from wn.morphy import Morphy
+ANTONYM_SENSE_RELATIONS = [
+    "antonym",
+    "anto_gradable",
+    "anto_simple",
+    "anto_converse",
+]
+
+log0.info(f"{wn.__file__}")
+log0.info("DONE: more extra imports and settings")
+\end{minted}
+
+\section{Process}
+\label{sec:orgf80324b}
+\subsection{Prepare WordNet}
+\label{sec:org90d9fdb}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+wn0 = wn.Wordnet(
+    "oewn:2021",
+    lang="en",
+    lemmatizer=Morphy(),
+    search_all_forms=True,
+)
+\end{minted}
+
+\subsection{prod: Load data}
+\label{sec:orgc97bdeb}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+dir0 = "../../data/d0007_synsets-selected/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"synsets"
+extn0 = ".yaml"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+ss_list = srsly.read_yaml(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{len(ss_list) = }")
+print(srsly.yaml_dumps(ss_list[:12]))
+\end{minted}
+
+\begin{verbatim}
+I: loading: ../../data/d0007_synsets-selected/synsets.yaml...
+I: loading: ../../data/d0007_synsets-selected/synsets.yaml... DONE
+I: len(ss_list) = 6914
+  - oewn-02854643-n
+  - oewn-02078906-v
+  - oewn-00443540-s
+  - oewn-08079806-n
+  - oewn-02090199-s
+  - oewn-05622440-n
+  - oewn-00185953-n
+  - oewn-01525056-v
+  - oewn-02713541-v
+  - oewn-00365540-r
+  - oewn-05651861-n
+  - oewn-01896097-v
+\end{verbatim}
+\subsection{Synsets data dict}
+\label{sec:org7f99869}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+ss_data0 = []
+for id0 in ss_list:
+    ss0 = wn0.synset(id0)
+    if not any(item["id0"]==ss0.id for item in ss_data0):
+        antonym_ids = []
+        antonym_defs = []
+        antonym_lemmas = []
+        antonym_examples = []
+        for sense0 in ss0.senses():
+            rels = sense0.relations(*ANTONYM_SENSE_RELATIONS)
+            for relname, antonym_senses_list in rels.items():
+                for sense2 in antonym_senses_list:
+                    if sense2.synset().id not in antonym_ids:
+                        if len(sense2.synset().examples())>0:
+                            antonym_ids.append(sense2.synset().id)
+                            antonym_defs.append(sense2.synset().definition())
+                            antonym_lemmas.append(sense2.synset().lemmas())
+                            antonym_examples.append(sense2.synset().examples())
+
+        ss_data0.append(dict(
+            id0=ss0.id,
+            lemmas=ss0.lemmas(),
+            definition=ss0.definition(),
+            examples=ss0.examples(),
+            antonym_ids=antonym_ids,
+            antonym_lemmas=antonym_lemmas,
+            antonym_defs=antonym_defs,
+            antonym_examples=antonym_examples,
+        ))
+
+log0.info(f"{len(ss_data0) = }")
+\end{minted}
+
+\begin{verbatim}
+I: len(ss_data0) = 6914
+\end{verbatim}
+
+\subsection{Synsets DataFrame}
+\label{sec:orgc870179}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+df0 = pd.DataFrame.from_records(ss_data0)
+df2 = df0[[col0 for col0 in df0.columns if not col0.startswith("antonym_") ]]
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+\end{minted}
+
+\begin{verbatim}
+I: df0.shape = (6914, 8)
+\end{verbatim}
+
+\begin{verbatim}
+                  id0                              lemmas                                   definition                                     examples antonym_ids antonym_lemmas antonym_defs antonym_examples
+1138  oewn-02684248-v  [worry, concern, occupy, interest]                            be on the mind of  [I worry about the second Germanic conso...          []             []           []               []
+1774  oewn-02456941-v                           [inhibit]  limit, block, or decrease the action or ...  [inhibit the action of the enzyme, inhib...          []             []           []               []
+1799  oewn-00498547-n                  [draw, draw poker]  poker in which a player can discard card...               [he played only draw and stud]          []             []           []               []
+2345  oewn-02353009-s                           [supreme]         highest in excellence or achievement  [supreme among musicians, a supreme ende...          []             []           []               []
+4163  oewn-02630209-v                              [head]        form a head or come or grow to a head           [The wheat headed early this year]          []             []           []               []
+4174  oewn-05846174-n                              [idea]                              a personal view      [he has an idea that we don't like him]          []             []           []               []
+5052  oewn-10641415-n                           [soldier]  an enlisted man or woman who serves in a...            [the soldiers stood at attention]          []             []           []               []
+6242  oewn-00592037-v                             [touch]                                   comprehend  [He could not touch the meaning of the p...          []             []           []               []
+\end{verbatim}
+
+\subsection{Cols DF0}
+\label{sec:org07a069e}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+\end{minted}
+
+\begin{verbatim}
+    "id0",
+    "lemmas",
+    "definition",
+    "examples",
+    "antonym_ids",
+    "antonym_lemmas",
+    "antonym_defs",
+    "antonym_examples",
+\end{verbatim}
+
+\subsection{Cols DF2}
+\label{sec:orgfc201c5}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+for col0 in df2.columns:
+    print(f"    \"{col0}\",")
+\end{minted}
+
+\begin{verbatim}
+    "id0",
+    "lemmas",
+    "definition",
+    "examples",
+\end{verbatim}
+
+
+\subsection{Antonyms exclusive}
+\label{sec:org5b959b1}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+df4 = df0[df0.antonym_ids.apply(lambda x: x != [])]
+
+log0.info(f"{df4.shape = }")
+disp_df(df4.sample(n=8).sort_index())
+\end{minted}
+
+\begin{verbatim}
+I: df4.shape = (858, 8)
+\end{verbatim}
+
+\begin{verbatim}
+                  id0                                       lemmas                                   definition                                     examples        antonym_ids                               antonym_lemmas                                 antonym_defs                             antonym_examples
+1918  oewn-07556441-n                                       [hope]  the general feeling that some desire wil...  [in spite of his troubles he never gave ...  [oewn-07557311-n]                                  [[despair]]  [the feeling that everything is wrong an...  [[they moaned in despair and dismay, one...
+2166  oewn-02217607-v                               [refuse, deny]                           refuse to let have  [She denies me every pleasure, he denies...  [oewn-02260270-v]                             [[allow, grant]]                                   [let have]  [[grant permission, Mandela was allowed ...
+2823  oewn-00370083-r             [precisely, exactly, incisively]                          in a precise manner     [she always expressed herself precisely]  [oewn-00370277-r]                   [[imprecisely, inexactly]]                     [in an imprecise manner]         [[he expressed himself imprecisely]]
+2938  oewn-01762851-a                        [lasting, persistent]                           retained; not shed  [persistent leaves remain attached past ...  [oewn-01763094-a]                           [[caducous, shed]]      [shed at an early stage of development]  [[most amphibians have caducous gills, t...
+4190  oewn-00338302-a               [incertain, uncertain, unsure]  lacking or indicating lack of confidence...  [uncertain of his convictions, unsure of...  [oewn-00337729-a]                            [[certain, sure]]  [having or feeling no doubt or uncertain...  [[felt certain of success, was sure (or ...
+5215  oewn-02605525-v                                       [fail]                                    be unable          [I fail to understand your motives]  [oewn-02528530-v]  [[manage, pull off, carry off, negociate...              [be successful; achieve a goal]  [[I managed to carry the box upstairs, S...
+5410  oewn-01768652-v  [quieten, calm, lull, calm down, still, ...                           make calm or still        [quiet the dragons of worry and fear]  [oewn-01766380-v]  [[agitate, turn on, charge, commove, rou...   [cause to be agitated, excited, or roused]  [[The speaker charged up the crowd with ...
+6857  oewn-14498478-n                                    [success]                a state of prosperity or fame  [he is enjoying great success, he does n...  [oewn-14501461-n]                                  [[failure]]                            [lack of success]  [[he felt that his entire life had been ...
+\end{verbatim}
+\subsection{Save DF2}
+\label{sec:org6eec026}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/d0007_synsets-selected/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["sysnsets-data-0001-wn-text"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df2.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df2.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df2.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df2.to_dict(orient="records"))
+
+log0.info("DONE")
+\end{minted}
+
+\begin{verbatim}
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0001-wn-text.pkl...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0001-wn-text.csv...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0001-wn-text.xlsx...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0001-wn-text.jsonl...
+I: DONE
+\end{verbatim}
+
+\subsection{Save DF0}
+\label{sec:org362ae63}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/d0007_synsets-selected/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["sysnsets-data-0002-wn-text-with-antonyms"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df0.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df0.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df0.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df0.to_dict(orient="records"))
+
+log0.info("DONE")
+\end{minted}
+
+\begin{verbatim}
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0002-wn-text-with-antonyms.pkl...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0002-wn-text-with-antonyms.csv...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0002-wn-text-with-antonyms.xlsx...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0002-wn-text-with-antonyms.jsonl...
+I: DONE
+\end{verbatim}
+
+\subsection{Save DF4}
+\label{sec:orgd070da0}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/d0007_synsets-selected/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["sysnsets-data-0004-wn-text-only-antonyms"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df4.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df4.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df4.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df4.to_dict(orient="records"))
+
+log0.info("DONE")
+\end{minted}
+
+\begin{verbatim}
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0004-wn-text-only-antonyms.pkl...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0004-wn-text-only-antonyms.csv...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0004-wn-text-only-antonyms.xlsx...
+I: saving: ../../data/d0007_synsets-selected/sysnsets-data-0004-wn-text-only-antonyms.jsonl...
+I: DONE
+\end{verbatim}
+\end{document}
