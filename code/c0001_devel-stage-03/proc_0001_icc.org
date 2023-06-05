@@ -1,0 +1,96 @@
+#+title: ICC
+
+#+PROPERTY: header-args:R  :tangle   yes
+#+PROPERTY: header-args:R+ :eval     yes
+#+PROPERTY: header-args:R+ :comments org
+#+PROPERTY: header-args:R+ :results  output drawer pp
+#+PROPERTY: header-args:R+ :exports  both
+#+PROPERTY: header-args:R+ :var      BUFFER_DIR=(file-name-directory buffer-file-name)
+#+PROPERTY: header-args:R+ :session  *R*
+
+#+LATEX_CMD:   xelatex
+#+LATEX_CLASS: article
+
+#+LATEX_CLASS_OPTIONS: [a4paper,10pt,onecolumn,oneside,openright]
+
+#+JIKO-CONFIG: use-minted
+#+JIKO-CONFIG: use-biblatex-apa7
+#+JIKO-CONFIG: use-hyperref-setup
+#+JIKO-CONFIG: use-threeparttable
+
+#+LATEX_HEADER_EXTRA: \IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+#+LATEX_HEADER_EXTRA: \IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+
+#+OPTIONS: author:nil
+#+OPTIONS: email:nil
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: ^:{}
+
+
+* Info
+Procedure used here is based textcite:&MurakiEtAl2022pub
+- Muraki, E. J., Abdalla, S., Brysbaert, M., & Pexman, P. M. (2022).
+  Concreteness ratings for 62,000 English multiword expressions. Behavior
+  Research Methods. https://doi.org/10.3758/s13428-022-01912-6
+* Imports
+#+begin_src R :session *R*
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(moments)
+library(tm)#Function to remove strings
+library(reshape2)#for data manipulation
+library(nlme)#for ICC
+library(multilevel)#for ICC
+library(arsenal)#for dataframe comparisons
+library(jtools)#for theme_apa function for plots
+library(apaTables)#for APA format tables
+library(fuzzyjoin)
+
+#+end_src
+
+
+* ALD (synsets)
+** Load data
+#+begin_src R :session *R* :results  output drawer pp
+# SWITCH DATA
+dir0 <- "../../data/d0008_synsets-evaluated/"
+if0 <- "long.csv"
+
+ratings_icc <- read_csv(file = file.path(dir0, if0))
+spec(ratings_icc)
+ratings_icc
+#+end_src
+** ICC
+#+begin_src R :session *R*
+#Calculate ICC based on function from psychometric package but customized optimizer (see Brysbaert et al. 2019 for method description)
+#Run multilevel model with optimizer set to optim
+attach(ratings_icc)
+mod <- lme(EVAL ~ 1, random = ~1 | OEWN, na.action = na.omit, control = lmeControl(opt = "optim"))
+detach(ratings_icc)
+#Extract intercept variance
+t0 <- as.numeric(VarCorr(mod)[1,1])
+#Extract residual variance
+sig2 <- as.numeric(VarCorr(mod)[2,1])
+#Calculate ICC based on intercept and residual variance
+icc1 <- t0/(t0 + sig2)
+#Calculate mean ICC across all group ICCs
+# icc2 <- mean(GmeanRel(mod)$MeanRel)
+icc2 <- mean(gmeanrel(mod)$MeanRel)
+paste(icc1)
+paste(icc2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "0.430698478308441"
+[1] "0.85934412088267"
+#+end_example
+
+* References
+:PROPERTIES:
+:UNNUMBERED: t
+:END:
+\addcontentsline{toc}{section}{References}
+
+\printbibliography[heading=none]
