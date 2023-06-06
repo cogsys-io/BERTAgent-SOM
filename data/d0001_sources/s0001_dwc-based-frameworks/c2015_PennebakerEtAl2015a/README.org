@@ -1,0 +1,4 @@
+#+title: README
+
+The Linguistic Inquiry and Word Count (LIWC; textcite:&PennebakerEtAl2015a)
+data should be obtained from https://www.liwc.app/.

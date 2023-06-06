@@ -1,0 +1,4 @@
+#+title: README
+
+The General Inquirer (GI; cite:&StoneHunt1963a) data should be obtained from
+https://inquirer.sites.fas.harvard.edu/.
