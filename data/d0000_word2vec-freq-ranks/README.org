@@ -1,0 +1,3 @@
+#+title: README
+
+=word2vec_freq_ranks_raw.jsonl= (saved from ~s0002_expand-patterns.org~).
