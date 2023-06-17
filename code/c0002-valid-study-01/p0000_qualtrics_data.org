@@ -38,9 +38,6 @@ locations = srsly.yaml_loads(locations)
 log0.info(f"{nvm.chdir(locations)}")
 #+end_src
 
-#+RESULTS:
-: I: /home/jiko/cc/dev/c2023a/b0002_c0122_gptchat_intro/code/prod_r0003_gold_standard_qualtrics_data
-
 ** test: Auto reload
 #+begin_src jupyter-python :async yes
 get_ipython().run_line_magic("load_ext", "autoreload")
@@ -3845,15 +3842,3 @@ with open(of0, "w") as fh:
     fh.write(df3b_str)
 
 #+end_src
-
-#+RESULTS:
-#+begin_example
-/tmp/ipykernel_38184/295441116.py:20: FutureWarning:
-
-
-/tmp/ipykernel_38184/295441116.py:20: FutureWarning:
-
-
-I: type(df3b_str) = <class 'str'>
-I: len(df3b_str) = 178749
-#+end_example
