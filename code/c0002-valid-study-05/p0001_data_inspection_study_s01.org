@@ -1,0 +1,481 @@
+#+title: P0001_data_inspection
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_encourage/osf-arch_2023-04-05-001/Study 1"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"Study1_merged_clean"
+extn0 = ".sav"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_spss(if0)
+log0.info(f"loading: {if0}... DONE")
+
+df0["Text"] = df0.Text.apply(clean_str)
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=4).sort_index(), width=4444)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0004_encourage/osf-arch_2023-04-05-001/Study 1/Study1_merged_clean.sav...
+I: loading: ../../data/v0004_encourage/osf-arch_2023-04-05-001/Study 1/Study1_merged_clean.sav... DONE
+I: df0.shape = (445, 149)
+#+end_example
+#+begin_example
+              StartDate             EndDate      Status  Progress  Duration__in_seconds_ Finished        RecordedDate         ResponseId  Q_RecaptchaScore Q1.3                                          Q30                                          Q34                                         Text           Q48_1 Q48_2           Q48_3           Q48_4             Q48_5  Gender Age                   Political_orient Q12                                          Q13 Q15                       Q17 Gender_3_TEXT                English  index0                                        sents  WORD_count  NOUN_count  ADJ_count  VERB_count  VERB_count_without_be_and_have  VB_count  VB_count_without_be_and_have  JJ_count  JJRs_count  JJSs_count  count_of_is_big2a_ag_from_big2  count_of_is_big2b_ag_from_big2  count_of_is_IAV_from_lcm0  count_of_is_DAV_from_lcm0  count_of_is_SV_from_lcm0  count_of_is_IPadj_from_lcm1  count_of_is_IndAdj_from_lcm1                                   concr_info  concr_count  concr_sum  concr_mean  count_of_is_liwc_00001_Function_from_liwc  count_of_is_liwc_00002_Pronoun_from_liwc  count_of_is_liwc_00003_Ppron_from_liwc  count_of_is_liwc_00004_I_from_liwc  count_of_is_liwc_00005_We_from_liwc  count_of_is_liwc_00006_You_from_liwc  count_of_is_liwc_00007_SheHe_from_liwc  count_of_is_liwc_00008_They_from_liwc  count_of_is_liwc_00009_Ipron_from_liwc  count_of_is_liwc_00010_Article_from_liwc  count_of_is_liwc_00011_Prep_from_liwc  count_of_is_liwc_00012_Auxverb_from_liwc  count_of_is_liwc_00013_Adverb_from_liwc  count_of_is_liwc_00014_Conj_from_liwc  count_of_is_liwc_00015_Negate_from_liwc  count_of_is_liwc_00020_Verb_from_liwc  count_of_is_liwc_00021_Adj_from_liwc  count_of_is_liwc_00022_Compare_from_liwc  count_of_is_liwc_00023_Interrog_from_liwc  count_of_is_liwc_00024_Number_from_liwc  count_of_is_liwc_00025_Quant_from_liwc  count_of_is_liwc_00030_Affect_from_liwc  count_of_is_liwc_00031_Posemo_from_liwc  count_of_is_liwc_00032_Negemo_from_liwc  count_of_is_liwc_00033_Anx_from_liwc  count_of_is_liwc_00034_Anger_from_liwc  count_of_is_liwc_00035_Sad_from_liwc  count_of_is_liwc_00040_Social_from_liwc  count_of_is_liwc_00041_Family_from_liwc  count_of_is_liwc_00042_Friend_from_liwc  count_of_is_liwc_00043_Female_from_liwc  count_of_is_liwc_00044_Male_from_liwc  count_of_is_liwc_00050_CogProc_from_liwc  count_of_is_liwc_00051_Insight_from_liwc  count_of_is_liwc_00052_Cause_from_liwc  count_of_is_liwc_00053_Discrep_from_liwc  count_of_is_liwc_00054_Tentat_from_liwc  count_of_is_liwc_00055_Certain_from_liwc  count_of_is_liwc_00056_Differ_from_liwc  count_of_is_liwc_00060_Percept_from_liwc  count_of_is_liwc_00061_See_from_liwc  count_of_is_liwc_00062_Hear_from_liwc  count_of_is_liwc_00063_Feel_from_liwc  count_of_is_liwc_00070_Bio_from_liwc  count_of_is_liwc_00071_Body_from_liwc  count_of_is_liwc_00072_Health_from_liwc  count_of_is_liwc_00073_Sexual_from_liwc  count_of_is_liwc_00074_Ingest_from_liwc  count_of_is_liwc_00080_Drives_from_liwc  count_of_is_liwc_00081_Affiliation_from_liwc  count_of_is_liwc_00082_Achieve_from_liwc  count_of_is_liwc_00083_Power_from_liwc  count_of_is_liwc_00084_Reward_from_liwc  count_of_is_liwc_00085_Risk_from_liwc  count_of_is_liwc_00090_FocusPast_from_liwc  count_of_is_liwc_00091_FocusPresent_from_liwc  count_of_is_liwc_00092_FocusFuture_from_liwc  count_of_is_liwc_00100_Relativ_from_liwc  count_of_is_liwc_00101_Motion_from_liwc  count_of_is_liwc_00102_Space_from_liwc  count_of_is_liwc_00103_Time_from_liwc  count_of_is_liwc_00110_Work_from_liwc  count_of_is_liwc_00111_Leisure_from_liwc  count_of_is_liwc_00112_Home_from_liwc  count_of_is_liwc_00113_Money_from_liwc  count_of_is_liwc_00114_Relig_from_liwc  count_of_is_liwc_00115_Death_from_liwc  count_of_is_liwc_00120_Informal_from_liwc  count_of_is_liwc_00121_Swear_from_liwc  count_of_is_liwc_00122_Netspeak_from_liwc  count_of_is_liwc_00123_Assent_from_liwc  count_of_is_liwc_00124_Nonflu_from_liwc  count_of_is_liwc_00125_Filler_from_liwc  was_good  Filter_1  Filter_2  Filter_3  Filter_4 Filter_general_2  Check  xxxxxxxxxxxxxx         Study         Condition  S_D1  C_D2  A_agency  A_concr  A_abstr     N_perc  Adj_perc         V1         V2         V3         V4  Sem_agency       LCM     LCM_R     concr      condR
+163 2021-10-10 07:44:26 2021-10-10 07:50:29  IP Address     100.0                  362.0     True 2021-10-10 07:50:29  R_4PbXYL9KsMuoc8N               1.0  yes  The enivroment is getting worse and huma...                                               The enivroment is getting worse and huma...               6     6               6               6                 6  Female  42  neither left-wing, nor right-wing  No  writing a leaflet presenting your though...      6162c650f52a251b60211e35                                  NaN   179.0  ['The enivroment is getting worse and hu...       105.0        21.0        9.0        20.0                            19.0       7.0                           6.0       6.0         3.0         0.0                             3.0                             0.0                       11.0                       11.0                       4.0                          0.0                           0.0  [{'The': 1.43}, {'is': 1.59}, {'getting'...         89.0     220.29    2.475169                                       52.0                                       8.0                                     6.0                                 0.0                                  0.0                                   0.0                                     0.0                                    6.0                                     2.0                                       7.0                                   14.0                                       9.0                                      5.0                                    9.0                                      3.0                                   20.0                                   7.0                                       7.0                                        2.0                                      0.0                                     6.0                                      7.0                                      3.0                                      3.0                                   0.0                                     0.0                                   0.0                                     15.0                                      0.0                                      1.0                                      0.0                                    0.0                                      12.0                                       0.0                                     3.0                                       3.0                                      3.0                                       0.0                                      5.0                                       0.0                                   0.0                                    0.0                                    0.0                                   0.0                                    0.0                                      0.0                                      0.0                                      0.0                                     10.0                                          4.0                                        1.0                                     3.0                                      4.0                                    1.0                                         2.0                                         21.0                                            0.0                                       18.0                                      7.0                                     7.0                                    4.0                                    0.0                                       1.0                                    0.0                                     0.0                                     0.0                                     0.0                                        1.0                                     0.0                                        0.0                                      0.0                                      1.0                                      0.0       1.0  Selected       1.0       1.0       NaN         Selected    1.0             NaN   Environment  Express thoughts   0.0   1.0  6.000000      6.0      6.0  20.000000  8.571429  19.047619  18.095238   6.666667   5.714286    2.857143  1.730769  3.269231  2.475169     inform
+240 2021-11-17 12:58:09 2021-11-17 13:02:21  IP Address     100.0                  251.0     True 2021-11-17 13:02:21  R_1qeQbQhAv49w9tZ               1.0  yes                                               Start your volunteering journey today! D...  Start your volunteering journey today! D...               5     5               4               4                 6  Female  36                          left-wing  No  writing a leaflet encouraging others to ...      572230173fbc810011c58a38                I am a native speaker   270.0  ['Start your volunteering journey today!...       108.0        30.0        8.0        17.0                            16.0      15.0                          14.0       8.0         0.0         0.0                            17.0                             2.0                       11.0                        8.0                       4.0                          0.0                           0.0  [{'Start': 2.71}, {'your': 2.37}, {'jour...         90.0     217.69    2.418778                                       54.0                                      15.0                                    10.0                                 0.0                                  0.0                                  10.0                                     0.0                                    0.0                                     5.0                                       6.0                                   15.0                                       8.0                                      5.0                                    7.0                                      0.0                                   18.0                                   5.0                                       1.0                                        2.0                                      0.0                                     4.0                                      6.0                                      6.0                                      0.0                                   0.0                                     0.0                                   0.0                                     16.0                                      0.0                                      1.0                                      0.0                                    0.0                                      13.0                                       1.0                                     1.0                                       2.0                                      5.0                                       3.0                                      3.0                                       1.0                                   1.0                                    0.0                                    0.0                                   2.0                                    0.0                                      2.0                                      0.0                                      0.0                                     13.0                                          3.0                                        6.0                                     2.0                                      4.0                                    0.0                                         0.0                                         23.0                                            0.0                                       19.0                                      3.0                                     8.0                                    9.0                                    6.0                                       1.0                                    0.0                                     1.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       1.0  Selected       1.0       1.0  Selected         Selected    1.0             NaN  Volunteering         Encourage   1.0   0.0  4.666667      4.0      6.0  27.777778  7.407407  15.740741  14.814815  13.888889  12.962963   15.740741  1.826087  3.173913  2.418778  encourage
+262 2021-11-17 12:59:05 2021-11-17 13:04:48  IP Address     100.0                  342.0     True 2021-11-17 13:04:48  R_wXEm7FqNfcif2gx               1.0  yes                                               Hello. I would like to encourage you to ...  Hello. I would like to encourage you to ...               4     6               6               6                 3  Female  20  neither left-wing, nor right-wing  No  writing a leaflet encouraging others to ...      60bbe5dac754ff6671006e16                I am a native speaker   292.0  ['Hello.', 'I would like to encourage yo...       103.0        26.0        5.0        17.0                            16.0       6.0                           5.0       5.0         0.0         0.0                             7.0                             2.0                       11.0                        7.0                       3.0                          1.0                           0.0  [{'Hello': 2.8}, {'I': 3.93}, {'would': ...         93.0     245.07    2.635161                                       54.0                                      14.0                                    11.0                                 7.0                                  0.0                                   4.0                                     0.0                                    0.0                                     3.0                                       5.0                                   18.0                                       9.0                                      3.0                                    5.0                                      0.0                                   18.0                                   5.0                                       3.0                                        0.0                                      0.0                                     2.0                                      7.0                                      7.0                                      0.0                                   0.0                                     0.0                                   0.0                                     11.0                                      0.0                                      0.0                                      1.0                                    0.0                                       7.0                                       1.0                                     0.0                                       3.0                                      1.0                                       1.0                                      2.0                                       2.0                                   0.0                                    0.0                                    1.0                                   2.0                                    0.0                                      2.0                                      0.0                                      0.0                                     11.0                                          3.0                                        5.0                                     4.0                                      2.0                                    0.0                                         3.0                                         16.0                                            1.0                                       21.0                                      4.0                                    13.0                                    5.0                                    4.0                                       2.0                                    0.0                                     1.0                                     1.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       1.0  Selected       1.0       1.0  Selected         Selected    1.0             NaN  Volunteering         Encourage   1.0   0.0  5.333333      6.0      3.0  25.242718  4.854369  16.504854  15.533981   5.825243   4.854369    6.796117  1.909091  3.090909  2.635161  encourage
+397 2021-11-17 12:50:17 2021-11-17 12:54:06  IP Address     100.0                  228.0     True 2021-11-17 12:54:06  R_2EErUy5JeaRr1sy               1.0  yes  volunteering is a funny word. I dont rea...                                               volunteering is a funny word. I dont rea...  1 - not at all     3  1 - not at all  1 - not at all  7 - very much so  Female  31               definitely left-wing  No  writing a leaflet presenting your though...  no  5ea954b828c814030440af23                I am a native speaker   445.0  ['volunteering is a funny word.', 'I don...       108.0        15.0       10.0        18.0                            10.0      11.0                           6.0      10.0         0.0         0.0                             6.0                             0.0                        7.0                        4.0                      12.0                          0.0                           1.0  [{'is': 1.59}, {'a': 1.46}, {'funny': 2....         99.0     214.62    2.167879                                       70.0                                      17.0                                     7.0                                 4.0                                  0.0                                   0.0                                     0.0                                    3.0                                    10.0                                       6.0                                   16.0                                      18.0                                      5.0                                    8.0                                      2.0                                   22.0                                   8.0                                       3.0                                        2.0                                      0.0                                     3.0                                      6.0                                      5.0                                      1.0                                   0.0                                     0.0                                   1.0                                      5.0                                      0.0                                      0.0                                      0.0                                    0.0                                      22.0                                       1.0                                     0.0                                       6.0                                      9.0                                       2.0                                     10.0                                       0.0                                   0.0                                    0.0                                    0.0                                   2.0                                    0.0                                      1.0                                      0.0                                      1.0                                      2.0                                          0.0                                        2.0                                     0.0                                      0.0                                    0.0                                         3.0                                         19.0                                            1.0                                        3.0                                      0.0                                     1.0                                    2.0                                    2.0                                       0.0                                    0.0                                     4.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       1.0  Selected       1.0       1.0  Selected         Selected    1.0             NaN  Volunteering  Express thoughts   1.0   1.0  1.666667      1.0      7.0  13.888889  9.259259  16.666667   9.259259  10.185185   5.555556    5.555556  2.416667  2.583333  2.167879     inform
+#+end_example
+:END:
+** Means
+#+begin_src jupyter-python :async yes
+df0.Age.apply(int).mean()
+#+end_src
+
+#+RESULTS:
+: 33.78202247191011
+
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "StartDate",
+    "EndDate",
+    "Status",
+    "Progress",
+    "Duration__in_seconds_",
+    "Finished",
+    "RecordedDate",
+    "ResponseId",
+    "Q_RecaptchaScore",
+    "Q1.3",
+    "Q30",
+    "Q34",
+    "Text",
+    "Q48_1",
+    "Q48_2",
+    "Q48_3",
+    "Q48_4",
+    "Q48_5",
+    "Gender",
+    "Age",
+    "Political_orient",
+    "Q12",
+    "Q13",
+    "Q15",
+    "Q17",
+    "Gender_3_TEXT",
+    "English",
+    "index0",
+    "sents",
+    "WORD_count",
+    "NOUN_count",
+    "ADJ_count",
+    "VERB_count",
+    "VERB_count_without_be_and_have",
+    "VB_count",
+    "VB_count_without_be_and_have",
+    "JJ_count",
+    "JJRs_count",
+    "JJSs_count",
+    "count_of_is_big2a_ag_from_big2",
+    "count_of_is_big2b_ag_from_big2",
+    "count_of_is_IAV_from_lcm0",
+    "count_of_is_DAV_from_lcm0",
+    "count_of_is_SV_from_lcm0",
+    "count_of_is_IPadj_from_lcm1",
+    "count_of_is_IndAdj_from_lcm1",
+    "concr_info",
+    "concr_count",
+    "concr_sum",
+    "concr_mean",
+    "count_of_is_liwc_00001_Function_from_liwc",
+    "count_of_is_liwc_00002_Pronoun_from_liwc",
+    "count_of_is_liwc_00003_Ppron_from_liwc",
+    "count_of_is_liwc_00004_I_from_liwc",
+    "count_of_is_liwc_00005_We_from_liwc",
+    "count_of_is_liwc_00006_You_from_liwc",
+    "count_of_is_liwc_00007_SheHe_from_liwc",
+    "count_of_is_liwc_00008_They_from_liwc",
+    "count_of_is_liwc_00009_Ipron_from_liwc",
+    "count_of_is_liwc_00010_Article_from_liwc",
+    "count_of_is_liwc_00011_Prep_from_liwc",
+    "count_of_is_liwc_00012_Auxverb_from_liwc",
+    "count_of_is_liwc_00013_Adverb_from_liwc",
+    "count_of_is_liwc_00014_Conj_from_liwc",
+    "count_of_is_liwc_00015_Negate_from_liwc",
+    "count_of_is_liwc_00020_Verb_from_liwc",
+    "count_of_is_liwc_00021_Adj_from_liwc",
+    "count_of_is_liwc_00022_Compare_from_liwc",
+    "count_of_is_liwc_00023_Interrog_from_liwc",
+    "count_of_is_liwc_00024_Number_from_liwc",
+    "count_of_is_liwc_00025_Quant_from_liwc",
+    "count_of_is_liwc_00030_Affect_from_liwc",
+    "count_of_is_liwc_00031_Posemo_from_liwc",
+    "count_of_is_liwc_00032_Negemo_from_liwc",
+    "count_of_is_liwc_00033_Anx_from_liwc",
+    "count_of_is_liwc_00034_Anger_from_liwc",
+    "count_of_is_liwc_00035_Sad_from_liwc",
+    "count_of_is_liwc_00040_Social_from_liwc",
+    "count_of_is_liwc_00041_Family_from_liwc",
+    "count_of_is_liwc_00042_Friend_from_liwc",
+    "count_of_is_liwc_00043_Female_from_liwc",
+    "count_of_is_liwc_00044_Male_from_liwc",
+    "count_of_is_liwc_00050_CogProc_from_liwc",
+    "count_of_is_liwc_00051_Insight_from_liwc",
+    "count_of_is_liwc_00052_Cause_from_liwc",
+    "count_of_is_liwc_00053_Discrep_from_liwc",
+    "count_of_is_liwc_00054_Tentat_from_liwc",
+    "count_of_is_liwc_00055_Certain_from_liwc",
+    "count_of_is_liwc_00056_Differ_from_liwc",
+    "count_of_is_liwc_00060_Percept_from_liwc",
+    "count_of_is_liwc_00061_See_from_liwc",
+    "count_of_is_liwc_00062_Hear_from_liwc",
+    "count_of_is_liwc_00063_Feel_from_liwc",
+    "count_of_is_liwc_00070_Bio_from_liwc",
+    "count_of_is_liwc_00071_Body_from_liwc",
+    "count_of_is_liwc_00072_Health_from_liwc",
+    "count_of_is_liwc_00073_Sexual_from_liwc",
+    "count_of_is_liwc_00074_Ingest_from_liwc",
+    "count_of_is_liwc_00080_Drives_from_liwc",
+    "count_of_is_liwc_00081_Affiliation_from_liwc",
+    "count_of_is_liwc_00082_Achieve_from_liwc",
+    "count_of_is_liwc_00083_Power_from_liwc",
+    "count_of_is_liwc_00084_Reward_from_liwc",
+    "count_of_is_liwc_00085_Risk_from_liwc",
+    "count_of_is_liwc_00090_FocusPast_from_liwc",
+    "count_of_is_liwc_00091_FocusPresent_from_liwc",
+    "count_of_is_liwc_00092_FocusFuture_from_liwc",
+    "count_of_is_liwc_00100_Relativ_from_liwc",
+    "count_of_is_liwc_00101_Motion_from_liwc",
+    "count_of_is_liwc_00102_Space_from_liwc",
+    "count_of_is_liwc_00103_Time_from_liwc",
+    "count_of_is_liwc_00110_Work_from_liwc",
+    "count_of_is_liwc_00111_Leisure_from_liwc",
+    "count_of_is_liwc_00112_Home_from_liwc",
+    "count_of_is_liwc_00113_Money_from_liwc",
+    "count_of_is_liwc_00114_Relig_from_liwc",
+    "count_of_is_liwc_00115_Death_from_liwc",
+    "count_of_is_liwc_00120_Informal_from_liwc",
+    "count_of_is_liwc_00121_Swear_from_liwc",
+    "count_of_is_liwc_00122_Netspeak_from_liwc",
+    "count_of_is_liwc_00123_Assent_from_liwc",
+    "count_of_is_liwc_00124_Nonflu_from_liwc",
+    "count_of_is_liwc_00125_Filler_from_liwc",
+    "was_good",
+    "Filter_1",
+    "Filter_2",
+    "Filter_3",
+    "Filter_4",
+    "Filter_general_2",
+    "Check",
+    "xxxxxxxxxxxxxx",
+    "Study",
+    "Condition",
+    "S_D1",
+    "C_D2",
+    "A_agency",
+    "A_concr",
+    "A_abstr",
+    "N_perc",
+    "Adj_perc",
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "Sem_agency",
+    "LCM",
+    "LCM_R",
+    "concr",
+    "condR",
+#+end_example
+** Unique
+#+begin_src jupyter-python :async yes
+df0.Q17.is_unique
+#+end_src
+
+#+RESULTS:
+: True
+** Check
+#+begin_src jupyter-python :async yes
+df0.condR.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+condR
+encourage    231
+inform       214
+Name: count, dtype: int64
+#+end_example
+
+** Check
+#+begin_src jupyter-python :async yes
+df0.Study.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Study
+Volunteering    264
+Environment     181
+Name: count, dtype: int64
+#+end_example
+
+** Recode
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_encourage/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+
+"""
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "LCM",
+    "LCM_R",
+"""
+
+map0 = {
+    "id0": "Q17",
+    "verb index": "V4",
+    "concreteness": "concr_mean",
+    "concr raw": "concr",
+    "semantic agency": "Sem_agency",
+    "meta agency": "A_agency",
+    "meta concreteness": "A_concr",
+    "meta abstractness": "A_abstr",
+    "condition": "Condition",
+    "condR": "condR",
+    "context": "Study",
+    "english": "English",
+    "gender": "Gender",
+    "age": "Age",
+    "was_good": "was_good",
+    "filter_1": "Filter_1",
+    "filter_2": "Filter_2",
+    "filter_3": "Filter_3",
+    "filter_4": "Filter_4",
+    "filter_general": "Filter_general_2",
+    "check": "Check",
+    "text": "Text",
+}
+for key, val in map0.items():
+    df0[key] = df0[val]
+
+cols2 = [*list(map0.keys())]
+
+df2 = df0[cols2].copy()
+
+df2.insert(8, "study", "s01")
+
+df2.to_pickle(dir0/"Study01_super-clean.pkl")
+df2.to_csv(dir0/"Study01_super-clean.csv", index=False)
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=4).sort_index(), width=4444)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df2.shape = (445, 23)
+#+begin_example
+                          id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study         condition   condR       context                english gender age  was_good  filter_1  filter_2  filter_3  filter_4 filter_general  check                                         text
+126  5c83d4580ed0dd0001419d8a    2.912621      2.364239   2.364239         5.825243     5.666667                7.0                2.0   s01  Express thoughts  inform   Environment                    NaN   Male  31       1.0  Selected       1.0       1.0       NaN       Selected    1.0  I believe the environment is in great da...
+128  5b142e4530d562000155eaf4    5.600000      2.603276   2.603276        12.000000     6.333333                5.0                4.0   s01  Express thoughts  inform   Environment                    NaN   Male  27       1.0  Selected       1.0       1.0       NaN       Selected    1.0  I feel everyone should be responsible fo...
+329  5c259ddd0091e40001c9bcc0    5.660377      2.191300   2.191300         5.660377     7.000000                7.0                1.0   s01  Express thoughts  inform  Volunteering  I am a native speaker   Male  42       1.0  Selected       1.0       1.0  Selected       Selected    1.0  I believe volunteering should be encoura...
+339  60b0c8de70777200e41805c0    2.884615      2.491413   2.491413         3.846154     4.666667                5.0                2.0   s01  Express thoughts  inform  Volunteering  I am a native speaker   Male  32       1.0  Selected       1.0       1.0  Selected       Selected    1.0  I have participated in volunteering seve...
+#+end_example
+:END:
+
+** Checkup value counts
+#+begin_src jupyter-python :async yes
+df2.english.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+english
+I am a native speaker    264
+NaN                      181
+Name: count, dtype: int64
+#+end_example
+
+** Checkup correlations
+#+begin_src jupyter-python :async yes
+numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+df4 = df2.select_dtypes(include=numerics)
+
+cr2 = df4.corr()
+disp_df(cr2["verb index"], max_rows=444)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+verb index           1.000000
+concreteness         0.382263
+concr raw            0.382263
+semantic agency      0.361643
+meta agency          0.021185
+meta concreteness   -0.074508
+meta abstractness   -0.050072
+was_good                  NaN
+filter_2                  NaN
+filter_3                  NaN
+check                     NaN
+Name: verb index, dtype: float64
+#+end_example

@@ -1,0 +1,375 @@
+#+title: P0005_metafor Discriminatory Power Rlang
+
+#+PROPERTY: header-args:R  :tangle   yes
+#+PROPERTY: header-args:R+ :eval     yes
+#+PROPERTY: header-args:R+ :comments org
+#+PROPERTY: header-args:R+ :results  output drawer pp
+#+PROPERTY: header-args:R+ :exports  both
+#+PROPERTY: header-args:R+ :session  *R*
+
+* Imports
+#+begin_src R :session *R*
+options("width" = 222)
+options(cli.width=222)
+paste(getwd())
+
+library(devtools)
+library(tidyverse)
+library(readr)
+library(assertr)
+
+library(metafor)
+
+#+end_src
+* Load data
+#+begin_src R :session *R* :results  output drawer pp
+dir0 <- "../../data/v0004_encourage/super-clean-0000"
+if0 <- "data_d0000_done"
+df0 <- read_csv(file=paste(paste(dir0, if0, sep="/"), "csv", sep="."))
+
+spec(df0)
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+indexing data_d0000_done.csv [==========================================================================================================================================================================] 118.52GB/s, eta:  0s                                                                                                                                                                                                                                                                 Rows: 972 Columns: 18
+── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (7): study, condition, condR, context, sents, text, ba0
+dbl (11): idx0, PietA, PietB, PietC, NicoPos, NicoNeg, NicoCom, BATot, BAPos, BANeg, BAAbs
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+cols(
+  idx0 = col_double(),
+  study = col_character(),
+  condition = col_character(),
+  condR = col_character(),
+  context = col_character(),
+  PietA = col_double(),
+  PietB = col_double(),
+  PietC = col_double(),
+  NicoPos = col_double(),
+  NicoNeg = col_double(),
+  NicoCom = col_double(),
+  sents = col_character(),
+  text = col_character(),
+  ba0 = col_character(),
+  BATot = col_double(),
+  BAPos = col_double(),
+  BANeg = col_double(),
+  BAAbs = col_double()
+)
+#+end_example
+* checkups
+#+begin_src R :session *R*
+paste(str(df0))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+spc_tbl_ [972 × 18] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ idx0     : num [1:972] 0 1 2 3 4 5 6 7 8 9 ...
+ $ study    : chr [1:972] "s00" "s00" "s00" "s00" ...
+ $ condition: chr [1:972] "Encourage" "Encourage" "Encourage" "Encourage" ...
+ $ condR    : chr [1:972] "encourage" "encourage" "encourage" "encourage" ...
+ $ context  : chr [1:972] "Environment" "Environment" "Environment" "Environment" ...
+ $ PietA    : num [1:972] 0.1444 0.1735 0.0642 0.0634 0.2481 ...
+ $ PietB    : num [1:972] 0 0 0 0.00704 0.00752 ...
+ $ PietC    : num [1:972] 0.0556 0.0714 0.0459 0.0634 0.1504 ...
+ $ NicoPos  : num [1:972] 0.0333 0 0.0275 0.0282 0.0376 ...
+ $ NicoNeg  : num [1:972] 0 0 0 0 0 ...
+ $ NicoCom  : num [1:972] 0.0333 0 0.0275 0.0282 0.0376 ...
+ $ sents    : chr [1:972] "['Your Planet Needs You!', 'You have heard the news, you have seen Sir David Attenborough talking about plastic"| __truncated__ "['Your area needs you!', 'Have you ever noticed how much litter there is around you?', 'On the streets?', 'In p"| __truncated__ "['With how climate change is progressing, we need to act now to save our planet!', 'If everyone did their bit t"| __truncated__ "['With global warming a major concern, its important that we (globally) take action together to help combat the"| __truncated__ ...
+ $ text     : chr [1:972] "Your Planet Needs You! You have heard the news, you have seen Sir David Attenborough talking about plastic stra"| __truncated__ "Your area needs you! Have you ever noticed how much litter there is around you? On the streets? In parks? By yo"| __truncated__ "With how climate change is progressing, we need to act now to save our planet! If everyone did their bit to hel"| __truncated__ "With global warming a major concern, its important that we (globally) take action together to help combat the e"| __truncated__ ...
+ $ ba0      : chr [1:972] "[0.07145225256681442, -0.09204895049333572, 0.4489404857158661, 0.24794776737689972]" "[0.0037678973749279976, -0.139009028673172, 0.02377576380968094, -0.027515778318047523, -0.0155286630615592, 0."| __truncated__ "[0.11974672973155975, 0.28751540184020996, -0.08044356107711792, 0.13944950699806213, 0.052675992250442505, 0.3"| __truncated__ "[0.13518711924552917, 0.26910895109176636, 0.23437966406345367, 0.24467048048973083, 0.3775387406349182, 0.5262"| __truncated__ ...
+ $ BATot    : num [1:972] 0.1691 0.1007 0.1014 0.2844 -0.0232 ...
+ $ BAPos    : num [1:972] 0.1921 0.1189 0.1399 0.2844 0.0564 ...
+ $ BANeg    : num [1:972] 0.023 0.0182 0.0386 0 0.0796 ...
+ $ BAAbs    : num [1:972] 0.215 0.137 0.179 0.284 0.136 ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   idx0 = col_double(),
+  ..   study = col_character(),
+  ..   condition = col_character(),
+  ..   condR = col_character(),
+  ..   context = col_character(),
+  ..   PietA = col_double(),
+  ..   PietB = col_double(),
+  ..   PietC = col_double(),
+  ..   NicoPos = col_double(),
+  ..   NicoNeg = col_double(),
+  ..   NicoCom = col_double(),
+  ..   sents = col_character(),
+  ..   text = col_character(),
+  ..   ba0 = col_character(),
+  ..   BATot = col_double(),
+  ..   BAPos = col_double(),
+  ..   BANeg = col_double(),
+  ..   BAAbs = col_double()
+  .. )
+ - attr(*, "problems")=<externalptr>
+character(0)
+#+end_example
+* Check
+#+begin_src R :session *R*
+df2 <- df0 %>% select(
+    idx0,
+    condR,
+    context,
+    PietA,
+    PietB,
+    PietC,
+    NicoPos,
+    NicoNeg,
+    NicoCom,
+    BATot,
+    BAPos,
+    BANeg,
+    BAAbs,
+) %>% rename(
+    condition = condR,
+)
+
+df2 %>% verify(is_uniq(idx0))
+
+head(df2, 4)
+tail(df2, 4)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 972 × 13
+    idx0 condition context      PietA   PietB  PietC NicoPos NicoNeg NicoCom   BATot  BAPos   BANeg BAAbs
+   <dbl> <chr>     <chr>        <dbl>   <dbl>  <dbl>   <dbl>   <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl>
+ 1     0 encourage Environment 0.144  0       0.0556  0.0333 0        0.0333  0.169  0.192  0.0230  0.215
+ 2     1 encourage Environment 0.173  0       0.0714  0      0        0       0.101  0.119  0.0182  0.137
+ 3     2 encourage Environment 0.0642 0       0.0459  0.0275 0        0.0275  0.101  0.140  0.0386  0.179
+ 4     3 encourage Environment 0.0634 0.00704 0.0634  0.0282 0        0.0282  0.284  0.284  0       0.284
+ 5     4 encourage Environment 0.248  0.00752 0.150   0.0376 0        0.0376 -0.0232 0.0564 0.0796  0.136
+ 6     5 encourage Environment 0.123  0.00943 0.0849  0.0472 0        0.0472  0.263  0.266  0.00258 0.269
+ 7     6 encourage Environment 0.0453 0.00697 0.0453  0.0418 0.00348  0.0383  0.0517 0.137  0.0855  0.223
+ 8     7 encourage Environment 0.156  0.0206  0.0864  0.0247 0        0.0247  0.0904 0.119  0.0290  0.148
+ 9     8 encourage Environment 0.056  0       0.056   0.032  0        0.032   0.298  0.298  0       0.298
+10     9 encourage Environment 0.111  0       0.0444  0.0333 0        0.0333  0.181  0.197  0.0170  0.214
+# ℹ 962 more rows
+# ℹ Use `print(n = ...)` to see more rows
+# A tibble: 4 × 13
+   idx0 condition context      PietA   PietB  PietC NicoPos NicoNeg NicoCom BATot BAPos  BANeg BAAbs
+  <dbl> <chr>     <chr>        <dbl>   <dbl>  <dbl>   <dbl>   <dbl>   <dbl> <dbl> <dbl>  <dbl> <dbl>
+1     0 encourage Environment 0.144  0       0.0556  0.0333       0  0.0333 0.169 0.192 0.0230 0.215
+2     1 encourage Environment 0.173  0       0.0714  0            0  0      0.101 0.119 0.0182 0.137
+3     2 encourage Environment 0.0642 0       0.0459  0.0275       0  0.0275 0.101 0.140 0.0386 0.179
+4     3 encourage Environment 0.0634 0.00704 0.0634  0.0282       0  0.0282 0.284 0.284 0      0.284
+# A tibble: 4 × 13
+   idx0 condition context       PietA  PietB  PietC NicoPos NicoNeg NicoCom   BATot  BAPos   BANeg BAAbs
+  <dbl> <chr>     <chr>         <dbl>  <dbl>  <dbl>   <dbl>   <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl>
+1   968 inform    Volunteering 0.0463 0.0278 0.0463  0.0370       0  0.0370 0.00190 0.0588 0.0569  0.116
+2   969 inform    Volunteering 0.0112 0.0112 0.0112  0.0506       0  0.0506 0.0546  0.119  0.0642  0.183
+3   970 inform    Volunteering 0.101  0.0155 0.0620  0.0465       0  0.0465 0.172   0.181  0.00871 0.189
+4   971 inform    Volunteering 0.0948 0      0.0517  0.0259       0  0.0259 0.215   0.215  0       0.215
+#+end_example
+
+* Pivot
+#+begin_src R :session *R*
+df3 <- df2 %>% pivot_longer(
+    cols = c(PietA, PietB, PietC, NicoPos, NicoNeg, NicoCom, BATot, BAPos, BANeg, BAAbs),
+    names_to = "tool",
+    values_to = "score"
+)
+df3
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 9,720 × 5
+    idx0 condition context     tool     score
+   <dbl> <chr>     <chr>       <chr>    <dbl>
+ 1     0 encourage Environment PietA   0.144
+ 2     0 encourage Environment PietB   0
+ 3     0 encourage Environment PietC   0.0556
+ 4     0 encourage Environment NicoPos 0.0333
+ 5     0 encourage Environment NicoNeg 0
+ 6     0 encourage Environment NicoCom 0.0333
+ 7     0 encourage Environment BATot   0.169
+ 8     0 encourage Environment BAPos   0.192
+ 9     0 encourage Environment BANeg   0.0230
+10     0 encourage Environment BAAbs   0.215
+# ℹ 9,710 more rows
+# ℹ Use `print(n = ...)` to see more rows
+#+end_example
+
+* Aggregate
+#+begin_src R :session *R*
+df4 <- df3 %>% group_by(condition, tool) %>%
+    summarise(
+        cnt = n(),
+        avg = mean(score),
+        std = sd(score),
+        .groups = "drop"
+    )
+
+df4
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 20 × 5
+   condition tool      cnt     avg     std
+   <chr>     <chr>   <int>   <dbl>   <dbl>
+ 1 encourage BAAbs     479 0.224   0.0694
+ 2 encourage BANeg     479 0.0242  0.0336
+ 3 encourage BAPos     479 0.200   0.0776
+ 4 encourage BATot     479 0.176   0.0974
+ 5 encourage NicoCom   479 0.0312  0.0210
+ 6 encourage NicoNeg   479 0.00138 0.00391
+ 7 encourage NicoPos   479 0.0326  0.0207
+ 8 encourage PietA     479 0.110   0.0481
+ 9 encourage PietB     479 0.0126  0.0130
+10 encourage PietC     479 0.0596  0.0258
+11 inform    BAAbs     493 0.183   0.0699
+12 inform    BANeg     493 0.0308  0.0389
+13 inform    BAPos     493 0.152   0.0814
+14 inform    BATot     493 0.121   0.107
+15 inform    NicoCom   493 0.0256  0.0196
+16 inform    NicoNeg   493 0.00182 0.00422
+17 inform    NicoPos   493 0.0274  0.0190
+18 inform    PietA     493 0.0686  0.0389
+19 inform    PietB     493 0.0102  0.0112
+20 inform    PietC     493 0.0500  0.0251
+#+end_example
+* Pivot wider
+#+begin_src R :session *R*
+df5 <- df4 %>%
+   pivot_wider(names_from = condition, values_from = c(cnt, avg, std))
+df5
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 10 × 7
+   tool    cnt_encourage cnt_inform avg_encourage avg_inform std_encourage std_inform
+   <chr>           <int>      <int>         <dbl>      <dbl>         <dbl>      <dbl>
+ 1 BAAbs             479        493       0.224      0.183         0.0694     0.0699
+ 2 BANeg             479        493       0.0242     0.0308        0.0336     0.0389
+ 3 BAPos             479        493       0.200      0.152         0.0776     0.0814
+ 4 BATot             479        493       0.176      0.121         0.0974     0.107
+ 5 NicoCom           479        493       0.0312     0.0256        0.0210     0.0196
+ 6 NicoNeg           479        493       0.00138    0.00182       0.00391    0.00422
+ 7 NicoPos           479        493       0.0326     0.0274        0.0207     0.0190
+ 8 PietA             479        493       0.110      0.0686        0.0481     0.0389
+ 9 PietB             479        493       0.0126     0.0102        0.0130     0.0112
+10 PietC             479        493       0.0596     0.0500        0.0258     0.0251
+#+end_example
+
+* Compute
+#+begin_src R :session *R*
+measure = "MD"
+measure = "SMD"
+
+### compute MD/SMD
+df6 <- escalc(
+    measure=measure,
+    m1i=avg_encourage,
+    m2i=avg_inform,
+    sd1i=std_encourage,
+    sd2i=std_inform,
+    n1i=cnt_encourage,
+    n2i=cnt_inform,
+    data=df5
+)
+### fit random-effects model
+res <- rma(yi, vi, data=df6)
+
+df6 <- df6 %>% mutate(
+    ymin = yi - 2*sqrt(vi),
+    ymax = yi + 2*sqrt(vi),
+)
+
+df6
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+      tool cnt_encourage cnt_inform avg_encourage  avg_inform std_encourage  std_inform      yi     vi        ymin        ymax
+1    BAAbs           479        493   0.224119497 0.183006321   0.069382301 0.069899552  0.5899 0.0043  0.45879366  0.72094059
+2    BANeg           479        493   0.024173882 0.030844949   0.033568871 0.038892474 -0.1833 0.0041 -0.31187991 -0.05471496
+3    BAPos           479        493   0.199945615 0.152161372   0.077638505 0.081421634  0.6000 0.0043  0.46882416  0.73116014
+4    BATot           479        493   0.175771733 0.121316424   0.097443878 0.106762665  0.5320 0.0043  0.40145642  0.66258258
+5  NicoCom           479        493   0.031199749 0.025576379   0.021002913 0.019624739  0.2766 0.0042  0.14766163  0.40551220
+6  NicoNeg           479        493   0.001379181 0.001823865   0.003907353 0.004222399 -0.1092 0.0041 -0.23757794  0.01923984
+7  NicoPos           479        493   0.032578930 0.027400244   0.020701473 0.019007677  0.2606 0.0042  0.13169598  0.38940906
+8    PietA           479        493   0.110253166 0.068567831   0.048092980 0.038890386  0.9539 0.0046  0.81843962  1.08926359
+9    PietB           479        493   0.012642795 0.010151119   0.012983538 0.011218528  0.2054 0.0041  0.07676584  0.33406834
+10   PietC           479        493   0.059585401 0.050000440   0.025847834 0.025088873  0.3761 0.0042  0.24665343  0.50553847
+#+end_example
+* Summary
+#+begin_src R :session *R*
+summary(res)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Random-Effects Model (k = 10; tau^2 estimator: REML)
+
+  logLik  deviance       AIC       BIC      AICc
+ -3.0910    6.1820   10.1820   10.5764   12.1820
+
+tau^2 (estimated amount of total heterogeneity): 0.1121 (SE = 0.0548)
+tau (square root of estimated tau^2 value):      0.3348
+I^2 (total heterogeneity / total variability):   96.36%
+H^2 (total variability / sampling variability):  27.49
+
+Test for Heterogeneity:
+Q(df = 9) = 243.4684, p-val < .0001
+
+Model Results:
+
+estimate      se    zval    pval   ci.lb   ci.ub
+  0.3499  0.1078  3.2444  0.0012  0.1385  0.5612  **
+
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#+end_example
+
+* Forest
+#+begin_src R :session *R*
+if (measure == "MD") {
+    xlim=c(3.5*min(df6$ymin),1.5*max(df6$ymax))
+    alim=c(1.0*min(df6$ymin),1.0*max(df6$ymax))
+} else {
+    xlim=c(2.5*min(df6$ymin),1.5*max(df6$ymax))
+    alim=c(1.0*min(df6$ymin),1.0*max(df6$ymax))
+}
+gg9 <- forest(
+    res,
+    slab=tool,
+    addfit=FALSE,
+    showweights=FALSE,
+    header=c("Measure"),
+    # ilab=cbind(dat$m1, dat$n1, dat$sd1, dat$m2, dat$n2, dat$sd2),
+    # ilab.xpos=c(-26,-24,-22,-18,-16,-14),
+    cex=2.0,
+    # cex.lab=2.0,
+    cex.lab=2.0,
+    # xlim=c(-0.2,0.3),
+    # alim=c(-0.1,0.2),
+    xlim=xlim,
+    alim=alim,
+    top=2.5,
+    # digits=2,
+    # ylim=c(-2, 10),
+    # font=28,
+    # width=c(3,3,7,7),
+    width=6,
+    psize=0.8
+)
+op <- par(family="Times", cex=1)
+# axis(2, at = 1:2, labels = c(" ", "Shallow", "Deep", " "), cex.axis = 1.5)
+# axis(2, cex.axis = 2)
+#+end_src
+
+#+RESULTS:

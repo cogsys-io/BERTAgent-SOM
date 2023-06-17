@@ -1,0 +1,297 @@
+#+title: P0006_select Cols
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0002_professions/p1005_bert/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"jobs_20230515T051955_bertagent-clean"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0002_professions/p1005_bert/jobs_20230515T051955_bertagent-clean.pkl...
+I: loading: ../../data/v0002_professions/p1005_bert/jobs_20230515T051955_bertagent-clean.pkl... DONE
+I: df0.shape = (132, 20)
+#+end_example
+#+begin_example
+     idx0    HumEval     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom                                        sents                                         text  sents_count                                          ba4  baTot_sum  baPos_sum  baNeg_sum  baAbs_sum     BAPos     BANeg     BATot     BAAbs
+17     17  49.201771  0.000000  0.010989  0.000000  0.010989  0.000000  0.010989  [Farmworkers and Laborers, Crop, Nursery...  Farmworkers and Laborers, Crop, Nursery,...            5  [0.2197866439819336, 0.4122565686702728,...   1.264652   1.264652   0.000000   1.264652  0.252930  0.000000  0.252930  0.252930
+25     25  54.860619  0.018868  0.018868  0.018868  0.056604  0.000000  0.056604  [Special Education Teachers, Preschool, ...  Special Education Teachers, Preschool, T...            4  [0.18204142153263092, 0.1102317124605178...   0.270360   0.393173   0.122813   0.515987  0.098293  0.030703  0.067590  0.128997
+28     28  44.115109  0.000000  0.000000  0.000000  0.027027  0.000000  0.027027  [Chefs and Head Cooks, Direct and may pa...  Chefs and Head Cooks, Direct and may par...            2    [0.2904079854488373, 0.26285895705223083]   0.553267   0.553267   0.000000   0.553267  0.276633  0.000000  0.276633  0.276633
+56     56  43.880719  0.000000  0.000000  0.000000  0.100000  0.000000  0.100000  [Logging Workers, All Other, All logging...  Logging Workers, All Other, All logging ...            1                       [0.043575938791036606]   0.043576   0.043576   0.000000   0.043576  0.043576  0.000000  0.043576  0.043576
+79     79  52.514268  0.025641  0.025641  0.025641  0.025641  0.025641  0.000000  [Machinists, Set up and operate a variet...  Machinists, Set up and operate a variety...            4  [0.2993006110191345, 0.21121694147586823...   0.942942   0.942942   0.000000   0.942942  0.235736  0.000000  0.235736  0.235736
+97     97  53.896335  0.000000  0.019231  0.000000  0.057692  0.000000  0.057692  [Morticians, Undertakers, and Funeral Ar...  Morticians, Undertakers, and Funeral Arr...            2  [0.30605563521385193, -0.04439429193735123]   0.261661   0.306056   0.044394   0.350450  0.153028  0.022197  0.130831  0.175225
+99     99  36.377640  0.043478  0.000000  0.043478  0.000000  0.000000  0.000000  [Waiters and Waitresses, Take orders and...  Waiters and Waitresses, Take orders and ...            2  [0.22347113490104675, -0.09196185320615768]   0.131509   0.223471   0.091962   0.315433  0.111736  0.045981  0.065755  0.157716
+105   105  70.421701  0.000000  0.027027  0.000000  0.027027  0.027027  0.000000  [Pharmacists, Dispense drugs prescribed ...  Pharmacists, Dispense drugs prescribed b...            2    [0.06494846940040588, 0.2283337563276291]   0.293282   0.293282   0.000000   0.293282  0.146641  0.000000  0.146641  0.146641
+#+end_example
+:END:
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "idx0",
+    "HumEval",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "sents",
+    "text",
+    "sents_count",
+    "ba4",
+    "baTot_sum",
+    "baPos_sum",
+    "baNeg_sum",
+    "baAbs_sum",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+#+end_example
+** Select
+#+begin_src jupyter-python :async yes
+cols2 = [
+    "text",
+    "HumEval",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "BATot",
+    "BAPos",
+    "BANeg",
+    "BAAbs",
+]
+df2 = df0[cols2]
+
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df2.shape = (132, 12)
+#+begin_example
+                                            text    HumEval     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom     BATot     BAPos     BANeg     BAAbs
+1    Personal Care Aides, Provide personalize...  44.850290  0.036585  0.012195  0.036585  0.060976  0.000000  0.060976  0.124198  0.124198  0.000000  0.124198
+4    Travel Agents, Plan and sell transportat...  45.445530  0.051282  0.025641  0.051282  0.025641  0.000000  0.025641  0.300097  0.300097  0.000000  0.300097
+14   Healthcare Social Workers, Provide indiv...  49.776132  0.033333  0.016667  0.033333  0.016667  0.016667  0.000000  0.180354  0.182633  0.002278  0.184911
+18   Photographers, Photograph people, landsc...  48.990469  0.000000  0.023256  0.000000  0.000000  0.046512 -0.046512  0.128921  0.134610  0.005689  0.140299
+64   Public Relations Specialists, Promote or...  56.156315  0.000000  0.031250  0.000000  0.062500  0.000000  0.062500  0.330300  0.330300  0.000000  0.330300
+79   Machinists, Set up and operate a variety...  52.514268  0.025641  0.025641  0.025641  0.025641  0.025641  0.000000  0.235736  0.235736  0.000000  0.235736
+97   Morticians, Undertakers, and Funeral Arr...  53.896335  0.000000  0.019231  0.000000  0.057692  0.000000  0.057692  0.130831  0.153028  0.022197  0.175225
+111  Meter Readers, Utilities, Read meter and...  36.623490  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.016465  0.016465  0.000000  0.016465
+#+end_example
+:END:
+** Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/v0002_professions/p1006_select-cols/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+df9 = df2.copy()
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["jobs"]
+sfx0 = ["done"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0002_professions/p1006_select-cols/jobs_done.pkl...
+I: saving: ../../data/v0002_professions/p1006_select-cols/jobs_done.csv...
+I: saving: ../../data/v0002_professions/p1006_select-cols/jobs_done.xlsx...
+I: saving: ../../data/v0002_professions/p1006_select-cols/jobs_done.jsonl...
+I: DONE
+#+end_example

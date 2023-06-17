@@ -1,0 +1,311 @@
+#+title: P0002_data Drop Cols
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0002_professions/p1002_merged/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"jobs_merged"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+keep0 = [
+    "occup_code",
+    "scale_agentic",
+    "occupation",
+    "match2",
+    "score0",
+    "eval2",
+    "eval0",
+    "soc_title",
+    "soc_definition",
+    "text",
+]
+df0 = df0[keep0]
+df0.rename(columns={"scale_agentic": "HumEval"}, inplace=True)
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0002_professions/p1002_merged/jobs_merged.pkl...
+I: loading: ../../data/v0002_professions/p1002_merged/jobs_merged.pkl... DONE
+I: df0.shape = (150, 10)
+#+end_example
+#+begin_example
+     occup_code    HumEval              occupation                                      match2  score0  eval2  eval0                                   soc_title                               soc_definition                                         text
+19           20  72.889738          Mathematicians                              Mathematicians     100      1      1                              Mathematicians  Conduct research in fundamental mathemat...  Mathematicians, Conduct research in fund...
+24           25  73.691845         Aircraft Pilots                           Commercial Pilots      72      2      0                           Commercial Pilots  Pilot and navigate the flight of fixed-w...  Commercial Pilots, Pilot and navigate th...
+54           55  50.958752  Insurance Sales Agents                      Insurance Sales Agents     100      1      1                      Insurance Sales Agents  Sell life, property, casualty, health, a...  Insurance Sales Agents, Sell life, prope...
+56           57  47.393016                Bailiffs                                    Bailiffs     100      1      1                                    Bailiffs             Maintain order in courts of law.   Bailiffs, Maintain order in courts of law.
+94           95  38.634000     Telephone Operators                         Telephone Operators     100      1      1                         Telephone Operators  Provide information by accessing alphabe...  Telephone Operators, Provide information...
+95           96  47.190274      Massage Therapists                          Massage Therapists     100      1      1                          Massage Therapists  Perform therapeutic massages of soft tis...  Massage Therapists, Perform therapeutic ...
+126         127  53.166275      Survey Researchers                          Survey Researchers     100      1      1                          Survey Researchers  Plan, develop, or conduct surveys. May a...  Survey Researchers, Plan, develop, or co...
+143         144  78.189179      Medical Scientists  Medical Scientists, Except Epidemiologists     100      1      0  Medical Scientists, Except Epidemiologists  Conduct research dealing with the unders...  Medical Scientists, Except Epidemiologis...
+#+end_example
+:END:
+** Check matching
+#+begin_src jupyter-python :async yes
+df0.eval2.value_counts()
+df0.eval0.value_counts()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+eval0
+0    82
+1    68
+Name: count, dtype: int64
+#+end_example
+** Checkups
+#+begin_src jupyter-python :async yes
+eval2 = 3
+eval2 = 2
+disp_df(df0[df0.eval2 == eval2])
+#+end_src
+
+#+RESULTS:
+#+begin_example
+     occup_code    HumEval                      occupation                                       match2  score0  eval2  eval0                                    soc_title                               soc_definition                                         text
+142         143  38.941821                 Material Movers  Laborers and Freight, Stock, and Materia...     100      2      0  Laborers and Freight, Stock, and Materia...  Manually move freight, stock, luggage, o...  Laborers and Freight, Stock, and Materia...
+87           88  39.287870         Aircraft Cargo Handlers                     Cargo and Freight Agents      87      2      0                     Cargo and Freight Agents  Expedite and route movement of incoming ...  Cargo and Freight Agents, Expedite and r...
+140         141  39.811671          Postal Service Workers                        Postal Service Clerks      86      2      0                        Postal Service Clerks  Perform any combination of tasks in a Un...  Postal Service Clerks, Perform any combi...
+131         132  42.186608                         Fishers                  Fishing and Hunting Workers      86      2      0                  Fishing and Hunting Workers  Hunt, trap, catch, or gather wild animal...  Fishing and Hunting Workers, Hunt, trap,...
+98           99  45.689970  Recreation and Fitness Workers  Exercise Trainers and Group Fitness Inst...      83      2      0  Exercise Trainers and Group Fitness Inst...  Instruct or coach groups or individuals ...  Exercise Trainers and Group Fitness Inst...
+41           42  48.133883                 Radio Operators  Radio, Cellular, and Tower Equipment Ins...      87      2      0  Radio, Cellular, and Tower Equipment Ins...  Repair, install, or maintain mobile or s...  Radio, Cellular, and Tower Equipment Ins...
+82           83  53.114646                    Car Mechanic  Automotive Service Technicians and Mecha...      83      2      0  Automotive Service Technicians and Mecha...  Diagnose, adjust, repair, or overhaul au...  Automotive Service Technicians and Mecha...
+141         142  56.792399                      Counselors  Educational, Guidance, and Career Counse...     100      2      0  Educational, Guidance, and Career Counse...  Advise and assist students and provide e...  Educational, Guidance, and Career Counse...
+125         126  59.315620                 Police Officers         Police and Sheriff’s Patrol Officers      87      2      0         Police and Sheriff’s Patrol Officers  Maintain order and protect life and prop...  Police and Sheriff’s Patrol Officers, Ma...
+107         108  59.708217                          Actors                                       Actors     100      2      0                                       Actors  Play parts in stage, television, radio, ...  Actors, Play parts in stage, television,...
+124         125  59.716755                   Chiropractors                                Chiropractors     100      2      0                                Chiropractors  Assess, treat, and care for patients by ...  Chiropractors, Assess, treat, and care f...
+51           52  60.398687                        Athletes              Athletes and Sports Competitors     100      2      0              Athletes and Sports Competitors                  Compete in athletic events.  Athletes and Sports Competitors, Compete...
+110         111  62.738650          Ship and Boat Captains  Captains, Mates, and Pilots of Water Ves...      64      2      0  Captains, Mates, and Pilots of Water Ves...  Command or supervise operations of ships...  Captains, Mates, and Pilots of Water Ves...
+60           61  69.124742                   Psychologists        Clinical and Counseling Psychologists     100      2      0        Clinical and Counseling Psychologists  Assess, diagnose, and treat mental and e...  Clinical and Counseling Psychologists, A...
+81           82  69.834738                 Movie Directors                      Producers and Directors      83      2      0                      Producers and Directors  Produce or direct stage, television, rad...  Producers and Directors, Produce or dire...
+62           63  71.747317                      Architects       Architects, Except Landscape and Naval     100      2      0       Architects, Except Landscape and Naval  Plan and design structures, such as priv...  Architects, Except Landscape and Naval, ...
+24           25  73.691845                 Aircraft Pilots                            Commercial Pilots      72      2      0                            Commercial Pilots  Pilot and navigate the flight of fixed-w...  Commercial Pilots, Pilot and navigate th...
+103         104  85.288650                        Surgeons        Orthopedic Surgeons, Except Pediatric     100      2      0        Orthopedic Surgeons, Except Pediatric  Diagnose and perform surgery to treat an...  Orthopedic Surgeons, Except Pediatric, D...
+#+end_example
+
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "occup_code",
+    "HumEval",
+    "occupation",
+    "match2",
+    "score0",
+    "eval2",
+    "eval0",
+    "soc_title",
+    "soc_definition",
+    "text",
+#+end_example
+** Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+df9 = df0[df0.eval2 != 2].copy()
+
+dir0 = "../../data/v0002_professions/p1003_merged-clean/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = []
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+pfx0 = ["jobs"]
+sfx0 = ["merged-clean"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0002_professions/p1003_merged-clean/jobs_20230515T050009_merged-clean.pkl...
+I: saving: ../../data/v0002_professions/p1003_merged-clean/jobs_20230515T050009_merged-clean.csv...
+I: saving: ../../data/v0002_professions/p1003_merged-clean/jobs_20230515T050009_merged-clean.xlsx...
+I: saving: ../../data/v0002_professions/p1003_merged-clean/jobs_20230515T050009_merged-clean.jsonl...
+I: DONE
+#+end_example

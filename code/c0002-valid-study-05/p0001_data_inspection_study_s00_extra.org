@@ -1,0 +1,491 @@
+#+title: P0001_data_inspection
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_encourage/osf-arch_2023-04-05-001/Additional Study"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"Additional_study_merged_clean"
+extn0 = ".sav"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_spss(if0)
+log0.info(f"loading: {if0}... DONE")
+
+df0["Text"] = df0.Text.apply(clean_str)
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=9).sort_index(), width=4444)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0004_encourage/osf-arch_2023-04-05-001/Additional Study/Additional_study_merged_clean.sav...
+I: loading: ../../data/v0004_encourage/osf-arch_2023-04-05-001/Additional Study/Additional_study_merged_clean.sav... DONE
+I: df0.shape = (779, 148)
+#+end_example
+#+begin_example
+              StartDate             EndDate      Status  Progress  Duration__in_seconds_ Finished        RecordedDate         ResponseId  Q_RecaptchaScore Q1.3                                          Q30                                          Q49                                          Q34                                         Text             Q48_1             Q48_2             Q48_3             Q48_4           Q48_5  Gender Age              Political_orientation Q12                                          Q13                                          Q15                       Q17               Q44  index0                                        sents  WORD_count  NOUN_count  ADJ_count  VERB_count  VERB_count_without_be_and_have  VB_count  VB_count_without_be_and_have  JJ_count  JJRs_count  JJSs_count  count_of_is_big2a_ag_from_big2  count_of_is_big2b_ag_from_big2  count_of_is_IAV_from_lcm0  count_of_is_DAV_from_lcm0  count_of_is_SV_from_lcm0  count_of_is_IPadj_from_lcm1  count_of_is_IndAdj_from_lcm1                                   concr_info  concr_count  concr_sum  concr_mean  count_of_is_liwc_00001_Function_from_liwc  count_of_is_liwc_00002_Pronoun_from_liwc  count_of_is_liwc_00003_Ppron_from_liwc  count_of_is_liwc_00004_I_from_liwc  count_of_is_liwc_00005_We_from_liwc  count_of_is_liwc_00006_You_from_liwc  count_of_is_liwc_00007_SheHe_from_liwc  count_of_is_liwc_00008_They_from_liwc  count_of_is_liwc_00009_Ipron_from_liwc  count_of_is_liwc_00010_Article_from_liwc  count_of_is_liwc_00011_Prep_from_liwc  count_of_is_liwc_00012_Auxverb_from_liwc  count_of_is_liwc_00013_Adverb_from_liwc  count_of_is_liwc_00014_Conj_from_liwc  count_of_is_liwc_00015_Negate_from_liwc  count_of_is_liwc_00020_Verb_from_liwc  count_of_is_liwc_00021_Adj_from_liwc  count_of_is_liwc_00022_Compare_from_liwc  count_of_is_liwc_00023_Interrog_from_liwc  count_of_is_liwc_00024_Number_from_liwc  count_of_is_liwc_00025_Quant_from_liwc  count_of_is_liwc_00030_Affect_from_liwc  count_of_is_liwc_00031_Posemo_from_liwc  count_of_is_liwc_00032_Negemo_from_liwc  count_of_is_liwc_00033_Anx_from_liwc  count_of_is_liwc_00034_Anger_from_liwc  count_of_is_liwc_00035_Sad_from_liwc  count_of_is_liwc_00040_Social_from_liwc  count_of_is_liwc_00041_Family_from_liwc  count_of_is_liwc_00042_Friend_from_liwc  count_of_is_liwc_00043_Female_from_liwc  count_of_is_liwc_00044_Male_from_liwc  count_of_is_liwc_00050_CogProc_from_liwc  count_of_is_liwc_00051_Insight_from_liwc  count_of_is_liwc_00052_Cause_from_liwc  count_of_is_liwc_00053_Discrep_from_liwc  count_of_is_liwc_00054_Tentat_from_liwc  count_of_is_liwc_00055_Certain_from_liwc  count_of_is_liwc_00056_Differ_from_liwc  count_of_is_liwc_00060_Percept_from_liwc  count_of_is_liwc_00061_See_from_liwc  count_of_is_liwc_00062_Hear_from_liwc  count_of_is_liwc_00063_Feel_from_liwc  count_of_is_liwc_00070_Bio_from_liwc  count_of_is_liwc_00071_Body_from_liwc  count_of_is_liwc_00072_Health_from_liwc  count_of_is_liwc_00073_Sexual_from_liwc  count_of_is_liwc_00074_Ingest_from_liwc  count_of_is_liwc_00080_Drives_from_liwc  count_of_is_liwc_00081_Affiliation_from_liwc  count_of_is_liwc_00082_Achieve_from_liwc  count_of_is_liwc_00083_Power_from_liwc  count_of_is_liwc_00084_Reward_from_liwc  count_of_is_liwc_00085_Risk_from_liwc  count_of_is_liwc_00090_FocusPast_from_liwc  count_of_is_liwc_00091_FocusPresent_from_liwc  count_of_is_liwc_00092_FocusFuture_from_liwc  count_of_is_liwc_00100_Relativ_from_liwc  count_of_is_liwc_00101_Motion_from_liwc  count_of_is_liwc_00102_Space_from_liwc  count_of_is_liwc_00103_Time_from_liwc  count_of_is_liwc_00110_Work_from_liwc  count_of_is_liwc_00111_Leisure_from_liwc  count_of_is_liwc_00112_Home_from_liwc  count_of_is_liwc_00113_Money_from_liwc  count_of_is_liwc_00114_Relig_from_liwc  count_of_is_liwc_00115_Death_from_liwc  count_of_is_liwc_00120_Informal_from_liwc  count_of_is_liwc_00121_Swear_from_liwc  count_of_is_liwc_00122_Netspeak_from_liwc  count_of_is_liwc_00123_Assent_from_liwc  count_of_is_liwc_00124_Nonflu_from_liwc  count_of_is_liwc_00125_Filler_from_liwc Filter_general  Filter_1  Filter_2  Filter_3  xxxxxxxxxxxxxx         Study         Condition  S_D1  S_D2  C_D1  C_D2  A_agency  A_concr  A_abstr     N_perc  Adj_perc         V1         V2         V3         V4  Sem_agency       LCM  LCM_recoded     LCM_R     concr
+11  2021-09-22 06:20:04 2021-09-22 06:26:45  IP Address     100.0                  400.0     True 2021-09-22 06:26:45  R_u3MrbDq5QGqcGdz               1.0  yes                                                                                            We all have taken part in negatively eff...  We all have taken part in negatively eff...                 4                 5                 5                 3               2  Female  29  neither left-wing, nor right-wing  No  writing a leaflet encouraging others to ...                                           No  612706016683ef8d601ab900               NaN    14.0  ['We all have taken part in negatively e...       113.0        22.0        5.0        26.0                            26.0      15.0                          14.0       3.0         2.0         0.0                            12.0                             0.0                       20.0                       12.0                       1.0                          0.0                           0.0  [{'We': 3.08}, {'all': 2.27}, {'have': 2...         99.0     253.93    2.564949                                       58.0                                      17.0                                    11.0                                 0.0                                  5.0                                   5.0                                     0.0                                    1.0                                     6.0                                       8.0                                   14.0                                       9.0                                      4.0                                    6.0                                      3.0                                   19.0                                   4.0                                       3.0                                        1.0                                      1.0                                     8.0                                     10.0                                      8.0                                      2.0                                   0.0                                     2.0                                   0.0                                     24.0                                      0.0                                      1.0                                      0.0                                    0.0                                      19.0                                       5.0                                     4.0                                       1.0                                      1.0                                       8.0                                      4.0                                       0.0                                   0.0                                    0.0                                    0.0                                   2.0                                    0.0                                      2.0                                      0.0                                      0.0                                     15.0                                         11.0                                        2.0                                     4.0                                      1.0                                    0.0                                         2.0                                         20.0                                            1.0                                       17.0                                      5.0                                     8.0                                    4.0                                    3.0                                       1.0                                    0.0                                     1.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN   Environment         Encourage   0.0   0.0   0.0   0.0  4.666667      3.0      2.0  19.469027  4.424779  23.008850  23.008850  13.274336  12.389381   10.619469  1.666667     3.333333  3.333333  2.564949
+92  2021-09-22 06:45:48 2021-09-22 06:55:16  IP Address     100.0                  567.0     True 2021-09-22 06:55:16  R_1oej8ilptSkGh4w               1.0  yes                                               The survival of the environment is the s...                                               The survival of the environment is the s...                 6  7 - very much so                 6                 3               3  Female  28                   rather left-wing  No  writing a leaflet making others aware of...                                               614832801e7e76fad68d95fb               NaN   117.0  ['The survival of the environment is the...       208.0        45.0       16.0        34.0                            30.0      18.0                          18.0      13.0         1.0         2.0                            27.0                             3.0                       20.0                       10.0                      13.0                          0.0                           0.0  [{'The': 1.43}, {'survival': 2.34}, {'of...        191.0     474.53    2.484450                                      113.0                                      31.0                                    17.0                                 1.0                                  7.0                                   8.0                                     0.0                                    1.0                                    14.0                                      18.0                                   25.0                                      18.0                                      8.0                                   16.0                                      1.0                                   36.0                                  14.0                                       9.0                                        5.0                                      1.0                                     7.0                                     10.0                                      8.0                                      2.0                                   0.0                                     0.0                                   0.0                                     18.0                                      0.0                                      0.0                                      0.0                                    0.0                                      34.0                                       8.0                                     8.0                                       5.0                                      7.0                                       2.0                                      7.0                                       5.0                                   2.0                                    1.0                                    2.0                                   8.0                                    0.0                                      4.0                                      0.0                                      5.0                                     15.0                                          7.0                                        3.0                                     2.0                                      3.0                                    0.0                                         3.0                                         39.0                                            0.0                                       32.0                                      6.0                                    19.0                                    8.0                                    3.0                                       2.0                                    0.0                                     2.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN   Environment    Raise awarness   0.0   0.0   1.0   0.0  6.333333      3.0      3.0  21.634615  7.692308  16.346154  14.423077   8.653846   8.653846   12.980769  2.069767     2.930233  2.930233  2.484450
+283 2021-08-29 07:23:37 2021-08-29 07:40:29  IP Address     100.0                 1012.0     True 2021-08-29 07:40:30  R_1DMFdQEcFrYE4vQ               1.0  yes                                               Volunteering is important. Helping someo...                                               Volunteering is important. Helping someo...                 6                 6  7 - very much so                 6               4  Female  18  neither left-wing, nor right-wing  No  writing a leaflet making others aware of...                                               60ff41240daf772db512d974               NaN   331.0  ['Volunteering is important.', 'Helping ...       190.0        32.0       15.0        42.0                            38.0      20.0                          18.0      14.0         1.0         0.0                            30.0                             1.0                       24.0                       12.0                      12.0                          0.0                           0.0  [{'is': 1.59}, {'important': 2.14}, {'He...        169.0     443.42    2.623787                                      103.0                                      34.0                                    19.0                                 0.0                                  1.0                                  17.0                                     0.0                                    1.0                                    15.0                                      13.0                                   18.0                                      17.0                                     10.0                                   14.0                                      2.0                                   33.0                                   8.0                                       3.0                                        3.0                                      0.0                                     1.0                                     19.0                                     16.0                                      3.0                                   0.0                                     1.0                                   2.0                                     41.0                                      0.0                                      1.0                                      0.0                                    0.0                                      27.0                                       6.0                                     3.0                                       2.0                                     11.0                                       2.0                                      8.0                                       5.0                                   2.0                                    1.0                                    2.0                                   5.0                                    2.0                                      1.0                                      0.0                                      2.0                                     29.0                                         11.0                                        2.0                                    18.0                                      7.0                                    0.0                                         2.0                                         35.0                                            1.0                                       24.0                                      4.0                                    16.0                                    4.0                                    0.0                                       0.0                                    0.0                                     1.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN  Volunteering    Raise awarness   1.0   0.0   1.0   0.0  6.333333      6.0      4.0  16.842105  7.894737  22.105263  20.000000  10.526316   9.473684   15.789474  2.000000     3.000000  3.000000  2.623787
+339 2021-08-30 09:53:23 2021-08-30 10:02:18  IP Address     100.0                  535.0     True 2021-08-30 10:02:18  R_30nGzYhPqMQsu9w               1.0  yes                                               Be a volunteer, Volunteering can give yo...                                               Be a volunteer, Volunteering can give yo...                 6                 6                 6                 6               5  Female  59                   rather left-wing  No  writing a leaflet making others aware of...                                               5c6b1b360e2cef00010dff71               NaN   402.0  ['Be a volunteer, Volunteering can give ...       129.0        30.0        7.0        24.0                            22.0      13.0                          11.0       7.0         0.0         0.0                            26.0                             5.0                       15.0                        5.0                       8.0                          0.0                           0.0  [{'Be': 1.85}, {'a': 1.46}, {'volunteer'...        120.0     298.81    2.490083                                       73.0                                      25.0                                    16.0                                 0.0                                  0.0                                  12.0                                     0.0                                    4.0                                     9.0                                       7.0                                   13.0                                      14.0                                      4.0                                   14.0                                      0.0                                   25.0                                   4.0                                       0.0                                        3.0                                      0.0                                     2.0                                     16.0                                     14.0                                      2.0                                   2.0                                     0.0                                   0.0                                     34.0                                      0.0                                      0.0                                      0.0                                    0.0                                      21.0                                       7.0                                     5.0                                       0.0                                      3.0                                       2.0                                      4.0                                       6.0                                   1.0                                    0.0                                    3.0                                   0.0                                    0.0                                      0.0                                      0.0                                      0.0                                     19.0                                         10.0                                        7.0                                     5.0                                      3.0                                    0.0                                         0.0                                         19.0                                            6.0                                        8.0                                      0.0                                     4.0                                    4.0                                    5.0                                       1.0                                    0.0                                     0.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN  Volunteering    Raise awarness   1.0   0.0   1.0   0.0  6.000000      6.0      5.0  23.255814  5.426357  18.604651  17.054264  10.077519   8.527132   20.155039  2.107143     2.892857  2.892857  2.490083
+464 2021-08-29 20:53:01 2021-08-29 21:07:22  IP Address     100.0                  860.0     True 2021-08-29 21:07:22  R_1CJByGdPCyaD8Zx               1.0  yes                                                                                            Come out to help others in needed for yo...  Come out to help others in needed for yo...                 4                 3  7 - very much so                 3               4  Female  47                  rather right-wing  No  writing a leaflet encouraging others to ...                                           No  6110cfa8838643dbbc56f8b9               NaN   540.0  ['Come out to help others in needed for ...       103.0        28.0        4.0        17.0                            15.0      10.0                           8.0       4.0         0.0         0.0                             9.0                             0.0                       12.0                        6.0                       4.0                          0.0                           0.0  [{'Come': 2.72}, {'out': 2.73}, {'to': 1...         89.0     262.54    2.949888                                       58.0                                      16.0                                     9.0                                 0.0                                  1.0                                   5.0                                     0.0                                    3.0                                     7.0                                       7.0                                   17.0                                       8.0                                      5.0                                    6.0                                      0.0                                   14.0                                   4.0                                       2.0                                        1.0                                      0.0                                     3.0                                      0.0                                      0.0                                      0.0                                   0.0                                     0.0                                   0.0                                     20.0                                      0.0                                      2.0                                      0.0                                    0.0                                      10.0                                       0.0                                     1.0                                       1.0                                      6.0                                       1.0                                      5.0                                       2.0                                   1.0                                    0.0                                    2.0                                   4.0                                    2.0                                      2.0                                      0.0                                      0.0                                     15.0                                         11.0                                        0.0                                     8.0                                      1.0                                    0.0                                         1.0                                         15.0                                            2.0                                       27.0                                      4.0                                    19.0                                    5.0                                    0.0                                       2.0                                    4.0                                     2.0                                     1.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN  Volunteering         Encourage   1.0   0.0   0.0   0.0  4.666667      3.0      4.0  27.184466  3.883495  16.504854  14.563107   9.708738   7.766990    8.737864  1.909091     3.090909  3.090909  2.949888
+550 2021-06-08 09:09:47 2021-06-08 09:14:10  IP Address     100.0                  262.0     True 2021-06-08 09:14:10  R_2riPlwjbfXIkhI9               1.0  yes                                                                                            VOTE TODAY AND MAKE A CHANGE!\n\nDo you ...  VOTE TODAY AND MAKE A CHANGE! Do you wan...                 4                 5                 5                 4               5    Male  23                   rather left-wing  No  writing a leaflet encouraging others to ...  I enjoyed this questionnaire, it allowed...  607de3bfeddbb99731c08e98  7 Very important   634.0  ['VOTE TODAY AND MAKE A CHANGE!', 'Do yo...       123.0        24.0        5.0        26.0                            22.0      17.0                          14.0       4.0         1.0         0.0                            19.0                             1.0                       12.0                       12.0                       9.0                          0.0                           0.0  [{'VOTE': 3.85}, {'TODAY': 2.57}, {'AND'...        115.0     300.03    2.608957                                       70.0                                      18.0                                    14.0                                 1.0                                  1.0                                  10.0                                     0.0                                    2.0                                     4.0                                       9.0                                   15.0                                      13.0                                      5.0                                   11.0                                      1.0                                   27.0                                   4.0                                       2.0                                        1.0                                      2.0                                     5.0                                      6.0                                      4.0                                      2.0                                   2.0                                     0.0                                   0.0                                     18.0                                      0.0                                      1.0                                      0.0                                    0.0                                      18.0                                       2.0                                     3.0                                       6.0                                      7.0                                       1.0                                      7.0                                       5.0                                   1.0                                    3.0                                    1.0                                   0.0                                    0.0                                      0.0                                      0.0                                      0.0                                      7.0                                          3.0                                        0.0                                     3.0                                      1.0                                    0.0                                         1.0                                         28.0                                            1.0                                       17.0                                      3.0                                    10.0                                    4.0                                    1.0                                       1.0                                    0.0                                     0.0                                     0.0                                     0.0                                        2.0                                     0.0                                        0.0                                      1.0                                      1.0                                      0.0       Selected  Selected       1.0       1.0             NaN        Voting         Encourage   0.0   1.0   0.0   0.0  4.666667      4.0      5.0  19.512195  4.065041  21.138211  17.886179  13.821138  11.382114   15.447154  1.909091     3.090909  3.090909  2.608957
+558 2021-06-12 10:30:25 2021-06-12 10:51:00  IP Address     100.0                 1235.0     True 2021-06-12 10:51:00  R_2xEQYgzjRyOnNPk               1.0  yes                                                                                            This is the time to voice how you feel, ...  This is the time to voice how you feel, ...                 6                 5                 5                 5               5  Female  40  neither left-wing, nor right-wing  No  writing a leaflet encouraging others to ...  In my opinion this was a really great qu...  5f2365b57014971386797f2e  7 Very important   643.0  ['This is the time to voice how you feel...       132.0        18.0        7.0        28.0                            25.0      18.0                          15.0       6.0         1.0         0.0                            14.0                             0.0                       16.0                       12.0                      11.0                          0.0                           0.0  [{'This': 2.14}, {'is': 1.59}, {'the': 1...        128.0     293.69    2.294453                                       86.0                                      17.0                                     8.0                                 0.0                                  7.0                                   1.0                                     0.0                                    0.0                                     9.0                                       7.0                                   18.0                                      18.0                                     15.0                                   14.0                                      4.0                                   34.0                                   2.0                                       1.0                                        4.0                                      1.0                                     3.0                                      3.0                                      2.0                                      1.0                                   0.0                                     0.0                                   0.0                                     11.0                                      0.0                                      0.0                                      0.0                                    0.0                                      30.0                                       3.0                                    10.0                                       5.0                                      1.0                                       3.0                                      8.0                                       8.0                                   4.0                                    3.0                                    1.0                                   0.0                                    0.0                                      0.0                                      0.0                                      0.0                                     12.0                                          7.0                                        0.0                                     2.0                                      3.0                                    0.0                                         4.0                                         33.0                                            0.0                                       19.0                                      7.0                                     6.0                                    6.0                                    0.0                                       0.0                                    0.0                                     0.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN        Voting         Encourage   0.0   1.0   0.0   0.0  5.333333      5.0      5.0  13.636364  5.303030  21.212121  18.939394  13.636364  11.363636   10.606061  1.974359     3.025641  3.025641  2.294453
+641 2021-06-16 04:24:42 2021-06-16 04:35:11  IP Address     100.0                  628.0     True 2021-06-16 04:35:11  R_1HQKOqFaMsN0ZJ7               1.0  yes  Citizenship sould be open to everyone wh...                                                                                            Citizenship sould be open to everyone wh...  7 - very much so  7 - very much so  7 - very much so  7 - very much so  1 - not at all    Male  42               definitely left-wing  No  writing a leaflet presenting your though...                                        None.  5c7823628ca9000001b5110a                 4   739.0  ['Citizenship sould be open to everyone ...        86.0        22.0        5.0        12.0                             6.0       7.0                           3.0       5.0         0.0         0.0                             5.0                             0.0                        6.0                        1.0                       6.0                          0.0                           0.0  [{'Citizenship': 2.96}, {'be': 1.85}, {'...         76.0     175.76    2.312632                                       49.0                                       8.0                                     1.0                                 0.0                                  0.0                                   0.0                                     0.0                                    1.0                                     7.0                                       6.0                                   13.0                                      14.0                                      3.0                                    4.0                                      2.0                                   18.0                                   4.0                                       4.0                                        3.0                                      1.0                                     1.0                                      1.0                                      1.0                                      0.0                                   0.0                                     0.0                                   0.0                                      8.0                                      0.0                                      0.0                                      0.0                                    0.0                                      14.0                                       1.0                                     4.0                                       4.0                                      3.0                                       1.0                                      4.0                                       0.0                                   0.0                                    0.0                                    0.0                                   0.0                                    0.0                                      0.0                                      0.0                                      0.0                                      8.0                                          1.0                                        2.0                                     5.0                                      1.0                                    0.0                                         3.0                                         12.0                                            0.0                                       13.0                                      0.0                                    10.0                                    3.0                                    2.0                                       0.0                                    1.0                                     1.0                                     0.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN        Voting  Express thoughts   0.0   1.0   0.0   1.0  7.000000      7.0      1.0  25.581395  5.813953  13.953488   6.976744   8.139535   3.488372    5.813953  2.384615     2.615385  2.615385  2.312632
+654 2021-06-08 05:27:59 2021-06-08 05:38:15  IP Address     100.0                  615.0     True 2021-06-08 05:38:15  R_2sbSrdibhxGKOC8               1.0  yes  Citizenship is defined by either being b...                                                                                            Citizenship is defined by either being b...  7 - very much so  7 - very much so  7 - very much so  7 - very much so               6    Male  45  neither left-wing, nor right-wing  No  writing a leaflet presenting your though...                           interesting survey  57e7b82b21d77800018e51fe                 3   754.0  ['Citizenship is defined by either being...       152.0        42.0       15.0        17.0                            12.0       5.0                           3.0      15.0         0.0         0.0                             4.0                             0.0                       10.0                        6.0                       5.0                          0.0                           0.0  [{'Citizenship': 2.96}, {'is': 1.59}, {'...        135.0     338.68    2.508741                                       75.0                                       9.0                                     2.0                                 0.0                                  0.0                                   2.0                                     0.0                                    0.0                                     7.0                                      16.0                                   25.0                                      13.0                                      3.0                                   12.0                                      0.0                                   16.0                                   5.0                                       6.0                                        1.0                                      4.0                                     6.0                                      6.0                                      6.0                                      0.0                                   0.0                                     0.0                                   0.0                                     12.0                                      1.0                                      0.0                                      0.0                                    0.0                                      17.0                                       4.0                                     3.0                                       1.0                                      5.0                                       6.0                                      7.0                                       0.0                                   0.0                                    0.0                                    0.0                                   1.0                                    0.0                                      1.0                                      0.0                                      0.0                                      4.0                                          1.0                                        1.0                                     2.0                                      0.0                                    0.0                                         3.0                                         14.0                                            1.0                                       26.0                                      1.0                                    21.0                                    4.0                                    7.0                                       0.0                                    0.0                                     1.0                                     1.0                                     0.0                                        0.0                                     0.0                                        0.0                                      0.0                                      0.0                                      0.0       Selected  Selected       1.0       1.0             NaN        Voting  Express thoughts   0.0   1.0   0.0   1.0  7.000000      7.0      6.0  27.631579  9.868421  11.184211   7.894737   3.289474   1.973684    2.631579  1.952381     3.047619  3.047619  2.508741
+#+end_example
+:END:
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "StartDate",
+    "EndDate",
+    "Status",
+    "Progress",
+    "Duration__in_seconds_",
+    "Finished",
+    "RecordedDate",
+    "ResponseId",
+    "Q_RecaptchaScore",
+    "Q1.3",
+    "Q30",
+    "Q49",
+    "Q34",
+    "Text",
+    "Q48_1",
+    "Q48_2",
+    "Q48_3",
+    "Q48_4",
+    "Q48_5",
+    "Gender",
+    "Age",
+    "Political_orientation",
+    "Q12",
+    "Q13",
+    "Q15",
+    "Q17",
+    "Q44",
+    "index0",
+    "sents",
+    "WORD_count",
+    "NOUN_count",
+    "ADJ_count",
+    "VERB_count",
+    "VERB_count_without_be_and_have",
+    "VB_count",
+    "VB_count_without_be_and_have",
+    "JJ_count",
+    "JJRs_count",
+    "JJSs_count",
+    "count_of_is_big2a_ag_from_big2",
+    "count_of_is_big2b_ag_from_big2",
+    "count_of_is_IAV_from_lcm0",
+    "count_of_is_DAV_from_lcm0",
+    "count_of_is_SV_from_lcm0",
+    "count_of_is_IPadj_from_lcm1",
+    "count_of_is_IndAdj_from_lcm1",
+    "concr_info",
+    "concr_count",
+    "concr_sum",
+    "concr_mean",
+    "count_of_is_liwc_00001_Function_from_liwc",
+    "count_of_is_liwc_00002_Pronoun_from_liwc",
+    "count_of_is_liwc_00003_Ppron_from_liwc",
+    "count_of_is_liwc_00004_I_from_liwc",
+    "count_of_is_liwc_00005_We_from_liwc",
+    "count_of_is_liwc_00006_You_from_liwc",
+    "count_of_is_liwc_00007_SheHe_from_liwc",
+    "count_of_is_liwc_00008_They_from_liwc",
+    "count_of_is_liwc_00009_Ipron_from_liwc",
+    "count_of_is_liwc_00010_Article_from_liwc",
+    "count_of_is_liwc_00011_Prep_from_liwc",
+    "count_of_is_liwc_00012_Auxverb_from_liwc",
+    "count_of_is_liwc_00013_Adverb_from_liwc",
+    "count_of_is_liwc_00014_Conj_from_liwc",
+    "count_of_is_liwc_00015_Negate_from_liwc",
+    "count_of_is_liwc_00020_Verb_from_liwc",
+    "count_of_is_liwc_00021_Adj_from_liwc",
+    "count_of_is_liwc_00022_Compare_from_liwc",
+    "count_of_is_liwc_00023_Interrog_from_liwc",
+    "count_of_is_liwc_00024_Number_from_liwc",
+    "count_of_is_liwc_00025_Quant_from_liwc",
+    "count_of_is_liwc_00030_Affect_from_liwc",
+    "count_of_is_liwc_00031_Posemo_from_liwc",
+    "count_of_is_liwc_00032_Negemo_from_liwc",
+    "count_of_is_liwc_00033_Anx_from_liwc",
+    "count_of_is_liwc_00034_Anger_from_liwc",
+    "count_of_is_liwc_00035_Sad_from_liwc",
+    "count_of_is_liwc_00040_Social_from_liwc",
+    "count_of_is_liwc_00041_Family_from_liwc",
+    "count_of_is_liwc_00042_Friend_from_liwc",
+    "count_of_is_liwc_00043_Female_from_liwc",
+    "count_of_is_liwc_00044_Male_from_liwc",
+    "count_of_is_liwc_00050_CogProc_from_liwc",
+    "count_of_is_liwc_00051_Insight_from_liwc",
+    "count_of_is_liwc_00052_Cause_from_liwc",
+    "count_of_is_liwc_00053_Discrep_from_liwc",
+    "count_of_is_liwc_00054_Tentat_from_liwc",
+    "count_of_is_liwc_00055_Certain_from_liwc",
+    "count_of_is_liwc_00056_Differ_from_liwc",
+    "count_of_is_liwc_00060_Percept_from_liwc",
+    "count_of_is_liwc_00061_See_from_liwc",
+    "count_of_is_liwc_00062_Hear_from_liwc",
+    "count_of_is_liwc_00063_Feel_from_liwc",
+    "count_of_is_liwc_00070_Bio_from_liwc",
+    "count_of_is_liwc_00071_Body_from_liwc",
+    "count_of_is_liwc_00072_Health_from_liwc",
+    "count_of_is_liwc_00073_Sexual_from_liwc",
+    "count_of_is_liwc_00074_Ingest_from_liwc",
+    "count_of_is_liwc_00080_Drives_from_liwc",
+    "count_of_is_liwc_00081_Affiliation_from_liwc",
+    "count_of_is_liwc_00082_Achieve_from_liwc",
+    "count_of_is_liwc_00083_Power_from_liwc",
+    "count_of_is_liwc_00084_Reward_from_liwc",
+    "count_of_is_liwc_00085_Risk_from_liwc",
+    "count_of_is_liwc_00090_FocusPast_from_liwc",
+    "count_of_is_liwc_00091_FocusPresent_from_liwc",
+    "count_of_is_liwc_00092_FocusFuture_from_liwc",
+    "count_of_is_liwc_00100_Relativ_from_liwc",
+    "count_of_is_liwc_00101_Motion_from_liwc",
+    "count_of_is_liwc_00102_Space_from_liwc",
+    "count_of_is_liwc_00103_Time_from_liwc",
+    "count_of_is_liwc_00110_Work_from_liwc",
+    "count_of_is_liwc_00111_Leisure_from_liwc",
+    "count_of_is_liwc_00112_Home_from_liwc",
+    "count_of_is_liwc_00113_Money_from_liwc",
+    "count_of_is_liwc_00114_Relig_from_liwc",
+    "count_of_is_liwc_00115_Death_from_liwc",
+    "count_of_is_liwc_00120_Informal_from_liwc",
+    "count_of_is_liwc_00121_Swear_from_liwc",
+    "count_of_is_liwc_00122_Netspeak_from_liwc",
+    "count_of_is_liwc_00123_Assent_from_liwc",
+    "count_of_is_liwc_00124_Nonflu_from_liwc",
+    "count_of_is_liwc_00125_Filler_from_liwc",
+    "Filter_general",
+    "Filter_1",
+    "Filter_2",
+    "Filter_3",
+    "xxxxxxxxxxxxxx",
+    "Study",
+    "Condition",
+    "S_D1",
+    "S_D2",
+    "C_D1",
+    "C_D2",
+    "A_agency",
+    "A_concr",
+    "A_abstr",
+    "N_perc",
+    "Adj_perc",
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "Sem_agency",
+    "LCM",
+    "LCM_recoded",
+    "LCM_R",
+    "concr",
+#+end_example
+**
+** Means
+#+begin_src jupyter-python :async yes
+df0.Age.apply(int).mean()
+#+end_src
+
+#+RESULTS:
+: 33.994865211810016
+
+** Unique
+#+begin_src jupyter-python :async yes
+df0.Text.is_unique
+#+end_src
+
+#+RESULTS:
+: True
+
+** Unique
+#+begin_src jupyter-python :async yes
+df0.ResponseId.is_unique
+#+end_src
+
+#+RESULTS:
+: True
+** Check
+#+begin_src jupyter-python :async yes
+df0.Study.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Study
+Volunteering    261
+Voting          261
+Environment     257
+Name: count, dtype: int64
+#+end_example
+
+** Check
+#+begin_src jupyter-python :async yes
+df0.Condition.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Condition
+Express thoughts    279
+Raise awarness      252
+Encourage           248
+Name: count, dtype: int64
+#+end_example
+
+** Recode
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_encourage/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+
+"""
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "LCM",
+    "LCM_R",
+"""
+
+map0 = {
+    "id0": "Q17",
+    "verb index": "V4",
+    "concreteness": "concr_mean",
+    "concr raw": "concr",
+    "semantic agency": "Sem_agency",
+    "meta agency": "A_agency",
+    "meta concreteness": "A_concr",
+    "meta abstractness": "A_abstr",
+    "condition": "Condition",
+    # "condR": "condR",
+    "context": "Study",
+    # "english": "English",
+    "gender": "Gender",
+    "age": "Age",
+    # "was_good": "was_good",
+    # "filter_1": "Filter_1",
+    # "filter_2": "Filter_2",
+    # "filter_3": "Filter_3",
+    # "filter_4": "Filter_4",
+    # "filter_general": "Filter_general_2",
+    # "check": "Check",
+    "text": "Text",
+}
+for key, val in map0.items():
+    df0[key] = df0[val]
+
+cols2 = [*list(map0.keys())]
+
+df2 = df0[cols2].copy()
+log0.info(f"{df2.shape = }")
+
+df2 = df2[df2.condition!="Raise awarness"]
+
+df2.insert(8, "study", "s00")
+
+df2.to_pickle(dir0/"Study00_super-clean.pkl")
+df2.to_csv(dir0/"Study00_super-clean.csv", index=False)
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=4).sort_index(), width=4444)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df2.shape = (779, 13)
+I: df2.shape = (527, 14)
+#+end_example
+#+begin_example
+                          id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study         condition       context  gender age                                         text
+40   6144fa1f3105e3757a9fa5a9    5.303030      2.523684   2.523684         6.818182     7.000000                7.0                5.0   s00         Encourage   Environment  Female  19  Roughly around the world the forested ar...
+174  6149ed15df40b8f9eccca24d   11.111111      2.378974   2.378974         2.222222     4.000000                5.0                2.0   s00  Express thoughts   Environment  Female  24  Nature is wonderful. As a human who enga...
+496  5e93ef454be00622d7c5432d   10.091743      2.355263   2.355263        14.678899     2.000000                2.0                7.0   s00         Encourage  Volunteering    Male  29  Do you care about x? Are you interested ...
+509  5c00fefa4c14cf00019cc374    5.050505      2.375730   2.375730        12.121212     2.333333                3.0                5.0   s00         Encourage  Volunteering    Male  40  Volunteering is your opportunity to help...
+#+end_example
+:END:
+** Checkup value counts
+#+begin_src jupyter-python :async yes
+# df2.english.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+
+** Checkup correlations
+#+begin_src jupyter-python :async yes
+numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+df4 = df2.select_dtypes(include=numerics)
+
+cr2 = df4.corr()
+disp_df(cr2["verb index"], max_rows=444)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+verb index           1.000000
+concreteness         0.363499
+concr raw            0.363499
+semantic agency      0.526842
+meta agency          0.125484
+meta concreteness   -0.006969
+meta abstractness   -0.008189
+Name: verb index, dtype: float64
+#+end_example

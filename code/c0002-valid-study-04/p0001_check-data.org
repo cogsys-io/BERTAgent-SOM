@@ -1,0 +1,389 @@
+#+title: P0001 Check Data
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+The autoreload extension is already loaded. To reload it, use:
+  %reload_ext autoreload
+#+end_example
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import CLEAN_STR_MAPPINGS_SPACE as space0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+# Pseudo-random category selection.
+categories = [
+    "alt.atheism",
+    # "comp.graphics",
+    # "comp.os.ms-windows.misc",
+    # "comp.sys.ibm.pc.hardware",
+    # "comp.sys.mac.hardware",
+    # "comp.windows.x",
+    # "misc.forsale",
+    # "rec.autos",
+    # "rec.motorcycles",
+    "rec.sport.baseball",
+    "rec.sport.hockey",
+    # "sci.crypt",
+    # "sci.electronics",
+    "sci.med",
+    "sci.space",
+    "soc.religion.christian",
+    "talk.politics.guns",
+    # "talk.politics.mideast",
+    "talk.politics.misc",
+    "talk.religion.misc",
+]
+# Import the dataset.
+from sklearn.datasets import fetch_20newsgroups
+# Fetch the data.
+subset="train"
+subset="test"
+subset="all"
+newsgroups_train = fetch_20newsgroups(
+    subset=subset,
+    categories=categories,
+    shuffle=True,
+    random_state=42,
+    remove=("headers", "footers", "quotes"),
+)
+log0.info("DONE: 20 newsgroups was fetched")
+
+#+end_src
+
+#+RESULTS:
+: I: DONE: 20 newsgroups was fetched
+
+** test: Checkup
+#+begin_src jupyter-python :async yes
+# Display how many data-points we have available.
+log0.info(f"{newsgroups_train.filenames.shape = }")
+# Display the categories collected.
+for categ in list(newsgroups_train.target_names):
+    log0.info(f"- {categ = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: newsgroups_train.filenames.shape = (8079,)
+I: - categ = 'alt.atheism'
+I: - categ = 'rec.sport.baseball'
+I: - categ = 'rec.sport.hockey'
+I: - categ = 'sci.med'
+I: - categ = 'sci.space'
+I: - categ = 'soc.religion.christian'
+I: - categ = 'talk.politics.guns'
+I: - categ = 'talk.politics.misc'
+I: - categ = 'talk.religion.misc'
+#+end_example
+
+** prod: Convert dataset to pandas dataframe
+#+begin_src jupyter-python :async yes
+df0 = pd.DataFrame(
+    np.c_[
+        newsgroups_train["data"],
+        newsgroups_train["target"]],
+    columns=["text", "target"],
+)
+log0.info("df0 was created.")
+
+# Add a more descriptive target labels.
+df0["label"] = df0.target.apply(lambda x: newsgroups_train["target_names"][int(x)])
+
+# Cleanup text
+df0["text"] = df0["text"].apply(clean_str)
+df0["text"] = df0["text"].apply(clean_str, space0)
+
+log0.info(f"{df0.shape}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df0 was created.
+I: (8079, 3)
+#+end_example
+
+** test: Checkup counts
+#+begin_src jupyter-python :async yes :eval yes
+# Check messages count in each category.
+log0.info(f"{df0.shape}")
+disp_df(df0["label"].value_counts())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: (8079, 3)
+#+begin_example
+label
+rec.sport.hockey          999
+soc.religion.christian    997
+rec.sport.baseball        994
+sci.med                   990
+sci.space                 987
+talk.politics.guns        910
+alt.atheism               799
+talk.politics.misc        775
+talk.religion.misc        628
+Name: count, dtype: int64
+#+end_example
+:END:
+
+** test: Checkup sample
+#+begin_src jupyter-python :async yes
+disp_df(df0.sample(n=12))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+                                             text target                   label
+7470  Just because the wording is elsewhere do...      0             alt.atheism
+500   Yes, Yes, I can see it now >>>> all thos...      2        rec.sport.hockey
+5491  Oh, lighten up. What depresses me is tha...      1      rec.sport.baseball
+6971  Not so. If you are thrown into a cage wi...      0             alt.atheism
+61    Why not try to eliminate discrimination ...      7      talk.politics.misc
+7428  : My girlfriend is in pain from kidney s...      3                 sci.med
+2620  Let the word of Christ dwell in you rich...      5  soc.religion.christian
+2479  But, Gary, for certain sofa tubers like ...      1      rec.sport.baseball
+4208  Also, Alomar got a FAR greater boost fro...      1      rec.sport.baseball
+2698  Is the license required for driving a ca...      6      talk.politics.guns
+3739  First off, let me congratulate you for n...      8      talk.religion.misc
+4367  OK, here is my try: Lukko, Finland (look...      2        rec.sport.hockey
+#+end_example
+
+** prod: Drop records with blank text
+#+begin_src jupyter-python :async yes
+log0.info(f"{df0.shape}")
+df0 = df0.loc[df0["text"].apply(len)!=0]
+log0.info(f"{df0.shape}")
+assert all(df0["text"].apply(len)!=0)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: (8079, 3)
+I: (7850, 3)
+#+end_example
+
+** test: Checkup counts
+rec.sport.hockey,          $N=975$;
+soc.religion.christian,    $N=975$;
+sci.med,                   $N=960$;
+rec.sport.baseball,        $N=958$;
+sci.space,                 $N=955$;
+talk.politics.guns,        $N=886$;
+alt.atheism,               $N=779$;
+talk.politics.misc,        $N=756$;
+talk.religion.misc,        $N=606$;
+
+#+begin_src jupyter-python :async yes :eval yes
+# Check messages count in each category.
+log0.info(f"{df0.shape}")
+disp_df(df0["label"].value_counts())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: (7850, 3)
+#+begin_example
+label
+rec.sport.hockey          975
+soc.religion.christian    975
+sci.med                   960
+rec.sport.baseball        958
+sci.space                 955
+talk.politics.guns        886
+alt.atheism               779
+talk.politics.misc        756
+talk.religion.misc        606
+Name: count, dtype: int64
+#+end_example
+:END:
+
+** prod: Save dataframe for further use
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+df9 = df0.copy()
+
+dir0 = "../../data/v0004_20newsgroups"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["data_d0000"]
+sfx0 = ["done"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+# xtn0 = ".xlsx"
+# ofn0 = bfn0.with_suffix(xtn0)
+# log0.info(f"saving: {ofn0}...")
+# df9.to_excel(ofn0)
+
+# xtn0 = ".jsonl"
+# ofn0 = bfn0.with_suffix(xtn0)
+# log0.info(f"saving: {ofn0}...")
+# with open(ofn0, "w") as fh: pass
+# srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0004_20newsgroups/data_d0000_done.pkl...
+I: saving: ../../data/v0004_20newsgroups/data_d0000_done.csv...
+I: DONE
+#+end_example

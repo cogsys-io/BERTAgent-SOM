@@ -1,0 +1,400 @@
+#+title: P0002_bert
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0003_valid-03-part-001-supernatural/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0003_valid-03-part-001-supernatural/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0003_valid-03-part-001-supernatural/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load model
+#+begin_src jupyter-python :async yes
+dir0 = pathlib.Path().home()/"bertagent"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+from helpers import BERTAgentSentencesPredictor
+
+model_path = dir0/"20230510T032633-model-roberta-base_data-df0x_testing-both_epo-064_status-DEPLOY/final"
+ba0 = BERTAgentSentencesPredictor(
+    model_path = model_path,
+    tokenizer_path = model_path,
+)
+
+model_path = dir0/"20230512T231630_status-DEPLOY_data-df4x_testing-both_epo-008_model-roberta-base/final"
+ba4 = BERTAgentSentencesPredictor(
+    model_path = model_path,
+    tokenizer_path = model_path,
+)
+#+end_src
+
+#+RESULTS:
+
+** test: Demo data
+#+begin_src jupyter-python :async yes
+sents = [
+    ["stiving to achieve my goals"],
+    ["struglling to survive"],
+    ["lost all hope"],
+    ["struglling to acheve something"],
+    ["I want to give up"],
+    ["hardly working individual"],
+    ["hard working individual"],
+]
+dfX = pd.DataFrame(dict(sents=sents))
+
+dfX["ba0"] = dfX.sents.progress_apply(ba0.predict)
+dfX["ba4"] = dfX.sents.progress_apply(ba4.predict)
+
+"""
+del ba0
+del ba4
+gc.collect()
+torch.cuda.empty_cache()
+
+"""
+
+log0.info(f"{dfX.shape = }")
+disp_df(dfX.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+100% 7/7 [00:00<00:00, 18.12it/s]
+100% 7/7 [00:00<00:00, 140.09it/s]
+I: dfX.shape = (7, 3)
+#+end_example
+#+begin_example
+                              sents                    ba0                     ba4
+0     [stiving to achieve my goals]    [0.811343789100647]   [0.46363115310668945]
+1           [struglling to survive]   [0.3093999922275543]    [0.2404521256685257]
+2                   [lost all hope]  [-0.9331526756286621]  [-0.35690292716026306]
+3  [struglling to acheve something]   [0.6140249371528625]   [0.32130008935928345]
+4               [I want to give up]  [-0.6370888352394104]  [-0.39004892110824585]
+5       [hardly working individual]  [-0.6461266279220581]    [-0.499760240316391]
+6         [hard working individual]   [0.7121863961219788]     [0.592132031917572]
+#+end_example
+:END:
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0003_supernatural/u1004_nlp/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"supernatural_nlp"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0003_supernatural/u1004_nlp/supernatural_nlp.pkl...
+I: loading: ../../data/v0003_supernatural/u1004_nlp/supernatural_nlp.pkl... DONE
+I: df0.shape = (216, 16)
+#+end_example
+#+begin_example
+       useful  imageable  thought_provoking   unusual  intentional_agency  strategic_knowledge  acts_in_the_world  motivates_rituals     PietA  PietB     PietC   NicoPos  NicoNeg   NicoCom                                        sents                                         text
+1    1.722222   2.666667           3.333333  4.777778            2.538462             2.000000           3.307692           2.307692  0.000000    0.0  0.000000  0.000000      0.0  0.000000  [Cloud that disappears at night and has ...  Cloud that disappears at night and has a...
+22   3.157895   2.631579           2.947368  4.157895            1.333333             1.444444           2.333333           3.333333  0.000000    0.0  0.000000  0.000000      0.0  0.000000  [Lamp that is standing on a lawn and is ...  Lamp that is standing on a lawn and is w...
+34   1.619048   2.714286           2.809524  4.333333            4.375000             4.312500           4.625000           3.187500  0.000000    0.0  0.000000  0.000000      0.0  0.000000  [Person who hops everywhere they go and ...  Person who hops everywhere they go and w...
+40   3.100000   4.100000           1.800000  1.750000            1.687500             1.375000           3.125000           2.750000  0.000000    0.0  0.000000  0.000000      0.0  0.000000      [Lamp that is tall and bronze in color]        Lamp that is tall and bronze in color
+55   1.352941   3.176471           3.058824  4.058824            2.636364             1.909091           3.090909           1.909091  0.000000    0.0  0.000000  0.000000      0.0  0.000000  [Puddle that feels very angry and causes...  Puddle that feels very angry and causes ...
+110  3.000000   3.368421           3.631579  4.631579            4.500000             4.300000           4.400000           3.800000  0.095238    0.0  0.095238  0.047619      0.0  0.047619  [Cloud that watches everything people do...  Cloud that watches everything people do ...
+163  3.500000   2.400000           3.850000  4.600000            3.833333             3.833333           3.583333           4.250000  0.000000    0.0  0.000000  0.000000      0.0  0.000000  [Puddle that is a wormhole to other plan...  Puddle that is a wormhole to other plane...
+191  1.736842   3.421053           2.842105  4.000000            2.000000             1.666667           3.583333           2.083333  0.000000    0.0  0.000000  0.000000      0.0  0.000000  [Cactus that is 7 feet tall and has been...  Cactus that is 7 feet tall and has been ...
+#+end_example
+:END:
+** Predict using =ba4=
+#+begin_src jupyter-python :async yes
+df0["ba4"] = df0.sents.progress_apply(ba4.predict)
+log0.info("DONE: predictions")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+100% 216/216 [00:01<00:00, 172.98it/s]
+I: DONE: predictions
+#+end_example
+
+** prod: Summarize predictions
+#+begin_src jupyter-python :async yes
+df0["sents_count"] = df0.sents.apply(len)
+# df0["ba0Tot_sum"] = df0["ba0"].apply(lambda x: sum([val for val in x]))
+# df0["ba0Pos_sum"] = df0["ba0"].apply(lambda x: sum([val for val in x if val > 0]))
+# df0["ba0Neg_sum"] = df0["ba0"].apply(lambda x: sum([abs(val) for val in x if val < 0]))
+# df0["ba0Abs_sum"] = df0["ba0"].apply(lambda x: sum([abs(val) for val in x]))
+
+model_id = "ba4"
+
+df0["baTot_sum"] = df0[model_id].apply(lambda x: sum([val for val in x]))
+df0["baPos_sum"] = df0[model_id].apply(lambda x: sum([val for val in x if val > 0]))
+df0["baNeg_sum"] = df0[model_id].apply(lambda x: sum([abs(val) for val in x if val < 0]))
+df0["baAbs_sum"] = df0[model_id].apply(lambda x: sum([abs(val) for val in x]))
+
+# df0["BA0Pos"] = df0["ba0Pos_sum"]/df0["sents_count"]
+# df0["BA0Neg"] = df0["ba0Neg_sum"]/df0["sents_count"]
+# df0["BA0Tot"] = df0["ba0Tot_sum"]/df0["sents_count"]
+# df0["BA0Abs"] = df0["ba0Abs_sum"]/df0["sents_count"]
+
+df0["BAPos"] = df0["baPos_sum"]/df0["sents_count"]
+df0["BANeg"] = df0["baNeg_sum"]/df0["sents_count"]
+df0["BATot"] = df0["baTot_sum"]/df0["sents_count"]
+df0["BAAbs"] = df0["baAbs_sum"]/df0["sents_count"]
+
+
+log0.info(f"{df0.shape = }")
+disp_df(
+    df0.sample(n=5).sort_index(),
+    max_colwidth=33,
+    width=5555,
+    max_columns=155,
+)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df0.shape = (216, 26)
+#+begin_example
+       useful  imageable  thought_provoking   unusual  intentional_agency  strategic_knowledge  acts_in_the_world  motivates_rituals  PietA  PietB  PietC   NicoPos  NicoNeg   NicoCom                             sents                              text                     ba4  sents_count  baTot_sum  baPos_sum  baNeg_sum  baAbs_sum     BAPos     BANeg     BATot     BAAbs
+34   1.619048   2.714286           2.809524  4.333333            4.375000             4.312500           4.625000           3.187500    0.0    0.0    0.0  0.000000      0.0  0.000000  [Person who hops everywhere t...  Person who hops everywhere th...   [0.05983783304691315]            1   0.059838   0.059838   0.000000   0.059838  0.059838  0.000000  0.059838  0.059838
+50   1.950000   4.400000           1.550000  1.300000            3.071429             2.642857           3.357143           1.928571    0.0    0.0    0.0  0.000000      0.0  0.000000  [Rabbit that is very fluffy t...  Rabbit that is very fluffy to...  [-0.02917657047510147]            1  -0.029177   0.000000   0.029177   0.029177  0.000000  0.029177 -0.029177  0.029177
+105  2.400000   4.500000           1.800000  1.300000            4.666667             4.666667           4.083333           2.666667    0.0    0.0    0.0  0.142857      0.0  0.142857  [Child that likes to play wit...  Child that likes to play with...   [0.01723690889775753]            1   0.017237   0.017237   0.000000   0.017237  0.017237  0.000000  0.017237  0.017237
+173  2.500000   3.363636           3.272727  4.500000            3.600000             3.100000           4.000000           2.800000    0.0    0.0    0.0  0.000000      0.0  0.000000  [Cactus that hates all non-pl...  Cactus that hates all non-pla...   [0.08076096326112747]            1   0.080761   0.080761   0.000000   0.080761  0.080761  0.000000  0.080761  0.080761
+214  1.888889   4.222222           1.666667  1.222222            4.555556             3.777778           4.444444           2.444444    0.0    0.0    0.0  0.000000      0.0  0.000000  [Child that has just learned ...  Child that has just learned t...  [-0.16645747423171997]            1  -0.166457   0.000000   0.166457   0.166457  0.000000  0.166457 -0.166457  0.166457
+#+end_example
+:END:
+** Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+df9 = df0.copy()
+
+dir0 = "../../data/v0003_supernatural/u1005_bert/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["supernatural"]
+sfx0 = ["bertagent-clean"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0003_supernatural/u1005_bert/supernatural_bertagent-clean.pkl...
+I: saving: ../../data/v0003_supernatural/u1005_bert/supernatural_bertagent-clean.csv...
+I: saving: ../../data/v0003_supernatural/u1005_bert/supernatural_bertagent-clean.xlsx...
+I: saving: ../../data/v0003_supernatural/u1005_bert/supernatural_bertagent-clean.jsonl...
+I: DONE
+#+end_example
+
+Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "useful",
+    "imageable",
+    "thought_provoking",
+    "unusual",
+    "intentional_agency",
+    "strategic_knowledge",
+    "acts_in_the_world",
+    "motivates_rituals",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "sents",
+    "text",
+    "ba4",
+    "sents_count",
+    "baTot_sum",
+    "baPos_sum",
+    "baNeg_sum",
+    "baAbs_sum",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+#+end_example

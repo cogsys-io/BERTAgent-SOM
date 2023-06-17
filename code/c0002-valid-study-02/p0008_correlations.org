@@ -1,0 +1,200 @@
+#+title: P0001_checkup
+
+#+PROPERTY: header-args:R  :tangle   yes
+#+PROPERTY: header-args:R+ :eval     yes
+#+PROPERTY: header-args:R+ :comments org
+#+PROPERTY: header-args:R+ :results  output drawer pp
+#+PROPERTY: header-args:R+ :exports  both
+#+PROPERTY: header-args:R+ :var      BUFFER_DIR=(file-name-directory buffer-file-name)
+#+PROPERTY: header-args:R+ :session  *R*
+
+* Imports
+#+begin_src R :session *R*
+library(devtools)
+library(tidyverse)
+library(readr)
+library(readr)
+
+load_all(
+  path="~/cc/dev/c2023a/c0512_apaTablesCoCoR/apaTablesCoCoR",
+  reset=TRUE,
+  recompile=TRUE,
+  export_all=TRUE,
+  helpers=TRUE,
+  quiet=FALSE)
+
+options("width" = 222)
+options(cli.width=222)
+paste(getwd())
+#+end_src
+* Load data
+#+begin_src R :session *R* :results  output drawer pp
+dir0 <- "../../data/v0002_professions/p1006_select-cols"
+if0 <- "jobs_done.csv"
+df0 <- read_csv(file=paste(dir0, if0, sep="/"))
+# df0 = read.csv(file=paste(dir0, if0, sep="/"))
+paste(str(df0))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+indexing jobs_done.csv [==================================================================================================================================================================================] 3.79GB/s, eta:  0s                                                                                                                                                                                                                                                                 Rows: 132 Columns: 12
+── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (1): text
+dbl (11): HumEval, PietA, PietB, PietC, NicoPos, NicoNeg, NicoCom, BATot, BAPos, BANeg, BAAbs
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+spc_tbl_ [132 × 12] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ text   : chr [1:132] "Dishwashers, Clean dishes, kitchen, food preparation equipment, or utensils." "Parking Attendants, Park vehicles or issue tickets for customers in a parking lot or garage. May park or tend v"| __truncated__ "Telemarketers, Solicit donations or orders for goods or services over the telephone." "Cashiers, Receive and disburse money in establishments other than financial institutions. May use electronic sc"| __truncated__ ...
+ $ HumEval: num [1:132] 26.3 29.8 30.9 31.9 32.7 ...
+ $ PietA  : num [1:132] 0 0 0 0 0 ...
+ $ PietB  : num [1:132] 0 0 0 0 0 0 0 0 0 0 ...
+ $ PietC  : num [1:132] 0 0 0 0 0 ...
+ $ NicoPos: num [1:132] 0 0 0 0.027 0 ...
+ $ NicoNeg: num [1:132] 0 0 0 0 0 0 0 0 0 0 ...
+ $ NicoCom: num [1:132] 0 0 0 0.027 0 ...
+ $ BATot  : num [1:132] 0.262 0.095 0.252 0.091 0.199 ...
+ $ BAPos  : num [1:132] 0.262 0.105 0.252 0.091 0.199 ...
+ $ BANeg  : num [1:132] 0 0.00992 0 0 0 ...
+ $ BAAbs  : num [1:132] 0.262 0.115 0.252 0.091 0.199 ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   text = col_character(),
+  ..   HumEval = col_double(),
+  ..   PietA = col_double(),
+  ..   PietB = col_double(),
+  ..   PietC = col_double(),
+  ..   NicoPos = col_double(),
+  ..   NicoNeg = col_double(),
+  ..   NicoCom = col_double(),
+  ..   BATot = col_double(),
+  ..   BAPos = col_double(),
+  ..   BANeg = col_double(),
+  ..   BAAbs = col_double()
+  .. )
+ - attr(*, "problems")=<externalptr>
+character(0)
+#+end_example
+
+* Check correlations
+- [[textcite:&DiedenhofenMusch2015a]]
+- [[textcite:&Diedenhofen2022a]]
+- https://f-santos.gitlab.io/2020-04-01-comparing-correlation-coefficients.html
+#+begin_src R :session *R* :results  output drawer pp
+df2 <- df0 %>% select(
+    HumEval,
+    PietA,
+    PietB,
+    PietC,
+    NicoPos,
+    NicoNeg,
+    NicoCom,
+    BATot,
+    BAPos,
+    BANeg,
+    BAAbs,
+)
+
+devtools::unload(package="apaTables", quiet=FALSE)
+load_all(path="~/cc/dev/c2023a/c0512_apaTablesCoCoR/apaTablesCoCoR",reset=TRUE,recompile=TRUE,export_all=TRUE,helpers=TRUE,quiet=FALSE)
+tab0 <- apa.cocor.table(
+  df2,
+  filename="p0008_jobs-correlations.doc",
+  table.number=1,
+  common="HumEval"
+)
+print(tab0)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ℹ Loading apaTables
+Warning message:
+In sqrt((1 - r.jk^2)^2 + (1 - r.jh^2)^2 - 2 * r.kh^3 - (2 * r.kh -  :
+  NaNs produced
+
+
+Table 1
+
+Means, standard deviations, and correlations with confidence intervals
+
+
+  Variable   M     SD    1            2            3           4           5           6            7           8            9            10           11
+  1. HumEval 52.31 12.21
+
+  2. PietA   0.01  0.02  .19*                      -0.72       NaN         0.58        0.94         0.91        -2.23*       -2.29*       3.07**       -2.26*
+                         [.02, .35]
+
+  3. PietB   0.02  0.03  .26**        .42**                    0.72        1.32        1.45         1.68        -1.80        -1.86        3.49**       -1.82
+                         [.09, .41]   [.27, .55]
+
+  4. PietC   0.01  0.02  .19*         1.00**       .42**                   0.58        0.94         0.91        -2.23*       -2.29*       3.07**       -2.26*
+                         [.02, .35]   [1.00, 1.00] [.27, .55]
+
+  5. NicoPos 0.03  0.04  .12          .10          .31**       .10                     0.38         1.24        -2.73**      -2.77**      2.45*        -2.73**
+                         [-.05, .29]  [-.07, .27]  [.14, .45]  [-.07, .27]
+
+  6. NicoNeg 0.00  0.01  .07          -.04         -.09        -.04        -.11                     -0.08       -3.26**      -3.30**      1.98*        -3.25**
+                         [-.10, .24]  [-.21, .13]  [-.25, .09] [-.21, .13] [-.28, .06]
+
+  7. NicoCom 0.03  0.04  .09          .10          .31**       .10         .94**       -.45**                   -3.00**      -3.05**      2.18*        -3.01**
+                         [-.09, .25]  [-.07, .27]  [.14, .45]  [-.07, .27] [.92, .96]  [-.57, -.30]
+
+  8. BATot   0.22  0.12  .44**        .04          .17*        .04         -.02        .07          -.04                     -0.49        4.24**       -0.07
+                         [.29, .57]   [-.13, .21]  [.00, .33]  [-.13, .21] [-.19, .15] [-.10, .24]  [-.21, .13]
+
+  9. BAPos   0.22  0.11  .45**        .05          .18*        .05         -.02        .06          -.04        .99**                     4.44**       0.31
+                         [.30, .57]   [-.13, .21]  [.01, .34]  [-.13, .21] [-.19, .15] [-.11, .23]  [-.21, .13] [.99, .99]
+
+  10. BANeg  0.01  0.02  -.18*        .03          -.04        .03         -.01        -.08         .02         -.54**       -.42**                    -4.65**
+                         [-.34, -.01] [-.14, .20]  [-.21, .13] [-.14, .20] [-.18, .16] [-.25, .09]  [-.15, .19] [-.65, -.40] [-.55, -.27]
+
+  11. BAAbs  0.23  0.10  .44**        .05          .18*        .05         -.02        .05          -.04        .96**        .99**        -.28**
+                         [.29, .57]   [-.12, .22]  [.01, .34]  [-.12, .22] [-.19, .15] [-.12, .22]  [-.21, .13] [.94, .97]   [.98, .99]   [-.43, -.12]
+
+
+Note. M and SD are used to represent mean and standard deviation, respectively.
+Values in square brackets indicate the 95% confidence interval.
+The confidence interval is a plausible range of population correlations
+that could have caused the sample correlation (Cumming, 2014).
+ ,* indicates p < .05. ** indicates p < .01.
+#+end_example
+* Manual checkups
+#+begin_src R :session *R* :results  output drawer pp
+df2 <- as.data.frame(df2)
+cc0 <- cocor::cocor(~HumEval+BATot|HumEval+BAPos, data=df2)
+cc0 <- cocor::cocor(~HumEval+BAAbs|HumEval+PietB, data=df2)
+cc0 <- cocor::cocor(~HumEval+PietB|HumEval+BAAbs, data=df2)
+cc0 <- cocor::cocor(~HumEval+BATot|HumEval+PietA, data=df2, test=c("hittner2003"))
+
+cc0
+cc0@hittner2003$statistic
+cc0@hittner2003$p.value
+gtools::stars.pval(cc0@hittner2003$p.value)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+  Results of a comparison of two overlapping correlations based on dependent groups
+
+Comparison between r.jk (HumEval, BATot) = 0.441 and r.jh (HumEval, PietA) = 0.1913
+Difference: r.jk - r.jh = 0.2497
+Related correlation: r.kh = 0.0371
+Data: df2: j = HumEval, k = BATot, h = PietA
+Group size: n = 132
+Null hypothesis: r.jk is equal to r.jh
+Alternative hypothesis: r.jk is not equal to r.jh (two-sided)
+Alpha: 0.05
+
+hittner2003: Hittner, May, and Silver's (2003) modification of Dunn and Clark's z (1969) using a backtransformed average Fisher's (1921) Z procedure
+  z = 2.2314, p-value = 0.0257
+  Null hypothesis rejected
+[1] 2.231444
+[1] 0.02565177
+[1] "*"
+attr(,"legend")
+[1] "0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1"
+#+end_example

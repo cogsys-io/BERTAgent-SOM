@@ -1,0 +1,1251 @@
+#+title: P0004_data_merge
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0005_valid-05-part-001-encourage/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_encourage/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+extn0 = ".pkl"
+
+name0 = f"Study00_super-clean"
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0s0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+df0s0["condR"] = df0s0.condition
+
+
+name0 = f"Study01_super-clean"
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0s1 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+name0 = f"Study02_super-clean"
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0s2 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+
+log0.info(f"{df0s0.shape = }")
+log0.info(f"{df0s1.shape = }")
+log0.info(f"{df0s2.shape = }")
+disp_df(df0s0.sample(n=4).sort_index())
+disp_df(df0s1.sample(n=4).sort_index())
+disp_df(df0s2.sample(n=4).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0004_encourage/Study00_super-clean.pkl...
+I: loading: ../../data/v0004_encourage/Study00_super-clean.pkl... DONE
+I: loading: ../../data/v0004_encourage/Study01_super-clean.pkl...
+I: loading: ../../data/v0004_encourage/Study01_super-clean.pkl... DONE
+I: loading: ../../data/v0004_encourage/Study02_super-clean.pkl...
+I: loading: ../../data/v0004_encourage/Study02_super-clean.pkl... DONE
+I: df0s0.shape = (527, 15)
+I: df0s1.shape = (445, 23)
+I: df0s2.shape = (339, 23)
+#+end_example
+#+begin_example
+                          id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study  condition      context  gender age                                         text      condR
+18   614a210a9402c23e80f9bf8c    6.666667      2.427875   2.427875         6.666667     5.666667                4.0                1.0   s00  Encourage  Environment  Female  54  The world we live in is a fragile place,...  Encourage
+55   60e7465719a71fd1b2fbe94a    5.072464      2.552276   2.552276         3.623188     6.000000                5.0                4.0   s00  Encourage  Environment  Female  44  It is important to participate in keepin...  Encourage
+60   61484b1caba5f192dfd4b547    8.372093      2.544422   2.544422        16.279070     4.666667                4.0                4.0   s00  Encourage  Environment  Female  53  I’m writing to you today to encourage yo...  Encourage
+580  60be02566a8a001faeca2608    6.493506      2.600496   2.600496        22.727273     2.000000                2.0                2.0   s00  Encourage       Voting   Other  51  It’s more essential now than ever to cas...  Encourage
+#+end_example
+#+begin_example
+                           id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study         condition      condR       context                english  gender age  was_good  filter_1  filter_2  filter_3  filter_4 filter_general  check                                         text
+34    615a04685ccd2763823852f7    5.607477      2.668812   2.668812        15.887850     6.000000                7.0                3.0   s01         Encourage  encourage   Environment                    NaN  Female  30       1.0  Selected       1.0       1.0       NaN       Selected    1.0  In a thousand years time would you like ...
+134   5accfa60e9d7a30001c2c0ec    3.738318      2.657527   2.657527         4.672897     5.000000                4.0                3.0   s01  Express thoughts     inform   Environment                    NaN  Female  24       1.0  Selected       1.0       1.0       NaN       Selected    1.0  I think everyone should be involved in t...
+379  NO PAY ;  ONLY REWARDS!!!    5.384615      2.371810   2.371810         8.461538     7.000000                7.0                7.0   s01  Express thoughts     inform  Volunteering  I am a native speaker  Female  50       1.0  Selected       1.0       1.0  Selected       Selected    1.0  VOLUNTEERING What is it? Volunteering is...
+430   607971ec894deea849c6e4ab    3.960396      2.154419   2.154419         3.960396     6.333333                6.0                6.0   s01  Express thoughts     inform  Volunteering  I am a native speaker  Female  24       1.0  Selected       1.0       1.0  Selected       Selected    1.0  Volunteering is regarded as an act of al...
+#+end_example
+#+begin_example
+                          id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study condition       condR       context                english  gender age  was_good  filter_1  filter_2  filter_3  filter_4 filter_general  check                                         text
+118  5bd23089dc398f000116c5b6    9.174312      2.552736   2.552736        11.009174     4.666667                4.0                3.0   s02       0.0  Mobilizing   Environment  I am a native speaker    Male  35       1.0  Selected  Selected       1.0  Selected       Selected    1.0  Do you have children? Do you want childr...
+162  6169ad68ef2992655667a42c   10.185185      2.541134   2.541134        12.037037     3.333333                3.0                3.0   s02       1.0   Informing  Volunteering  I am a native speaker  Female  23       1.0  Selected  Selected       1.0  Selected       Selected    1.0  Volunteering has huge benefits to one's ...
+193  602da4b0977e1185851058c3    5.084746      2.555660   2.555660         6.779661     4.333333                3.0                4.0   s02       1.0   Informing  Volunteering  I am a native speaker  Female  42       1.0  Selected  Selected       1.0  Selected       Selected    1.0  I believe that volunteering, whether it ...
+294  5bc690392885710001a0bb76   12.000000      2.271395   2.271395        15.000000     5.666667                5.0                5.0   s02       0.0  Mobilizing  Volunteering  I am a native speaker  Female  56       1.0  Selected  Selected       1.0  Selected       Selected    1.0  Do you have some spare time? You would l...
+#+end_example
+:END:
+** Check
+#+begin_src jupyter-python :async yes
+df0s0.condR.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+condR
+Express thoughts    279
+Encourage           248
+Raise awarness        0
+Name: count, dtype: int64
+#+end_example
+* Check
+#+begin_src jupyter-python :async yes
+df0s0.study.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+study
+s00    527
+Name: count, dtype: int64
+#+end_example
+
+* Check
+#+begin_src jupyter-python :async yes
+df0s1.study.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+study
+s01    445
+Name: count, dtype: int64
+#+end_example
+
+* Check
+#+begin_src jupyter-python :async yes
+df0s0.context.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+context
+Environment     179
+Volunteering    176
+Voting          172
+Name: count, dtype: int64
+#+end_example
+
+* Check
+#+begin_src jupyter-python :async yes
+df0s1.context.value_counts(dropna=False)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+context
+Volunteering    264
+Environment     181
+Name: count, dtype: int64
+#+end_example
+
+
+** Merge CAUTION WARNING ALSO DROP
+#+begin_src jupyter-python :async yes
+df0 = pd.concat([df0s0, df0s1, df0s2], axis=0, ignore_index=True)
+log0.info(f"{df0.shape = }")
+map0 = {
+    "Mobilizing": "encourage",
+    "encourage": "encourage",
+    "Informing": "inform",
+    "inform": "inform",
+    "Express thoughts": "inform",
+    "Encourage": "encourage"
+
+}
+
+df0["condR"] = df0.condR.map(map0)
+
+# df0 = df0[df0.study=="s01"]
+studies = ["s00", "s01"]
+df0 = df0[df0.study.isin(studies)]
+
+log0.info(f"{df0s0.shape = }")
+log0.info(f"{df0s1.shape = }")
+log0.info(f"{df0s2.shape = }")
+log0.info(f"{df0.shape = }")
+
+disp_df(df0.sample(n=4).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df0.shape = (1311, 23)
+I: df0s0.shape = (527, 15)
+I: df0s1.shape = (445, 23)
+I: df0s2.shape = (339, 23)
+I: df0.shape = (972, 23)
+#+end_example
+#+begin_example
+                          id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study         condition       context  gender age                                         text      condR                english  was_good  filter_1 filter_2  filter_3  filter_4 filter_general  check
+141  6148e1e0c1a60baf79c41d59   11.607143      2.461176   2.461176         4.464286     3.000000                2.0                1.0   s00  Express thoughts   Environment  Female  34  Nature is a beautiful and important part...     inform                    NaN       NaN       NaN      NaN       NaN       NaN            NaN    NaN
+500  5b6362cefaf7d30001e379e7    5.555556      2.336250   2.336250        10.000000     4.000000                4.0                4.0   s00  Express thoughts        Voting    Male  22  Citizenship is a privilege, not a right....     inform                    NaN       NaN       NaN      NaN       NaN       NaN            NaN    NaN
+569  613cbb902faa23195794ffb2    7.857143      2.600781   2.600781         4.285714     5.000000                4.0                3.0   s01         Encourage   Environment  Female  45  Come and join us this weekend for our mo...  encourage                    NaN       1.0  Selected      1.0       1.0       NaN       Selected    1.0
+782  6045b4e0d74c0a6f16a3135e    2.857143      2.318842   2.318842        13.333333     6.666667                7.0                6.0   s01         Encourage  Volunteering  Female  40  Is your passion giving back to a worthy ...  encourage  I am a native speaker       1.0  Selected      1.0       1.0  Selected       Selected    1.0
+#+end_example
+:END:
+** Checkups
+#+begin_src jupyter-python :async yes
+disp_df(df0.condition.value_counts(dropna=False))
+disp_df(df0.condR.value_counts(dropna=False))
+disp_df(df0.context.value_counts(dropna=False))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+condition
+Express thoughts    493
+Encourage           479
+Name: count, dtype: int64
+#+end_example
+#+begin_example
+condR
+inform       493
+encourage    479
+Name: count, dtype: int64
+#+end_example
+#+begin_example
+context
+Volunteering    440
+Environment     360
+Voting          172
+Name: count, dtype: int64
+#+end_example
+:END:
+* SpaCy
+** prod: Imports
+#+begin_src jupyter-python :async yes
+import spacy
+from spacy.tokens import Doc, Span, Token
+from spacy.tokens.underscore import Underscore
+from dframcy import DframCy
+from nvm.aux_spacy import get_doc_count_of_dict_items_component
+from nvm.aux_spacy import get_doc_basic_metrics_component
+from nvm.aux_spacy import get_doc_word_count_component
+# from nvm.aux_spacy import doc_pron_count_component
+# from nvm.aux_spacy import doc_POS_count_as_dict_component
+# from nvm.aux_spacy import doc_TAG_count_as_dict_component
+from nvm.aux_spacy import get_doc_sentences_as_list_component
+# from nvm.aux_spacy.factories import doc_big2a_ag_count_component
+
+from nvm.aux_spacy.data.PennebakerEtAl2015a import liwc_dict
+from nvm.aux_spacy.data.NicolasEtAl2019a import nico_dict
+from nvm.aux_spacy.data.PietraszkiewiczEtAl2019a import big2_dict
+from nvm.aux_spacy.data.PietraszkiewiczEtAl2019a import big2_liwc_dict
+from nvm.aux_spacy import get_doc_summary_dict_component
+# from nvm.aux_spacy.concreteness import concr_component
+
+# from wormwood.aux_spacy.data_gen_inq import gen_inq_lcm_dict
+# from wormwood.aux_spacy.data_gen_inq import gen_inq_cat_dict
+# from wormwood.aux_spacy.data_liwc import liwc_dict
+
+# from wormwood.aux_spacy.data_gaucher import gaucher_dict
+# from wormwood.aux_spacy.data_madera import madera_dict
+
+Underscore.doc_extensions = {}
+Underscore.span_extensions = {}
+Underscore.token_extensions = {}
+
+log0.info("DONE: spacy imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: spacy imports
+
+** prod: Setup NLP
+#+begin_src jupyter-python :async yes
+nlp = spacy.load("en_core_web_sm")
+# nlp = spacy.load("en_core_web_lg")
+
+nlp.tokenizer.add_special_case("cannot", [{spacy.symbols.ORTH: "cannot"}])
+if not Doc.has_extension("index0"):
+    Doc.set_extension("index0", default=None)
+
+# config1 = dict(dict0=liwc_dict)
+config2 = dict(dict0=big2_dict)
+# config3 = dict(
+#     dict0={key0: gen_inq_lcm_dict[key0] for key0 in ["IAV", "DAV", "SV"]},
+#     pos=["VERB"])
+
+# config4 = dict(
+#     dict0={key0: gen_inq_lcm_dict[key0] for key0 in ["IPadj", "IndAdj"]},
+#     pos=["ADJ"])
+
+# config5 = dict(dict0=gaucher_dict)
+# config6 = dict(dict0=madera_dict)
+config7 = dict(dict0=nico_dict)
+# config8 = dict(dict0=big2_liwc_dict)
+# config9 = dict(dict0=gen_inq_cat_dict)
+
+nlp.add_pipe("get_doc_word_count", "WC")
+# nlp.add_pipe("doc_pron_count", "PC")
+nlp.add_pipe("get_doc_sentences_as_list", "SENTS")
+nlp.add_pipe("get_doc_basic_metrics", "BASIC")
+# nlp.add_pipe("doc_big2a_ag_count", "big2a_ag")
+# nlp.add_pipe("doc_POS_count_as_dict", "POS")
+# nlp.add_pipe("doc_TAG_count_as_dict", "TAG")
+nlp.add_pipe("get_doc_count_of_dict_items", "big2", config=config2)
+# nlp.add_pipe("get_doc_count_of_dict_items", "lcm0", config=config3)
+# nlp.add_pipe("get_doc_count_of_dict_items", "lcm1", config=config4)
+
+# nlp.add_pipe("get_doc_count_of_dict_items", "gaucher", config=config5)
+# nlp.add_pipe("get_doc_count_of_dict_items", "madera", config=config6)
+nlp.add_pipe("get_doc_count_of_dict_items", "nico", config=config7)
+# nlp.add_pipe("get_doc_count_of_dict_items", "gen_inq_cats", config=config9)
+# nlp.add_pipe("get_doc_count_of_dict_items", "big2_liwc", config=config8)
+
+# nlp.add_pipe("get_doc_count_of_dict_items", "liwc", config=config1)
+
+# nlp.add_pipe("concr", "CONCR")
+
+nlp.add_pipe("get_doc_summary_dict", "SUMMARY")  # CAUTION: This should be the last one TODO FIXME add parameter as well
+
+log0.info("DONE: nlp setup")
+#+end_src
+
+#+RESULTS:
+: I: DONE: nlp setup
+
+** prod: Checkup
+#+begin_src jupyter-python :async yes
+tok_exts = list(Underscore.token_extensions.keys())
+spn_exts = list(Underscore.span_extensions.keys())
+doc_exts = list(Underscore.doc_extensions.keys())
+
+log0.info(f"{doc_exts = }")
+log0.info(f"{spn_exts = }")
+log0.info(f"{tok_exts = }")
+log0.info(f"{nlp.pipe_names = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: doc_exts = ['index0', 'word_count', 'sents', 'WORD_count', 'NOUN_count', 'ADJ_count', 'VERB_count', 'VERB_count_without_be_and_have', 'VB_count', 'VB_count_without_be_and_have', 'JJ_count', 'JJRs_count', 'JJSs_count', 'count_of_is_big2c_agen_from_big2', 'count_of_is_big2a_agen_from_big2', 'count_of_is_big2a_comm_from_big2', 'count_of_is_big2b_agen_from_big2', 'count_of_is_big2b_comm_from_big2', 'count_of_is_nico_full_ability_posit_from_nico', 'count_of_is_nico_full_status_negat_from_nico', 'count_of_is_nico_seed_ability_negat_from_nico', 'count_of_is_nico_full_agency_posit_from_nico', 'count_of_is_nico_seed_agency_posit_from_nico', 'count_of_is_nico_seed_agency_negat_from_nico', 'count_of_is_nico_full_ability_negat_from_nico', 'count_of_is_nico_seed_ability_posit_from_nico', 'count_of_is_nico_full_agency_negat_from_nico', 'count_of_is_nico_full_status_posit_from_nico', 'count_of_is_nico_seed_status_negat_from_nico', 'count_of_is_nico_seed_status_posit_from_nico', 'SUMMARY']
+I: spn_exts = []
+I: tok_exts = ['is_VB', 'is_VB_without_be_and_have', 'is_big2c_agen_from_big2', 'is_big2a_agen_from_big2', 'is_big2a_comm_from_big2', 'is_big2b_agen_from_big2', 'is_big2b_comm_from_big2', 'is_nico_full_ability_posit_from_nico', 'is_nico_full_status_negat_from_nico', 'is_nico_seed_ability_negat_from_nico', 'is_nico_full_agency_posit_from_nico', 'is_nico_seed_agency_posit_from_nico', 'is_nico_seed_agency_negat_from_nico', 'is_nico_full_ability_negat_from_nico', 'is_nico_seed_ability_posit_from_nico', 'is_nico_full_agency_negat_from_nico', 'is_nico_full_status_posit_from_nico', 'is_nico_seed_status_negat_from_nico', 'is_nico_seed_status_posit_from_nico']
+I: nlp.pipe_names = ['tok2vec', 'tagger', 'parser', 'senter', 'attribute_ruler', 'lemmatizer', 'ner', 'WC', 'SENTS', 'BASIC', 'big2', 'nico', 'SUMMARY']
+#+end_example
+
+** prod: Checkup
+#+begin_src jupyter-python :async yes
+for name0 in nlp.pipe_names:
+    print(f"    \"{name0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "tok2vec",
+    "tagger",
+    "parser",
+    "senter",
+    "attribute_ruler",
+    "lemmatizer",
+    "ner",
+    "WC",
+    "SENTS",
+    "BASIC",
+    "big2",
+    "nico",
+    "SUMMARY",
+#+end_example
+
+** prod: Checkup
+#+begin_src jupyter-python :async yes
+for ext0 in doc_exts:
+    print(f"    \"{ext0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "index0",
+    "word_count",
+    "sents",
+    "WORD_count",
+    "NOUN_count",
+    "ADJ_count",
+    "VERB_count",
+    "VERB_count_without_be_and_have",
+    "VB_count",
+    "VB_count_without_be_and_have",
+    "JJ_count",
+    "JJRs_count",
+    "JJSs_count",
+    "count_of_is_big2c_agen_from_big2",
+    "count_of_is_big2a_agen_from_big2",
+    "count_of_is_big2a_comm_from_big2",
+    "count_of_is_big2b_agen_from_big2",
+    "count_of_is_big2b_comm_from_big2",
+    "count_of_is_nico_full_ability_posit_from_nico",
+    "count_of_is_nico_full_status_negat_from_nico",
+    "count_of_is_nico_seed_ability_negat_from_nico",
+    "count_of_is_nico_full_agency_posit_from_nico",
+    "count_of_is_nico_seed_agency_posit_from_nico",
+    "count_of_is_nico_seed_agency_negat_from_nico",
+    "count_of_is_nico_full_ability_negat_from_nico",
+    "count_of_is_nico_seed_ability_posit_from_nico",
+    "count_of_is_nico_full_agency_negat_from_nico",
+    "count_of_is_nico_full_status_posit_from_nico",
+    "count_of_is_nico_seed_status_negat_from_nico",
+    "count_of_is_nico_seed_status_posit_from_nico",
+    "SUMMARY",
+#+end_example
+
+* Process
+** prod: Prepare DOCS dictionary and list
+#+begin_src jupyter-python :async yes
+text_field = "text"
+
+assert df0.index.is_unique, "Dataframe index must be unique before dictionary creation!"
+txt_dict = df0[text_field].to_dict()
+txt_list = [[val0, {"index0": key0}] for key0, val0 in txt_dict.items()]
+assert len(df0) == len(txt_list)
+assert len(df0) == len(txt_dict)
+
+log0.info(f"{len(df0) = }")
+log0.info(f"{len(txt_dict) = }")
+log0.info(f"{len(txt_list) = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: len(df0) = 972
+I: len(txt_dict) = 972
+I: len(txt_list) = 972
+#+end_example
+** test: Checkup
+#+begin_src jupyter-python :async yes
+idx0 = 0
+idx0 = 3
+log0.info(f"{txt_list[idx0] = }")
+
+samp_size = 4
+for item0 in random.sample(txt_dict.items(), samp_size):
+    log0.info("- {}".format(item0))
+
+samp_size = 4
+for item0 in random.sample(txt_list, samp_size):
+    log0.info("- {}".format(item0))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: txt_list[idx0] = ["With global warming a major concern, its important that we (globally) take action together to help combat the effects. When we all make even small sacrifices we can make a big change! We can all take simple actions such as: recycling, carpooling (or limiting our emissions), conserving our water and electricity. Of course, there are also lots of options for larger scale interventions. One might be interested in joining or starting advocacy groups. These groups can advocate for policy change, spread the word about changes that we can make and ensure that we all have accurate information about the state of our world. It took all of us to get our world to where it is today, so its important that we ALL participate in countering some of the effects we've caused. We all hope for a healthy earth for future generations.", {'index0': 3}]
+I: - (905, 'Volunteer work can be beneficial for both mental and physical health. Should you decide to participate, you can escape the bonds of capitalism for as much time as you want because you are in control. There are a multitude of organisations out there who would love to have you! You can find an area that interests you and develop more skills. You could also sign up to volunteer with some of your friends and use it as an opportunity to socialise while also helping others achieving their goals. If you struggle with executive function, having a few hours out of your week scheduled for volunteering can help you balance your routine and ensure that for those few hours you have helped others. Yay volunteering! Participate or feel bad!')
+I: - (226, "Charity is very important and in this day and age at its most critical point. As the population grows more people will grow up impoverished or grow up with diseases and cancers that are currently uncureable or unable to afford care. Charity can help solve all of these things, Charity can fund research to make currently incurable diseases more bearable to live with, or cure it altogether. Charity can help fund the care and medical needs of those who can't afford it on their own. Charity also helps fund shelters for animals, in a world of humans its hard for animals to live in a concrete jungle without support, they need help just as much as any human.")
+I: - (587, 'It is vital that we act now to save our planet. We cannot rely on big companies to do their part so we as a collective set of individuals should al do what we can to shame the large companies. Look at how many food companies are selling vegan/ vegetarian options these days.(something unheard of a few years ago) companies have to adapt to what the consumer wants and if we act together then the companies will have no choice to rethink their plastic use; wasteful processes;and fast fashion. We need to all reduce, reuse, recycle where possible')
+I: - (643, 'Environmental action is extremely important for all individuals to not only consider but to do their part in assisting in. Wether it be simple tasks such as being more mindful in purchasing single use plastics or recycling in your home or workplace. Or going further by educating yourself and participating in environmental events such as rallies or beach pick ups. There are multiple ways in which each individual can do their part in helping the environment and it is important that each of us are able to do this. Especially when it comes to covid 19 - disposing of single use masks in the proper way can assist a small amount in assisting the environment and helping to save animals who can quite easily come into distress with masks being polluted to land fills and into the oceans. Simple measures by each individual can be a massive help in assisting to keep the environment clean but also reducing pollution to the environment.')
+I: - ["Often we do not think enough about those in need, in today's world we focus mostly on ourselves. Extending an act of kindness to a stranger or helping those who are in need is how our society should operate, for the greater good of everyone. Charities and other non profit organisations are a great way to deliver structured support to those in need. So many individuals, groups, organisations and families depend on charity to survive. Your charitable support and donations help improve the lives of people all over the world. Charity provides the opportunity to improve standard of living, build vibrant and stronger communities or save cultural artefacts that matter to us. Charity is an important selfless act of giving that reminds everyone that they are not alone.", {'index0': 190}]
+I: - ["Fresh air and sunshine are hard to do away with. Laughter is as good a medicine as listening to the murmur of water or watching the clouds float across the sky. The best way to surf through this complex life is to adopt simplicity. Nature has its own music ,the singing birds, sound of leaves …. If not for nature then we wouldn't be alive. The most important thing given by nature for survival is oxygen and the entire system of respiration is being regulated by nature. The oxygen that we inhale is given by the trees and the carbon dioxide we exhale is getting absorbed by trees.", {'index0': 170}]
+I: - ['We have a moral obligation to protect the environment. Help us to promote the sustainable development of Planet Earth not for you, but for your children, for their grandchildren and for the many generations of your family still to come. It was clear to me from a young age, that change starts with youth, the biggest changes can be made from those it will affect the longest. Our youth are key to creating a sustainable future - before we can talk about conservation, we must talk about education. Young people can do a lot in their community and at home, especially in persuading others to change habits and think differently. Whether it is looking after and appreciating their local green spaces, encouraging friends and family to make different shopping choices or choosing a commute with less negative impact on the environment. Let’s show the youth of today, it isn’t just them that can pull together for a greener future! It may only take one person to promote environment awareness, but it takes everyone to make a difference. We aren’t all Greta Thunberg but we can all certainly play our part. Talk to your neighbours, co-workers, friends, family, local businesses and collaborate as a community to make a positive change. If every community can make a small impact, the world can make a VERY BIG change! Promoting environmental awareness is a crucial part of being an environmental ambassador and there are plenty of ways to be green: · Take a ‘green team walk’ with the children. Take gloves and bag and bask in the glow of cleaning your neighbourhood! · Recycle. Recycle. Recycle! If everyone can recycle efficiently at home, it makes the process easier for everyone! · Don’t just take out the trash, can you compost it? How much of your rubbish can you turn into fertile soil for the garden? You’d be surprised! · Plant a tree! Not a forest in your garden… but even just a small tree is a massive return to the Planet for all we take from it! · Instead of driving to work or school, take the bus, carpool, walk, or ride your bike to work. Nobody likes a gas-guzzler! · Ditch the carrier bags, re-cycling is more than giving new life to trash. Re-use shopping bags, glass bottles ditch the disposables! · Support local businesses and farmers. For the world to go green these are just small changes we can make at home, male one change today and make your pledge to our planet. The future of our children should be at the heart of everything we do to leave our planet in a better state then we inherited it. It is crucial we understand the fragility of our environment and the BIG and SMALL ways we can protect it. Climate change is here. As its impact intensifies over time, it is the children and young people of today who will face the worst effects. Let’s start today, educating the youth and building greener communities for a greener future for our children. We are the last generation that can end climate change. We can and we will.', {'index0': 702}]
+I: - ["Voting is so important. Why wouldn't you vote? Sure, the party you support may not win but when you're moaning about taxes, the police, lockdowns, the education system etc. Then, if you don't get out and vote then you don't have any right to complain about things. Voting for the correct party could help so many people its madness. I cant stress enough how important it is too vote and the fact that we get to vote is an amazing freedom we have in this country. Many other countries don't allow people to vote and have no say on how their country is ran. I believe voting has such a massive effect on the country, other people, communities and everyone you know. Also, if I may add - don't vote Tory", {'index0': 373}]
+#+end_example
+
+** prod: COMPUTE (NLP.PIPE)
+#+begin_src jupyter-python :async yes
+log0.info("Starting SpaCy NLP pipeline")
+time_t0 = time.perf_counter()
+
+doc_list = list(tqdm(
+    nlp.pipe(txt_list, as_tuples=True),
+    desc="DOC_LIST",
+    total=len(txt_list),
+    leave=True,
+    disable=False,      # CONSIDER: turning that off for Emacs
+    mininterval=0.250,
+))
+time_t1 = time.perf_counter()
+time_d1 = time_t1-time_t0
+log0.info(f"DONE: processed: {len(doc_list)} documents.")
+log0.info(f"DONE: time elapsed: {hf.format_timespan(time_d1)}.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: Starting SpaCy NLP pipeline
+DOC_LIST: 100% 972/972 [00:17<00:00, 54.15it/s]
+I: DONE: processed: 972 documents.
+I: DONE: time elapsed: 17.95 seconds.
+#+end_example
+
+** test: Checkup DOC example
+#+begin_src jupyter-python :async yes
+idx0 = 123
+idx0 = 42
+idx0 = 0
+idx0 = 12
+doc0, ctx0 = doc_list[idx0]
+log0.info(f"{doc0._.index0 = }")
+log0.info(f"{doc0._.WORD_count = }")
+# log0.info(f"{doc0._.concr_mean = }")
+log0.info(f"{doc0.text = }")
+log0.info(f"{ctx0 = }")
+for key0, val0 in doc0._.SUMMARY.items():
+    log0.info(f"- {key0}: {val0}")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: doc0._.index0 = None
+I: doc0._.WORD_count = 116
+I: doc0.text = 'We all have a responsibility to participate in environmental action. You may have seen protests on the motorways, and disagreed with the actions. However, although causing inconvenience is not the best way, their intentions are good. Humans are the reason for the state of the environment at current times. Animals and other species do no harm, yet humans have made a terrible impact, and continue to do so every day. The environment gives us as humans so much joy, and there is so much to be thankful for. So, isn’t it up to us to put right what we have done wrong? It’s time for us to give back, and protect our children and future generations.'
+I: ctx0 = {'index0': 12}
+I: - index0: None
+I: - word_count: 116
+I: - sents: ['We all have a responsibility to participate in environmental action.', 'You may have seen protests on the motorways, and disagreed with the actions.', 'However, although causing inconvenience is not the best way, their intentions are good.', 'Humans are the reason for the state of the environment at current times.', 'Animals and other species do no harm, yet humans have made a terrible impact, and continue to do so every day.', 'The environment gives us as humans so much joy, and there is so much to be thankful for.', 'So, isn’t it up to us to put right what we have done wrong?', 'It’s time for us to give back, and protect our children and future generations.']
+I: - WORD_count: 116
+I: - NOUN_count: 25
+I: - ADJ_count: 10
+I: - VERB_count: 15
+I: - VERB_count_without_be_and_have: 13
+I: - VB_count: 8
+I: - VB_count_without_be_and_have: 6
+I: - JJ_count: 9
+I: - JJRs_count: 0
+I: - JJSs_count: 1
+I: - count_of_is_big2c_agen_from_big2: 6
+I: - count_of_is_big2a_agen_from_big2: 7
+I: - count_of_is_big2a_comm_from_big2: 11
+I: - count_of_is_big2b_agen_from_big2: 1
+I: - count_of_is_big2b_comm_from_big2: 2
+I: - count_of_is_nico_full_ability_posit_from_nico: 8
+I: - count_of_is_nico_full_status_negat_from_nico: 0
+I: - count_of_is_nico_seed_ability_negat_from_nico: 0
+I: - count_of_is_nico_full_agency_posit_from_nico: 2
+I: - count_of_is_nico_seed_agency_posit_from_nico: 0
+I: - count_of_is_nico_seed_agency_negat_from_nico: 0
+I: - count_of_is_nico_full_ability_negat_from_nico: 1
+I: - count_of_is_nico_seed_ability_posit_from_nico: 0
+I: - count_of_is_nico_full_agency_negat_from_nico: 0
+I: - count_of_is_nico_full_status_posit_from_nico: 1
+I: - count_of_is_nico_seed_status_negat_from_nico: 0
+I: - count_of_is_nico_seed_status_posit_from_nico: 0
+#+end_example
+
+** prod: Produce output dictionary
+#+begin_src jupyter-python :async yes
+log0.info("Adding index0 to DOC)")
+time_t0 = time.perf_counter()
+
+out_dict = {}
+for doc0, ctx0 in tqdm(
+        doc_list,
+        desc="OUT_DICT",
+        total=len(doc_list),
+        leave=True,
+        disable=False,
+        mininterval=0.50):
+    index0 = ctx0["index0"]
+    out_dict[index0] = doc0._.SUMMARY
+    out_dict[index0]["index0"] = index0
+    out_dict[index0] = {f"spacy_{key}": val for key, val in out_dict[index0].items()}
+    # out_dict[index0]["text0"] = str(doc0.text)
+
+time_t1 = time.perf_counter()
+time_d1 = time_t1-time_t0
+log0.info(f"DONE: processed: {len(out_dict)} documents.")
+log0.info(f"DONE: out_dict time elapsed: {hf.format_timespan(time_d1)}.")
+
+log0.info(f"TYPE: {type(out_dict)}.")
+log0.info(f"TYPE: {type(out_dict[11])}.")
+log0.info(f"EXAMPLE: {out_dict[11]}.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: Adding index0 to DOC)
+OUT_DICT: 100% 972/972 [00:00<00:00, 173299.19it/s]
+I: DONE: processed: 972 documents.
+I: DONE: out_dict time elapsed: 0.01 seconds.
+I: TYPE: <class 'dict'>.
+I: TYPE: <class 'dict'>.
+I: EXAMPLE: {'spacy_index0': 11, 'spacy_word_count': 113, 'spacy_sents': ['We all have taken part in negatively effecting the environment.', 'No one is asking you to change everything.', 'But if we all start small, make little adjustments and improvements along the way, we will all be helping, without even noticing!', 'Recycle, don’t liter, all the things we learnt in grade school.', 'Start there.', 'Helping the environment can encourage you to make healthier choices.', 'Ride your bike, go for a walk, ride share and spend more time with your friends, all things that are proven to improve the health of individuals.', 'We talk about fighting for those who can’t fight for themselves, let’s do the same for the environment.', 'All while, also helping yourselves'], 'spacy_WORD_count': 113, 'spacy_NOUN_count': 23, 'spacy_ADJ_count': 5, 'spacy_VERB_count': 26, 'spacy_VERB_count_without_be_and_have': 26, 'spacy_VB_count': 14, 'spacy_VB_count_without_be_and_have': 13, 'spacy_JJ_count': 3, 'spacy_JJRs_count': 2, 'spacy_JJSs_count': 0, 'spacy_count_of_is_big2c_agen_from_big2': 7, 'spacy_count_of_is_big2a_agen_from_big2': 12, 'spacy_count_of_is_big2a_comm_from_big2': 12, 'spacy_count_of_is_big2b_agen_from_big2': 0, 'spacy_count_of_is_big2b_comm_from_big2': 6, 'spacy_count_of_is_nico_full_ability_posit_from_nico': 8, 'spacy_count_of_is_nico_full_status_negat_from_nico': 2, 'spacy_count_of_is_nico_seed_ability_negat_from_nico': 0, 'spacy_count_of_is_nico_full_agency_posit_from_nico': 3, 'spacy_count_of_is_nico_seed_agency_posit_from_nico': 0, 'spacy_count_of_is_nico_seed_agency_negat_from_nico': 0, 'spacy_count_of_is_nico_full_ability_negat_from_nico': 0, 'spacy_count_of_is_nico_seed_ability_posit_from_nico': 0, 'spacy_count_of_is_nico_full_agency_negat_from_nico': 0, 'spacy_count_of_is_nico_full_status_posit_from_nico': 0, 'spacy_count_of_is_nico_seed_status_negat_from_nico': 0, 'spacy_count_of_is_nico_seed_status_posit_from_nico': 0}.
+#+end_example
+
+** prod: Convert to dataframe
+#+begin_src jupyter-python :async yes
+df1 = pd.DataFrame.from_dict(out_dict, orient="index")
+# disp_df(df1)
+del out_dict
+log0.info("DONE")
+log0.info(f"{df1.shape = }")
+disp_df(df1.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: DONE
+I: df1.shape = (972, 30)
+#+end_example
+#+begin_example
+   spacy_index0  spacy_word_count                                  spacy_sents  spacy_WORD_count  spacy_NOUN_count  spacy_ADJ_count  spacy_VERB_count  spacy_VERB_count_without_be_and_have  spacy_VB_count  spacy_VB_count_without_be_and_have  spacy_JJ_count  spacy_JJRs_count  spacy_JJSs_count  spacy_count_of_is_big2c_agen_from_big2  spacy_count_of_is_big2a_agen_from_big2  spacy_count_of_is_big2a_comm_from_big2  spacy_count_of_is_big2b_agen_from_big2  spacy_count_of_is_big2b_comm_from_big2  spacy_count_of_is_nico_full_ability_posit_from_nico  spacy_count_of_is_nico_full_status_negat_from_nico  spacy_count_of_is_nico_seed_ability_negat_from_nico  spacy_count_of_is_nico_full_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_negat_from_nico  spacy_count_of_is_nico_full_ability_negat_from_nico  spacy_count_of_is_nico_seed_ability_posit_from_nico  spacy_count_of_is_nico_full_agency_negat_from_nico  spacy_count_of_is_nico_full_status_posit_from_nico  spacy_count_of_is_nico_seed_status_negat_from_nico  spacy_count_of_is_nico_seed_status_posit_from_nico
+0             0                90  [Your Planet Needs You!, You have heard ...                90                21                3                16                                    16               8                                   8               3                 0                 0                                       5                                      13                                       8                                       0                                       2                                            4                                                    1                                                   0                                                    3                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+1             1                98  [Your area needs you!, Have you ever not...                98                17                4                18                                    17              11                                  11               3                 1                 0                                       7                                      17                                       4                                       0                                       2                                            7                                                    4                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   1                                                   0                                                   0
+2             2               109  [With how climate change is progressing,...               109                25                4                19                                    17              15                                  12               4                 0                 0                                       5                                       7                                       9                                       0                                       2                                            5                                                    2                                                   0                                                    3                                                   0                                                   0                                                   1                                                    0                                                    0                                                   1                                                   0                                                   0
+3             3               142  [With global warming a major concern, it...               142                32               12                22                                    20              10                                   9              11                 1                 0                                       9                                       9                                      20                                       1                                       3                                            7                                                    1                                                   0                                                    4                                                   0                                                   0                                                   1                                                    0                                                    0                                                   4                                                   0                                                   2
+4             4               133  [Why should you participate in environme...               133                29                6                24                                    21              15                                  11               6                 0                 0                                      20                                      33                                       7                                       1                                       1                                           15                                                    3                                                   0                                                    5                                                   0                                                   0                                                   0                                                    0                                                    0                                                   2                                                   0                                                   0
+5             5               106  [Why should you help ?, It is important ...               106                19                8                19                                    18              11                                   9               6                 2                 0                                       9                                      13                                      16                                       1                                       5                                            3                                                    4                                                   0                                                    5                                                   0                                                   0                                                   0                                                    0                                                    0                                                   3                                                   0                                                   1
+6             6               287  [WHAT’S THE UK DOING ABOUT CLIMATE CHANG...               287                71               28                38                                    36              17                                  14              27                 1                 0                                      13                                      13                                       7                                       2                                       0                                           14                                                    4                                                   0                                                   12                                                   0                                                   0                                                   1                                                    1                                                    1                                                   6                                                   1                                                   2
+7             7               243  [We only get one Earth and if we carry o...               243                44               19                41                                    37              21                                  19              17                 2                 0                                      21                                      38                                      14                                       5                                       5                                           20                                                    1                                                   0                                                    6                                                   0                                                   0                                                   0                                                    2                                                    0                                                   1                                                   0                                                   0
+#+end_example
+:END:
+** prod: Merge source and spacified DataFrames
+#+begin_src jupyter-python :async yes
+df2 = df0.copy()
+df2 = df2.join(df1, lsuffix="__OLD", rsuffix="")
+log0.info("DONE: merge")
+log0.info(f"{df2.shape = }")
+disp_df(df2.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: DONE: merge
+I: df2.shape = (972, 53)
+#+end_example
+#+begin_example
+                        id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study  condition      context  gender age                                         text      condR english  was_good filter_1 filter_2  filter_3 filter_4 filter_general  check  spacy_index0  spacy_word_count                                  spacy_sents  spacy_WORD_count  spacy_NOUN_count  spacy_ADJ_count  spacy_VERB_count  spacy_VERB_count_without_be_and_have  spacy_VB_count  spacy_VB_count_without_be_and_have  spacy_JJ_count  spacy_JJRs_count  spacy_JJSs_count  spacy_count_of_is_big2c_agen_from_big2  spacy_count_of_is_big2a_agen_from_big2  spacy_count_of_is_big2a_comm_from_big2  spacy_count_of_is_big2b_agen_from_big2  spacy_count_of_is_big2b_comm_from_big2  spacy_count_of_is_nico_full_ability_posit_from_nico  spacy_count_of_is_nico_full_status_negat_from_nico  spacy_count_of_is_nico_seed_ability_negat_from_nico  spacy_count_of_is_nico_full_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_negat_from_nico  spacy_count_of_is_nico_full_ability_negat_from_nico  spacy_count_of_is_nico_seed_ability_posit_from_nico  spacy_count_of_is_nico_full_agency_negat_from_nico  spacy_count_of_is_nico_full_status_posit_from_nico  spacy_count_of_is_nico_seed_status_negat_from_nico  spacy_count_of_is_nico_seed_status_posit_from_nico
+0  5fba3794574acb9a11edfaa4    8.888889      2.553735   2.553735        14.444444     5.333333                3.0                5.0   s00  Encourage  Environment   Other  42  Your Planet Needs You! You have heard th...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             0                90  [Your Planet Needs You!, You have heard ...                90                21                3                16                                    16               8                                   8               3                 0                 0                                       5                                      13                                       8                                       0                                       2                                            4                                                    1                                                   0                                                    3                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+1  61489484b2fd0132f6f4ac7c   13.265306      2.766989   2.766989        17.346939     6.333333                4.0                4.0   s00  Encourage  Environment  Female  22  Your area needs you! Have you ever notic...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             1                98  [Your area needs you!, Have you ever not...                98                17                4                18                                    17              11                                  11               3                 1                 0                                       7                                      17                                       4                                       0                                       2                                            7                                                    4                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   1                                                   0                                                   0
+2  6146f18b1224ce3923c39180   11.009174      2.535400   2.535400         6.422018     5.000000                4.0                4.0   s00  Encourage  Environment  Female  32  With how climate change is progressing, ...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             2               109  [With how climate change is progressing,...               109                25                4                19                                    17              15                                  12               4                 0                 0                                       5                                       7                                       9                                       0                                       2                                            5                                                    2                                                   0                                                    3                                                   0                                                   0                                                   1                                                    0                                                    0                                                   1                                                   0                                                   0
+3  61075428e2a27f4cf8c8fb83    6.338028      2.472362   2.472362         6.338028     5.000000                4.0                4.0   s00  Encourage  Environment  Female  36  With global warming a major concern, its...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             3               142  [With global warming a major concern, it...               142                32               12                22                                    20              10                                   9              11                 1                 0                                       9                                       9                                      20                                       1                                       3                                            7                                                    1                                                   0                                                    4                                                   0                                                   0                                                   1                                                    0                                                    0                                                   4                                                   0                                                   2
+4  61482783dcf57221d3738f8d    8.270677      2.600248   2.600248        24.060150     7.000000                7.0                4.0   s00  Encourage  Environment  Female  27  Why should you participate in environmen...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             4               133  [Why should you participate in environme...               133                29                6                24                                    21              15                                  11               6                 0                 0                                      20                                      33                                       7                                       1                                       1                                           15                                                    3                                                   0                                                    5                                                   0                                                   0                                                   0                                                    0                                                    0                                                   2                                                   0                                                   0
+5  61436eb8c5c219b4ff7fd3be    8.490566      2.487500   2.487500        12.264151     3.666667                2.0                4.0   s00  Encourage  Environment  Female  47  Why should you help ? It is important we...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             5               106  [Why should you help ?, It is important ...               106                19                8                19                                    18              11                                   9               6                 2                 0                                       9                                      13                                      16                                       1                                       5                                            3                                                    4                                                   0                                                    5                                                   0                                                   0                                                   0                                                    0                                                    0                                                   3                                                   0                                                   1
+6                LauraFirth    4.878049      2.315455   2.315455         4.529617     5.666667                6.0                4.0   s00  Encourage  Environment  Female  26  WHAT’S THE UK DOING ABOUT CLIMATE CHANGE...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             6               287  [WHAT’S THE UK DOING ABOUT CLIMATE CHANG...               287                71               28                38                                    36              17                                  14              27                 1                 0                                      13                                      13                                       7                                       2                                       0                                           14                                                    4                                                   0                                                   12                                                   0                                                   0                                                   1                                                    1                                                    1                                                   6                                                   1                                                   2
+7  614720a7da4728234747edf1    7.818930      2.612952   2.612952        15.637860     7.000000                4.0                1.0   s00  Encourage  Environment  Female  40  We only get one Earth and if we carry on...  encourage     NaN       NaN      NaN      NaN       NaN      NaN            NaN    NaN             7               243  [We only get one Earth and if we carry o...               243                44               19                41                                    37              21                                  19              17                 2                 0                                      21                                      38                                      14                                       5                                       5                                           20                                                    1                                                   0                                                    6                                                   0                                                   0                                                   0                                                    2                                                    0                                                   1                                                   0                                                   0
+#+end_example
+:END:
+** prod: Drop OLD cols
+#+begin_src jupyter-python :async yes
+log0.info(f"{df2.shape}")
+df2 = df2[df2.columns.drop(list(df2.filter(regex="spacy.*__OLD$")))]
+log0.info(f"{df2.shape}")
+for col0 in df2.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: (972, 53)
+I: (972, 53)
+    "id0",
+    "verb index",
+    "concreteness",
+    "concr raw",
+    "semantic agency",
+    "meta agency",
+    "meta concreteness",
+    "meta abstractness",
+    "study",
+    "condition",
+    "context",
+    "gender",
+    "age",
+    "text",
+    "condR",
+    "english",
+    "was_good",
+    "filter_1",
+    "filter_2",
+    "filter_3",
+    "filter_4",
+    "filter_general",
+    "check",
+    "spacy_index0",
+    "spacy_word_count",
+    "spacy_sents",
+    "spacy_WORD_count",
+    "spacy_NOUN_count",
+    "spacy_ADJ_count",
+    "spacy_VERB_count",
+    "spacy_VERB_count_without_be_and_have",
+    "spacy_VB_count",
+    "spacy_VB_count_without_be_and_have",
+    "spacy_JJ_count",
+    "spacy_JJRs_count",
+    "spacy_JJSs_count",
+    "spacy_count_of_is_big2c_agen_from_big2",
+    "spacy_count_of_is_big2a_agen_from_big2",
+    "spacy_count_of_is_big2a_comm_from_big2",
+    "spacy_count_of_is_big2b_agen_from_big2",
+    "spacy_count_of_is_big2b_comm_from_big2",
+    "spacy_count_of_is_nico_full_ability_posit_from_nico",
+    "spacy_count_of_is_nico_full_status_negat_from_nico",
+    "spacy_count_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_count_of_is_nico_full_agency_posit_from_nico",
+    "spacy_count_of_is_nico_seed_agency_posit_from_nico",
+    "spacy_count_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_count_of_is_nico_full_ability_negat_from_nico",
+    "spacy_count_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_count_of_is_nico_full_agency_negat_from_nico",
+    "spacy_count_of_is_nico_full_status_posit_from_nico",
+    "spacy_count_of_is_nico_seed_status_negat_from_nico",
+    "spacy_count_of_is_nico_seed_status_posit_from_nico",
+#+end_example
+
+** prod: Convert categorical data types to objects (important for Datasets)
+#+begin_src jupyter-python :async yes
+# df2[df2.select_dtypes(["category"]).columns] = df2.select_dtypes(["category"]).apply(lambda x: x.astype("object"))
+df2[df2.select_dtypes(["category"]).columns] = df2.select_dtypes(["category"]).apply(lambda x: x.astype(str))
+log0.info("DONE (categ to str)")
+disp_df(df2.dtypes, max_rows=500)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: DONE (categ to str)
+#+begin_example
+id0                                                     object
+verb index                                             float64
+concreteness                                           float64
+concr raw                                              float64
+semantic agency                                        float64
+meta agency                                            float64
+meta concreteness                                      float64
+meta abstractness                                      float64
+study                                                   object
+condition                                               object
+context                                                 object
+gender                                                  object
+age                                                     object
+text                                                    object
+condR                                                   object
+english                                                 object
+was_good                                               float64
+filter_1                                                object
+filter_2                                                object
+filter_3                                               float64
+filter_4                                                object
+filter_general                                          object
+check                                                  float64
+spacy_index0                                             int64
+spacy_word_count                                         int64
+spacy_sents                                             object
+spacy_WORD_count                                         int64
+spacy_NOUN_count                                         int64
+spacy_ADJ_count                                          int64
+spacy_VERB_count                                         int64
+spacy_VERB_count_without_be_and_have                     int64
+spacy_VB_count                                           int64
+spacy_VB_count_without_be_and_have                       int64
+spacy_JJ_count                                           int64
+spacy_JJRs_count                                         int64
+spacy_JJSs_count                                         int64
+spacy_count_of_is_big2c_agen_from_big2                   int64
+spacy_count_of_is_big2a_agen_from_big2                   int64
+spacy_count_of_is_big2a_comm_from_big2                   int64
+spacy_count_of_is_big2b_agen_from_big2                   int64
+spacy_count_of_is_big2b_comm_from_big2                   int64
+spacy_count_of_is_nico_full_ability_posit_from_nico      int64
+spacy_count_of_is_nico_full_status_negat_from_nico       int64
+spacy_count_of_is_nico_seed_ability_negat_from_nico      int64
+spacy_count_of_is_nico_full_agency_posit_from_nico       int64
+spacy_count_of_is_nico_seed_agency_posit_from_nico       int64
+spacy_count_of_is_nico_seed_agency_negat_from_nico       int64
+spacy_count_of_is_nico_full_ability_negat_from_nico      int64
+spacy_count_of_is_nico_seed_ability_posit_from_nico      int64
+spacy_count_of_is_nico_full_agency_negat_from_nico       int64
+spacy_count_of_is_nico_full_status_posit_from_nico       int64
+spacy_count_of_is_nico_seed_status_negat_from_nico       int64
+spacy_count_of_is_nico_seed_status_posit_from_nico       int64
+dtype: object
+#+end_example
+:END:
+
+** prod: Get means
+#+begin_src jupyter-python :async yes
+maybe_drop = False
+maybe_drop = True
+
+count_cols = [
+    col0 for col0 in df2.columns if
+    (col0.startswith("spacy_")) and \
+    ("count" in col0) and \
+    (col0!="spacy_WORD_count") and \
+    ("_as_dict" not in col0) and
+    ("votes_count" not in col0)
+]
+for col0 in count_cols:
+    log0.info(f"{col0 = }")
+    col1 = col0.replace("count", "mean")
+    df2[col1] = df2[col0]/df2["spacy_WORD_count"]
+    if maybe_drop:
+        df2.drop(columns=[col0], inplace=True)
+
+disp_cols = ["WORD_count", "spacy_mean_of_is_big2c_agen_from_big2", "spacy_mean_of_is_nico_full_status_posit_from_nico"]
+disp_df(df2.sample(n=5).sort_index(), width=4400)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: col0 = 'spacy_word_count'
+I: col0 = 'spacy_NOUN_count'
+I: col0 = 'spacy_ADJ_count'
+I: col0 = 'spacy_VERB_count'
+I: col0 = 'spacy_VERB_count_without_be_and_have'
+I: col0 = 'spacy_VB_count'
+I: col0 = 'spacy_VB_count_without_be_and_have'
+I: col0 = 'spacy_JJ_count'
+I: col0 = 'spacy_JJRs_count'
+I: col0 = 'spacy_JJSs_count'
+I: col0 = 'spacy_count_of_is_big2c_agen_from_big2'
+I: col0 = 'spacy_count_of_is_big2a_agen_from_big2'
+I: col0 = 'spacy_count_of_is_big2a_comm_from_big2'
+I: col0 = 'spacy_count_of_is_big2b_agen_from_big2'
+I: col0 = 'spacy_count_of_is_big2b_comm_from_big2'
+I: col0 = 'spacy_count_of_is_nico_full_ability_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_status_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_ability_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_agency_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_agency_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_agency_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_ability_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_ability_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_agency_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_status_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_status_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_status_posit_from_nico'
+#+end_example
+#+begin_example
+                          id0  verb index  concreteness  concr raw  semantic agency  meta agency  meta concreteness  meta abstractness study         condition       context  gender  age                                         text      condR english  was_good filter_1 filter_2  filter_3 filter_4 filter_general  check  spacy_index0                                  spacy_sents  spacy_WORD_count  spacy_word_mean  spacy_NOUN_mean  spacy_ADJ_mean  spacy_VERB_mean  spacy_VERB_mean_without_be_and_have  spacy_VB_mean  spacy_VB_mean_without_be_and_have  spacy_JJ_mean  spacy_JJRs_mean  spacy_JJSs_mean  spacy_mean_of_is_big2c_agen_from_big2  spacy_mean_of_is_big2a_agen_from_big2  spacy_mean_of_is_big2a_comm_from_big2  spacy_mean_of_is_big2b_agen_from_big2  spacy_mean_of_is_big2b_comm_from_big2  spacy_mean_of_is_nico_full_ability_posit_from_nico  spacy_mean_of_is_nico_full_status_negat_from_nico  spacy_mean_of_is_nico_seed_ability_negat_from_nico  spacy_mean_of_is_nico_full_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_negat_from_nico  spacy_mean_of_is_nico_full_ability_negat_from_nico  spacy_mean_of_is_nico_seed_ability_posit_from_nico  spacy_mean_of_is_nico_full_agency_negat_from_nico  spacy_mean_of_is_nico_full_status_posit_from_nico  spacy_mean_of_is_nico_seed_status_negat_from_nico  spacy_mean_of_is_nico_seed_status_posit_from_nico
+45   6148cf0229eaa9c434466c8b    5.747126      2.580385   2.580385        13.793103          7.0                5.0                6.0   s00         Encourage   Environment  Female   28  Please participate in environment saving...  encourage     nan       NaN      nan      NaN       NaN      nan            nan    NaN            45  [Please participate in environment savin...                87              1.0         0.241379        0.068966         0.195402                             0.183908       0.080460                           0.057471       0.068966         0.000000              0.0                               0.091954                               0.137931                               0.045977                               0.011494                               0.045977                                     0.011494                                            0.000000                                                0.0                                            0.080460                                                0.0                                                0.0                                                0.0                                            0.000000                                                 0.0                                           0.011494                                                0.0                                                0.0
+206  60ff8f48909c68ae805ea2ba    3.846154      2.425203   2.425203        12.307692          3.0                3.0                2.0   s00  Express thoughts  Volunteering  Female   19  I believe that charity is an action of g...     inform     nan       NaN      nan      NaN       NaN      nan            nan    NaN           206  [I believe that charity is an action of ...               130              1.0         0.176923        0.030769         0.146154                             0.138462       0.038462                           0.030769       0.030769         0.000000              0.0                               0.084615                               0.123077                               0.084615                               0.000000                               0.038462                                     0.023077                                            0.038462                                                0.0                                            0.023077                                                0.0                                                0.0                                                0.0                                            0.000000                                                 0.0                                           0.015385                                                0.0                                                0.0
+296  5d37aa8e79f4c40001685ecb    7.929515      2.411386   2.411386         6.607930          5.0                5.0                7.0   s00         Encourage  Volunteering    Male   27  Many of us want our voices heard in toda...  encourage     nan       NaN      nan      NaN       NaN      nan            nan    NaN           296  [Many of us want our voices heard in tod...               227              1.0         0.189427        0.088106         0.176211                             0.162996       0.083700                           0.074890       0.083700         0.004405              0.0                               0.048458                               0.066079                               0.092511                               0.022026                               0.008811                                     0.066079                                            0.008811                                                0.0                                            0.008811                                                0.0                                                0.0                                                0.0                                            0.000000                                                 0.0                                           0.017621                                                0.0                                                0.0
+351  5d1b6cd832fb6a001b348fa0   14.953271      2.457041   2.457041        16.822430          6.0                7.0                4.0   s00         Encourage  Volunteering  Female   25  Volunteers needed. Do you want to help o...  encourage     nan       NaN      nan      NaN       NaN      nan            nan    NaN           351  [Volunteers needed., Do you want to help...               107              1.0         0.158879        0.093458         0.196262                             0.186916       0.158879                           0.140187       0.093458         0.000000              0.0                               0.102804                               0.168224                               0.112150                               0.009346                               0.028037                                     0.065421                                            0.037383                                                0.0                                            0.065421                                                0.0                                                0.0                                                0.0                                            0.009346                                                 0.0                                           0.000000                                                0.0                                                0.0
+524  5e3c80d18af2be072bbd60cc    1.769912      2.359533   2.359533        10.619469          4.0                3.0                6.0   s00  Express thoughts        Voting  Female  606  Anyone should be proud to be a citizen o...     inform     nan       NaN      nan      NaN       NaN      nan            nan    NaN           524  [Anyone should be proud to be a citizen ...               113              1.0         0.176991        0.070796         0.097345                             0.079646       0.070796                           0.017699       0.061947         0.008850              0.0                               0.070796                               0.106195                               0.008850                               0.026549                               0.000000                                     0.017699                                            0.000000                                                0.0                                            0.008850                                                0.0                                                0.0                                                0.0                                            0.000000                                                 0.0                                           0.008850                                                0.0                                                0.0
+#+end_example
+:END:
+** prod: Copy
+#+begin_src jupyter-python :async yes
+df8 = df2.copy()
+
+#+end_src
+
+#+RESULTS:
+
+** prod: Checkup columns
+#+begin_src jupyter-python :async yes
+log0.info(f"{df8.shape}")
+for col0 in df8.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: (972, 53)
+    "id0",
+    "verb index",
+    "concreteness",
+    "concr raw",
+    "semantic agency",
+    "meta agency",
+    "meta concreteness",
+    "meta abstractness",
+    "study",
+    "condition",
+    "context",
+    "gender",
+    "age",
+    "text",
+    "condR",
+    "english",
+    "was_good",
+    "filter_1",
+    "filter_2",
+    "filter_3",
+    "filter_4",
+    "filter_general",
+    "check",
+    "spacy_index0",
+    "spacy_sents",
+    "spacy_WORD_count",
+    "spacy_word_mean",
+    "spacy_NOUN_mean",
+    "spacy_ADJ_mean",
+    "spacy_VERB_mean",
+    "spacy_VERB_mean_without_be_and_have",
+    "spacy_VB_mean",
+    "spacy_VB_mean_without_be_and_have",
+    "spacy_JJ_mean",
+    "spacy_JJRs_mean",
+    "spacy_JJSs_mean",
+    "spacy_mean_of_is_big2c_agen_from_big2",
+    "spacy_mean_of_is_big2a_agen_from_big2",
+    "spacy_mean_of_is_big2a_comm_from_big2",
+    "spacy_mean_of_is_big2b_agen_from_big2",
+    "spacy_mean_of_is_big2b_comm_from_big2",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_status_posit_from_nico",
+#+end_example
+
+** prod: Cleanup
+#+begin_src jupyter-python :async yes
+cols9 = {
+    "spacy_index0": "idx0",
+    "study": "study",
+    "condition": "condition",
+    "condR": "condR",
+    "context": "context",
+    # "EVAL_count": "HumEvalN",
+    # "EVAL_STD": "HumEvalSD",
+    # "EVAL_MEAN": "HumEval",
+    # "spacy_WORD_count": "WC",
+    "spacy_mean_of_is_big2a_agen_from_big2": "PietA",
+    "spacy_mean_of_is_big2b_agen_from_big2": "PietB",
+    "spacy_mean_of_is_big2c_agen_from_big2": "PietC",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico": "NicoPos",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico": "NicoNeg",
+    # "spacy_mean_of_is_nico_full_ability_posit_from_nico": "",
+    # "spacy_mean_of_is_nico_full_ability_negat_from_nico": "",
+    # "spacy_mean_of_is_nico_full_status_negat_from_nico": "",
+    # "spacy_mean_of_is_nico_full_status_posit_from_nico": "",
+    # "spacy_sents": "spacy_sents",
+    "spacy_sents": "sents",
+    "text": "text",
+}
+df9 = df8[cols9.keys()].copy()
+df9.rename(columns=cols9, inplace=True)
+
+df9.insert(10, "NicoCom", df9.NicoPos-df9.NicoNeg)
+
+log0.info(f"{df9.shape = }")
+disp_df(df9.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df9.shape = (972, 13)
+#+begin_example
+     idx0 study         condition      condR       context     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom                                        sents                                         text
+246   246   s00  Express thoughts     inform  Volunteering  0.068182  0.000000  0.034091  0.022727  0.022727  0.000000  [Charity is all about giving or providin...  Charity is all about giving or providing...
+258   258   s00  Express thoughts     inform  Volunteering  0.061224  0.010204  0.061224  0.030612  0.000000  0.030612  [Charity in itself is a positive for soc...  Charity in itself is a positive for soci...
+263   263   s00  Express thoughts     inform  Volunteering  0.061404  0.000000  0.043860  0.000000  0.000000  0.000000  [Charity can mean a variety of things., ...  Charity can mean a variety of things. So...
+436   436   s00         Encourage  encourage        Voting  0.070312  0.039062  0.062500  0.007812  0.000000  0.007812  [Don't forget to vote!, always taking in...  Don't forget to vote! always taking into...
+541   541   s01         Encourage  encourage   Environment  0.054348  0.021739  0.054348  0.054348  0.000000  0.054348  [I think they're interesting informing p...  I think they're interesting informing pe...
+662   662   s01  Express thoughts     inform   Environment  0.060241  0.012048  0.060241  0.024096  0.000000  0.024096  [I think everyone should consider the im...  I think everyone should consider the imp...
+877   877   s01  Express thoughts     inform  Volunteering  0.128713  0.059406  0.089109  0.049505  0.000000  0.049505  [I think that participating in volunteer...  I think that participating in volunteeri...
+885   885   s01  Express thoughts     inform  Volunteering  0.149533  0.009346  0.102804  0.000000  0.000000  0.000000  [I think volunteering is brilliant., It ...  I think volunteering is brilliant. It ma...
+#+end_example
+:END:
+
+* BERTAgent
+** prod: Load model
+#+begin_src jupyter-python :async yes
+dir0 = pathlib.Path().home()/"bertagent"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+from bertagent import BERTAgent
+
+model_path = dir0/"20230523T145242_status-DEPLOY_data-ft3x_testing-gold_epo-012_model-roberta-base/final"
+ba0 = BERTAgent(
+    model_path = model_path,
+    tokenizer_path = model_path,
+)
+
+#+end_src
+
+#+RESULTS:
+
+** test: Demo data
+#+begin_src jupyter-python :async yes
+model_id = "ba0"
+df9[model_id] = df9.sents.progress_apply(ba0.predict)
+
+"""
+del ba0
+del ba4
+gc.collect()
+torch.cuda.empty_cache()
+
+"""
+
+log0.info(f"{df9.shape = }")
+disp_df(df9.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+100% 972/972 [00:41<00:00, 23.50it/s]
+I: df9.shape = (972, 14)
+#+end_example
+#+begin_example
+   idx0 study  condition      condR      context     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom                                        sents                                         text                                          ba0
+0     0   s00  Encourage  encourage  Environment  0.144444  0.000000  0.055556  0.033333  0.000000  0.033333  [Your Planet Needs You!, You have heard ...  Your Planet Needs You! You have heard th...  [0.07145225256681442, -0.092048950493335...
+1     1   s00  Encourage  encourage  Environment  0.173469  0.000000  0.071429  0.000000  0.000000  0.000000  [Your area needs you!, Have you ever not...  Your area needs you! Have you ever notic...  [0.0037678973749279976, -0.1390090286731...
+2     2   s00  Encourage  encourage  Environment  0.064220  0.000000  0.045872  0.027523  0.000000  0.027523  [With how climate change is progressing,...  With how climate change is progressing, ...  [0.11974672973155975, 0.2875154018402099...
+3     3   s00  Encourage  encourage  Environment  0.063380  0.007042  0.063380  0.028169  0.000000  0.028169  [With global warming a major concern, it...  With global warming a major concern, its...  [0.13518711924552917, 0.2691089510917663...
+4     4   s00  Encourage  encourage  Environment  0.248120  0.007519  0.150376  0.037594  0.000000  0.037594  [Why should you participate in environme...  Why should you participate in environmen...  [0.3592643141746521, -0.0563734211027622...
+5     5   s00  Encourage  encourage  Environment  0.122642  0.009434  0.084906  0.047170  0.000000  0.047170  [Why should you help ?, It is important ...  Why should you help ? It is important we...  [0.19678255915641785, 0.2828612029552459...
+6     6   s00  Encourage  encourage  Environment  0.045296  0.006969  0.045296  0.041812  0.003484  0.038328  [WHAT’S THE UK DOING ABOUT CLIMATE CHANG...  WHAT’S THE UK DOING ABOUT CLIMATE CHANGE...  [0.16997024416923523, -0.533749759197235...
+7     7   s00  Encourage  encourage  Environment  0.156379  0.020576  0.086420  0.024691  0.000000  0.024691  [We only get one Earth and if we carry o...  We only get one Earth and if we carry on...  [-0.23093271255493164, 0.099018171429634...
+#+end_example
+:END:
+** prod: Summarize predictions
+#+begin_src jupyter-python :async yes
+
+df9["BATot"] = df9[model_id].apply(ba0.tot)
+df9["BAPos"] = df9[model_id].apply(ba0.pos)
+df9["BANeg"] = df9[model_id].apply(ba0.neg)
+df9["BAAbs"] = df9[model_id].apply(ba0.abs)
+
+log0.info(f"{df9.shape = }")
+disp_df(
+    df9.sample(n=5).sort_index(),
+    max_colwidth=33,
+    width=5555,
+    max_columns=155,
+)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df9.shape = (972, 18)
+#+begin_example
+     idx0 study         condition      condR       context     PietA     PietB     PietC   NicoPos  NicoNeg   NicoCom                             sents                              text                               ba0     BATot     BAPos     BANeg     BAAbs
+257   257   s00  Express thoughts     inform  Volunteering  0.100000  0.000000  0.056250  0.018750      0.0  0.018750  [Charity in my eyes is an ama...  Charity in my eyes is an amaz...  [0.2542835772037506, 0.427798...  0.317486  0.322642  0.005156  0.327798
+372   372   s00         Encourage  encourage        Voting  0.096000  0.024000  0.080000  0.016000      0.0  0.016000  [Voting is the chance to chip...  Voting is the chance to chip ...  [0.17510122060775757, -0.1586...  0.147792  0.170458  0.022666  0.193124
+695   695   s01  Express thoughts     inform   Environment  0.093220  0.008475  0.084746  0.076271      0.0  0.076271  [The time to act to save our ...  The time to act to save our e...  [0.31661832332611084, 0.48262...  0.057965  0.146207  0.088242  0.234449
+765   765   s01         Encourage  encourage  Volunteering  0.029197  0.000000  0.029197  0.021898      0.0  0.021898  [Volunteering is an incredibl...  Volunteering is an incredible...  [0.3233071565628052, 0.268022...  0.185317  0.187507  0.002190  0.189697
+806   806   s01         Encourage  encourage  Volunteering  0.168224  0.037383  0.074766  0.037383      0.0  0.037383  [Volunteering is very benefic...  Volunteering is very benefici...  [0.3267408609390259, 0.407731...  0.340582  0.340582  0.000000  0.340582
+#+end_example
+:END:
+
+** Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/v0004_encourage/super-clean-0000/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["data_d0000"]
+sfx0 = ["done"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0004_encourage/super-clean-0000/data_d0000_done.pkl...
+I: saving: ../../data/v0004_encourage/super-clean-0000/data_d0000_done.csv...
+I: saving: ../../data/v0004_encourage/super-clean-0000/data_d0000_done.xlsx...
+I: saving: ../../data/v0004_encourage/super-clean-0000/data_d0000_done.jsonl...
+I: DONE
+#+end_example
+
+** Check
+#+begin_src jupyter-python :async yes
+df9.condR.value_counts()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+condR
+inform       493
+encourage    479
+Name: count, dtype: int64
+#+end_example
+
+** Check
+#+begin_src jupyter-python :async yes
+df9.context.value_counts()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+context
+Volunteering    440
+Environment     360
+Voting          172
+Name: count, dtype: int64
+#+end_example

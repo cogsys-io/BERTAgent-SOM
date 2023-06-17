@@ -1,0 +1,325 @@
+% Created 2023-06-01 Thu 12:28
+% Intended LaTeX compiler: xelatex
+\documentclass[a4paper,10pt,onecolumn,oneside,openright]{article}
+\usepackage[no-math]{fontspec}
+\newfontfamily\cyrillicfont{CMU Serif}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Linux Libertine O}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Hack}
+\setmainfont[
+  Ligatures=TeX,
+  Extension=.otf,
+  BoldFont=cmunbx,
+  ItalicFont=cmunti,
+  BoldItalicFont=cmunbi,
+]{cmunrm}
+\usepackage[Latin,Cyrillics]{ucharclasses}
+\setTransitionsForCyrillics{\begingroup\cyrillicfont}{\endgroup}
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{latin}
+\setotherlanguage{greek}
+\setotherlanguage{russian}
+\setotherlanguage{polish}
+\setotherlanguage{german}
+\setotherlanguage{ukrainian}
+\newcommand{\RU}[1]{\foreignlanguage{russian}{#1}}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{tabularx}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \begin{tabular}{>{$}l<{$} @{} >{${}}c<{{}$} @{} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\newenvironment{conditions*}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \tabularx{\columnwidth}{>{$}l<{$} @{}>{${}}c<{{}$}@{} >{\raggedright\arraybackslash}X}}
+  {\endtabularx\par\vspace{\belowdisplayskip}}
+\usepackage[tableposition=t]{caption}
+\captionsetup[table]{skip=8pt}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+\usepackage[tableposition=t]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{fixltx2e}
+\usepackage[unicode]{hyperref}
+\usepackage{cleveref}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullRef}[1]{\nameCref{#1} \hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullREF}[1]{\nameCref{#1} \ref{#1}: \nameref*{#1}}
+\newcommand*{\FullREF}[1]{\nameCref{#1} \ref{#1} (\nameref*{#1})}
+\newcommand*{\eqnCref}[1]{\nameCref{#1} \ref{#1}}
+\newcommand*{\EqnCref}[1]{\nameCref{#1} \ref*{#1}}
+\newcommand{\citinf}{{\newline\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citfix}{{\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citsrc}{{\vadjust{\vspace{8pt}}\nolinebreak\hspace{\fill}\mbox{}\linebreak\hspace*{\fill}\textemdash\space}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{amscd}
+\usepackage{amstext}
+\usepackage{threeparttable}
+\AtBeginDocument{\hypersetup{pdfauthor={Jan Nikadon},pdftitle={\thetitle},pdfsubject={subject},pdfkeywords={keyword1,}{keyword2},}}
+\hypersetup{xetex,colorlinks=true,linktocpage=true,linkcolor=RoyalPurple,citecolor=RoyalPurple,filecolor=RoyalBlue,urlcolor=RoyalBlue,pagebackref=true,plainpages=false,pdfpagelabels=true,bookmarksnumbered=true,}
+\PassOptionsToPackage{dateabbrev=false,natbib=true,style=apa,backref=true,backrefstyle=two,dashed=false,hyperref=true,backend=biber,maxbibnames=99,firstinits=true,giveninits=false,uniquename=init,citetracker=true,parentracker=true,url=false,doi=true,}{biblatex}
+\usepackage{biblatex}
+\usepackage[newfloat]{minted}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{titling}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\definecolor{fuchsiapink}{rgb}{1.0, 0.47, 1.0}
+\definecolor{cream}{rgb}{1.00, 0.99, 0.82}
+\definecolor{champagne}{rgb}{0.97, 0.91, 0.81}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{blanchedalmond}{rgb}{1.0, 0.92, 0.8}
+\definecolor{brilliantlavender}{rgb}{0.96, 0.73, 1.0}
+\IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+\IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+\date{}
+\title{P0001\_checkup}
+\begin{document}
+
+\maketitle
+
+
+
+\section{Imports}
+\label{sec:orgf6701ae}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+library(devtools)
+library(tidyverse)
+library(readr)
+library(readr)
+
+load_all(
+  path="~/cc/dev/c2023a/c0512_apaTablesCoCoR/apaTablesCoCoR",
+  reset=TRUE,
+  recompile=TRUE,
+  export_all=TRUE,
+  helpers=TRUE,
+  quiet=FALSE)
+
+options("width" = 222)
+options(cli.width=222)
+paste(getwd())
+\end{minted}
+
+\begin{verbatim}
+/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0001_valid-01-part-008-correlations
+\end{verbatim}
+\section{Load data}
+\label{sec:org04e289a}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+dir0 <- "../../data/d0042_gold-standard"
+if0 <- "gold-std-x0002_20230513T203848_bertagent-clean.csv"
+if0 <- "gold-std-x0002_bertagent-clean.csv"
+df0 <- read_csv(file=paste(dir0, if0, sep="/"))
+# df0 = read.csv(file=paste(dir0, if0, sep="/"))
+paste(str(df0))
+\end{minted}
+
+\begin{verbatim}
+indexing gold-std-x0002_bertagent-clean.csv [============================================================================================================================================================] 10.95GB/s, eta:  0s                                                                                                                                                                                                                                                                 Rows: 300 Columns: 24
+── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (4): sents, text, ba0, ba4
+dbl (20): idx0, SENT, HumEvalN, HumEvalSD, HumEval, PietA, PietB, PietC, NicoPos, NicoNeg, NicoCom, sents_count, baTot_sum, baPos_sum, baNeg_sum, baAbs_sum, BAPos, BANeg, BATot, BAAbs
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+spc_tbl_ [300 × 24] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ idx0       : num [1:300] 0 1 2 3 4 5 6 7 8 9 ...
+ $ SENT       : num [1:300] 1 2 3 4 5 6 7 8 9 10 ...
+ $ HumEvalN   : num [1:300] 30 29 30 31 30 29 30 31 29 31 ...
+ $ HumEvalSD  : num [1:300] 1.196 0.953 1.326 0.653 1.224 ...
+ $ HumEval    : num [1:300] -0.867 -2.138 -1.633 -2.323 -2.133 ...
+ $ PietA      : num [1:300] 0 0 0 0.1667 0.0667 ...
+ $ PietB      : num [1:300] 0.0714 0 0 0 0 ...
+ $ PietC      : num [1:300] 0 0 0 0.1667 0.0667 ...
+ $ NicoPos    : num [1:300] 0 0 0 0 0 ...
+ $ NicoNeg    : num [1:300] 0 0.0909 0 0 0 ...
+ $ NicoCom    : num [1:300] 0 -0.0909 0 0 0 ...
+ $ sents      : chr [1:300] "['This has led to frustration and anger after the many years of loyal service.']" "['My brother is the only person I would say is lazy.']" "['The project was never finished and I felt gutted and disturbed.']" "[\"If there was the option to not make an effort, they wouldn't.\"]" ...
+ $ text       : chr [1:300] "This has led to frustration and anger after the many years of loyal service." "My brother is the only person I would say is lazy." "The project was never finished and I felt gutted and disturbed." "If there was the option to not make an effort, they wouldn't." ...
+ $ sents_count: num [1:300] 1 1 1 1 1 1 1 1 1 1 ...
+ $ ba0        : chr [1:300] "[0.06802511215209961]" "[-0.8474809527397156]" "[-0.6478484869003296]" "[-0.7028729915618896]" ...
+ $ ba4        : chr [1:300] "[0.04629361256957054]" "[-0.5952255725860596]" "[-0.40569421648979187]" "[0.18626771867275238]" ...
+ $ baTot_sum  : num [1:300] 0.0463 -0.5952 -0.4057 0.1863 0.0891 ...
+ $ baPos_sum  : num [1:300] 0.0463 0 0 0.1863 0.0891 ...
+ $ baNeg_sum  : num [1:300] 0 0.595 0.406 0 0 ...
+ $ baAbs_sum  : num [1:300] 0.0463 0.5952 0.4057 0.1863 0.0891 ...
+ $ BAPos      : num [1:300] 0.0463 0 0 0.1863 0.0891 ...
+ $ BANeg      : num [1:300] 0 0.595 0.406 0 0 ...
+ $ BATot      : num [1:300] 0.0463 -0.5952 -0.4057 0.1863 0.0891 ...
+ $ BAAbs      : num [1:300] 0.0463 0.5952 0.4057 0.1863 0.0891 ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   idx0 = col_double(),
+  ..   SENT = col_double(),
+  ..   HumEvalN = col_double(),
+  ..   HumEvalSD = col_double(),
+  ..   HumEval = col_double(),
+  ..   PietA = col_double(),
+  ..   PietB = col_double(),
+  ..   PietC = col_double(),
+  ..   NicoPos = col_double(),
+  ..   NicoNeg = col_double(),
+  ..   NicoCom = col_double(),
+  ..   sents = col_character(),
+  ..   text = col_character(),
+  ..   sents_count = col_double(),
+  ..   ba0 = col_character(),
+  ..   ba4 = col_character(),
+  ..   baTot_sum = col_double(),
+  ..   baPos_sum = col_double(),
+  ..   baNeg_sum = col_double(),
+  ..   baAbs_sum = col_double(),
+  ..   BAPos = col_double(),
+  ..   BANeg = col_double(),
+  ..   BATot = col_double(),
+  ..   BAAbs = col_double()
+  .. )
+ - attr(*, "problems")=<externalptr>
+character(0)
+\end{verbatim}
+
+\section{Check correlations}
+\label{sec:orgc3a6407}
+\begin{itemize}
+\item \textcite{DiedenhofenMusch2015a}
+\item \textcite{Diedenhofen2022a}
+\item \url{https://f-santos.gitlab.io/2020-04-01-comparing-correlation-coefficients.html}
+\end{itemize}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+df2 <- df0 %>% select(
+    HumEval,
+    PietA,
+    PietB,
+    PietC,
+    NicoPos,
+    NicoNeg,
+    NicoCom,
+    # BA0Tot,
+    # BA0Pos,
+    # BA0Neg,
+    # BA0Abs,
+    BATot,
+    BAPos,
+    BANeg,
+    BAAbs,
+)
+
+devtools::unload(package="apaTables", quiet=FALSE)
+load_all(path="~/cc/dev/c2023a/c0512_apaTablesCoCoR/apaTablesCoCoR",reset=TRUE,recompile=TRUE,export_all=TRUE,helpers=TRUE,quiet=FALSE)
+tab0 <- apa.cocor.table(
+  df2,
+  filename="p0001_gold-standard-correlations.doc",
+  table.number=1,
+  common="HumEval"
+)
+print(tab0)
+\end{minted}
+
+\begin{verbatim}
+ℹ Loading apaTables
+
+
+Table 1
+
+Means, standard deviations, and correlations with confidence intervals
+
+
+  Variable   M    SD   1            2            3           4            5           6            7            8            9            10         11
+  1. HumEval 0.12 1.54
+
+  2. PietA   0.05 0.05 .17**                     -1.25       0.28         0.05        5.35**       -1.78        -10.95**     -9.45**      9.88**     0.02
+                       [.06, .28]
+
+  3. PietB   0.02 0.03 .25**        .40**                    1.27         1.16        6.58**       -0.70        -10.00**     -8.95**      11.20**    1.17
+                       [.14, .35]   [.30, .49]
+
+  4. PietC   0.05 0.05 .17**        .99**        .40**                    0.03        5.34**       -1.80        -10.93**     -9.43**      9.87**     0.00
+                       [.06, .28]   [.99, 1.00]  [.30, .49]
+
+  5. NicoPos 0.03 0.04 .17**        .18**        .23**       .17**                    5.49**       -3.81**      -11.08**     -10.04**     10.16**    -0.03
+                       [.05, .27]   [.07, .29]   [.12, .34]  [.06, .28]
+
+  6. NicoNeg 0.01 0.03 -.28**       -.10         -.01        -.10         -.03                     -5.73**      -13.40**     -13.29**     7.13**     -7.03**
+                       [-.38, -.17] [-.21, .01]  [-.12, .11] [-.21, .02]  [-.14, .09]
+
+  7. NicoCom 0.02 0.05 .30**        .20**        .19**       .19**        .82**       -.60**                    -10.38**     -8.22**      10.40**    1.62
+                       [.19, .40]   [.09, .31]   [.08, .30]  [.08, .30]   [.78, .85]  [-.67, -.52]
+
+  8. BATot   0.09 0.35 .78**        .21**        .24**       .20**        .22**       -.42**       .42**                     3.07**       15.66**    10.44**
+                       [.73, .82]   [.10, .31]   [.13, .34]  [.09, .31]   [.11, .33]  [-.51, -.33] [.33, .51]
+
+  9. BAPos   0.19 0.21 .72**        .22**        .34**       .21**        .31**       -.16**       .34**        .87**                     16.21**    12.52**
+                       [.66, .77]   [.11, .32]   [.23, .43]  [.10, .32]   [.20, .41]  [-.27, -.05] [.24, .44]   [.84, .90]
+
+  10. BANeg  0.10 0.19 -.61**       -.14*        -.06        -.13*        -.06        .58**        -.38**       -.84**       -.47**                  -14.01**
+                       [-.67, -.53] [-.25, -.02] [-.17, .06] [-.24, -.02] [-.17, .05] [.50, .65]   [-.47, -.28] [-.87, -.81] [-.55, -.37]
+
+  11. BAAbs  0.29 0.21 .17**        .09          .29**       .09          .26**       .37**        -.00         .10          .58**        .45**
+                       [.06, .28]   [-.02, .21]  [.18, .39]  [-.02, .20]  [.15, .36]  [.27, .46]   [-.12, .11]  [-.01, .21]  [.50, .65]   [.36, .54]
+
+
+Note. M and SD are used to represent mean and standard deviation, respectively.
+Values in square brackets indicate the 95% confidence interval.
+The confidence interval is a plausible range of population correlations
+that could have caused the sample correlation (Cumming, 2014).
+ * indicates p < .05. ** indicates p < .01.
+\end{verbatim}
+\section{Manual checkups}
+\label{sec:org89a146b}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+df2 <- as.data.frame(df2)
+cc0 <- cocor::cocor(~HumEval+BATot|HumEval+BAPos, data=df2)
+cc0 <- cocor::cocor(~HumEval+BAAbs|HumEval+PietB, data=df2)
+cc0 <- cocor::cocor(~HumEval+PietB|HumEval+BAAbs, data=df2)
+cc0 <- cocor::cocor(~HumEval+BATot|HumEval+PietA, data=df2, test=c("hittner2003"))
+
+cc0
+cc0@hittner2003$statistic
+cc0@hittner2003$p.value
+gtools::stars.pval(cc0@hittner2003$p.value)
+\end{minted}
+
+\begin{verbatim}
+
+  Results of a comparison of two overlapping correlations based on dependent groups
+
+Comparison between r.jk (HumEval, BATot) = 0.778 and r.jh (HumEval, PietA) = 0.1699
+Difference: r.jk - r.jh = 0.6081
+Related correlation: r.kh = 0.2091
+Data: df2: j = HumEval, k = BATot, h = PietA
+Group size: n = 300
+Null hypothesis: r.jk is equal to r.jh
+Alternative hypothesis: r.jk is not equal to r.jh (two-sided)
+Alpha: 0.05
+
+hittner2003: Hittner, May, and Silver's (2003) modification of Dunn and Clark's z (1969) using a backtransformed average Fisher's (1921) Z procedure
+  z = 10.9466, p-value = 0.0000
+  Null hypothesis rejected
+[1] 10.9466
+[1] 0
+[1] "***"
+attr(,"legend")
+[1] "0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1"
+\end{verbatim}
+
+
+\section*{References}
+\label{sec:org944a619}
+\addcontentsline{toc}{section}{References}
+
+\printbibliography[heading=none]
+\end{document}

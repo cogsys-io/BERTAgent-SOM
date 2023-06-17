@@ -1,0 +1,169 @@
+#+title: P1001_corrs
+
+#+PROPERTY: header-args:R  :tangle   yes
+#+PROPERTY: header-args:R+ :eval     yes
+#+PROPERTY: header-args:R+ :comments org
+#+PROPERTY: header-args:R+ :results  output drawer pp
+#+PROPERTY: header-args:R+ :exports  both
+#+PROPERTY: header-args:R+ :var      BUFFER_DIR=(file-name-directory buffer-file-name)
+#+PROPERTY: header-args:R+ :session  *R*
+
+* Imports
+#+begin_src R :session *R*
+library(devtools)
+library(tidyverse)
+library(readr)
+library(readr)
+
+load_all(
+  path="~/cc/dev/c2023a/c0512_apaTablesCoCoR/apaTablesCoCoR",
+  reset=TRUE,
+  recompile=TRUE,
+  export_all=TRUE,
+  helpers=TRUE,
+  quiet=FALSE)
+
+options("width" = 222)
+options(cli.width=222)
+paste(getwd())
+#+end_src
+* Load data
+#+begin_src R :session *R* :results  output drawer pp
+dir0 <- "../../data/v0003_supernatural/u1006_clean"
+dir0 <- "../../data/v0004_20newsgroups"
+if0 <- "data_d1001_20newsgroups_corr_zero"
+if0 <- "data_d1001_20newsgroups_corr_posit"
+if0 <- "data_d1001_20newsgroups_corr_negat"
+df0 <- read_csv(file=paste(paste(dir0, if0, sep="/"), "csv", sep="."))
+# df0 = read.csv(file=paste(dir0, if0, sep="/"))
+paste(str(df0))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+indexing data_d1001_20newsgroups_corr_negat.csv [========================================================================================================================================================] 43.04GB/s, eta:  0s                                                                                                                                                                                                                                                                 Rows: 7850 Columns: 8
+── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: ","
+dbl (8): BANeg, NicoNeg, NicoAbilityNeg, NicoStatusNeg, Sad, Negemo, Anxiety, Anger
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+spc_tbl_ [7,850 × 8] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ BANeg         : num [1:7850] 0.1286 0.0129 0 0.051 0 ...
+ $ NicoNeg       : num [1:7850] 0.00571 0.01493 0 0 0 ...
+ $ NicoAbilityNeg: num [1:7850] 0.01429 0 0 0.00243 0 ...
+ $ NicoStatusNeg : num [1:7850] 0.01429 0.00896 0 0 0.0163 ...
+ $ Sad           : num [1:7850] 0.00857 0 0 0.00485 0 ...
+ $ Negemo        : num [1:7850] 0.0543 0 0.037 0.0364 0 ...
+ $ Anxiety       : num [1:7850] 0.0114 0 0 0 0 ...
+ $ Anger         : num [1:7850] 0.0229 0 0.037 0.0146 0 ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   BANeg = col_double(),
+  ..   NicoNeg = col_double(),
+  ..   NicoAbilityNeg = col_double(),
+  ..   NicoStatusNeg = col_double(),
+  ..   Sad = col_double(),
+  ..   Negemo = col_double(),
+  ..   Anxiety = col_double(),
+  ..   Anger = col_double()
+  .. )
+ - attr(*, "problems")=<externalptr>
+character(0)
+#+end_example
+
+* Check correlations
+- [[textcite:&DiedenhofenMusch2015a]]
+- [[textcite:&Diedenhofen2022a]]
+- https://f-santos.gitlab.io/2020-04-01-comparing-correlation-coefficients.html
+#+begin_src R :session *R* :results  output drawer pp
+df2 <- df0 # %>% select(HumEval, PietA, PietB, PietC, NicoPos, NicoNeg, NicoCom, BATot, BAPos, BANeg, BAAbs,)
+
+devtools::unload(package="apaTables", quiet=FALSE)
+load_all(path="~/cc/dev/c2023a/c0512_apaTablesCoCoR/apaTablesCoCoR",reset=TRUE,recompile=TRUE,export_all=TRUE,helpers=TRUE,quiet=FALSE)
+# tab0 <- apa.cocor.table(
+#   df2,
+#   filename=paste(paste("p0008_correlations", if0, sep="_"), "doc", sep="."),
+#   table.number=1,
+#   common="HumEval"
+# )
+tab0 <- apa.cor.table(
+  df2,
+  filename=paste(paste("p1001_correlations", if0, sep="_"), "doc", sep="."),
+  table.number=0,
+  # common="HumEval"
+)
+
+print(tab0)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ℹ Loading apaTables
+
+
+Table 0
+
+Means, standard deviations, and correlations with confidence intervals
+
+
+  Variable          M    SD   1          2           3           4           5           6          7
+  1. BANeg          0.03 0.04
+
+  2. NicoNeg        0.00 0.01 .09**
+                              [.07, .12]
+
+  3. NicoAbilityNeg 0.00 0.01 .19**      .00
+                              [.17, .21] [-.02, .03]
+
+  4. NicoStatusNeg  0.01 0.01 .11**      .17**       .00
+                              [.09, .13] [.15, .19]  [-.02, .03]
+
+  5. Sad            0.00 0.01 .25**      .03*        .00         .23**
+                              [.23, .27] [.00, .05]  [-.02, .02] [.21, .25]
+
+  6. Negemo         0.02 0.02 .33**      .09**       .10**       .08**       .34**
+                              [.31, .35] [.07, .11]  [.08, .12]  [.06, .10]  [.32, .36]
+
+  7. Anxiety        0.00 0.01 .16**      .20**       .06**       .00         .01         .35**
+                              [.13, .18] [.18, .22]  [.03, .08]  [-.02, .03] [-.01, .04] [.33, .37]
+
+  8. Anger          0.01 0.01 .12**      .01         .07**       -.02        .00         .63**      .02
+                              [.09, .14] [-.01, .03] [.05, .09]  [-.04, .01] [-.02, .03] [.61, .64] [-.01, .04]
+
+
+Note. M and SD are used to represent mean and standard deviation, respectively.
+Values in square brackets indicate the 95% confidence interval.
+The confidence interval is a plausible range of population correlations
+that could have caused the sample correlation (Cumming, 2014).
+ ,* indicates p < .05. ** indicates p < .01.
+#+end_example
+* Manual checkups
+#+begin_src R :session *R* :results  output drawer pp
+df2 <- as.data.frame(df2)
+cc0 <- cocor::cocor(~HumEval+BATot|HumEval+BAPos, data=df2)
+cc0 <- cocor::cocor(~HumEval+BAAbs|HumEval+PietB, data=df2)
+cc0 <- cocor::cocor(~HumEval+PietB|HumEval+BAAbs, data=df2)
+cc0 <- cocor::cocor(~HumEval+BATot|HumEval+PietA, data=df2, test=c("hittner2003"))
+
+cc0
+cc0@hittner2003$statistic
+cc0@hittner2003$p.value
+gtools::stars.pval(cc0@hittner2003$p.value)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Error in cocor::cocor(~HumEval + BATot | HumEval + BAPos, data = df2) : 
+  Could not find column 'HumEval' in the data.frame that is provided by the parameter 'data'
+Error in cocor::cocor(~HumEval + BAAbs | HumEval + PietB, data = df2) : 
+  Could not find column 'HumEval' in the data.frame that is provided by the parameter 'data'
+Error in cocor::cocor(~HumEval + PietB | HumEval + BAAbs, data = df2) : 
+  Could not find column 'HumEval' in the data.frame that is provided by the parameter 'data'
+Error in cocor::cocor(~HumEval + BATot | HumEval + PietA, data = df2,  : 
+  Could not find column 'HumEval' in the data.frame that is provided by the parameter 'data'
+Error: object 'cc0' not found
+Error: object 'cc0' not found
+Error: object 'cc0' not found
+Error: object 'cc0' not found
+#+end_example

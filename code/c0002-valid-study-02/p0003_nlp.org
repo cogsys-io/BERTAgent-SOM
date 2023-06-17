@@ -1,0 +1,959 @@
+#+title: P0003_nlp
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* SpaCy
+** prod: Imports
+#+begin_src jupyter-python :async yes
+import spacy
+from spacy.tokens import Doc, Span, Token
+from spacy.tokens.underscore import Underscore
+from dframcy import DframCy
+from nvm.aux_spacy import get_doc_count_of_dict_items_component
+from nvm.aux_spacy import get_doc_basic_metrics_component
+from nvm.aux_spacy import get_doc_word_count_component
+from nvm.aux_spacy import get_doc_sentences_as_list_component
+from nvm.aux_spacy import get_doc_summary_dict_component
+
+from nvm.aux_spacy.data.data_big2 import big2_dict
+from nvm.aux_spacy.data.data_nico import nico_dict
+
+Underscore.doc_extensions = {}
+Underscore.span_extensions = {}
+Underscore.token_extensions = {}
+
+log0.info("DONE: spacy imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: spacy imports
+
+** prod: Setup NLP
+#+begin_src jupyter-python :async yes
+nlp = spacy.load("en_core_web_sm")
+# nlp = spacy.load("en_core_web_lg")
+
+nlp.tokenizer.add_special_case("cannot", [{spacy.symbols.ORTH: "cannot"}])
+if not Doc.has_extension("index0"):
+    Doc.set_extension("index0", default=None)
+
+# config1 = dict(dict0=liwc_dict)
+config2 = dict(dict0=big2_dict)
+# config3 = dict(
+#     dict0={key0: gen_inq_lcm_dict[key0] for key0 in ["IAV", "DAV", "SV"]},
+#     pos=["VERB"])
+
+# config4 = dict(
+#     dict0={key0: gen_inq_lcm_dict[key0] for key0 in ["IPadj", "IndAdj"]},
+#     pos=["ADJ"])
+
+# config5 = dict(dict0=gaucher_dict)
+# config6 = dict(dict0=madera_dict)
+config7 = dict(dict0=nico_dict)
+# config8 = dict(dict0=big2_liwc_dict)
+# config9 = dict(dict0=gen_inq_cat_dict)
+
+nlp.add_pipe("get_doc_word_count", "WC")
+# nlp.add_pipe("get_doc_pron_count", "PC")
+nlp.add_pipe("get_doc_sentences_as_list", "SENTS")
+nlp.add_pipe("get_doc_basic_metrics", "BASIC")
+# nlp.add_pipe("get_doc_big2a_ag_count", "big2a_ag")
+# nlp.add_pipe("get_doc_POS_count_as_dict", "POS")
+# nlp.add_pipe("get_doc_TAG_count_as_dict", "TAG")
+nlp.add_pipe("get_doc_count_of_dict_items", "big2", config=config2)
+# nlp.add_pipe("get_doc_count_of_dict_items", "lcm0", config=config3)
+# nlp.add_pipe("get_doc_count_of_dict_items", "lcm1", config=config4)
+
+# nlp.add_pipe("get_doc_count_of_dict_items", "gaucher", config=config5)
+# nlp.add_pipe("get_doc_count_of_dict_items", "madera", config=config6)
+nlp.add_pipe("get_doc_count_of_dict_items", "nico", config=config7)
+# nlp.add_pipe("get_doc_count_of_dict_items", "gen_inq_cats", config=config9)
+# nlp.add_pipe("get_doc_count_of_dict_items", "big2_liwc", config=config8)
+
+# nlp.add_pipe("get_doc_count_of_dict_items", "liwc", config=config1)
+
+# nlp.add_pipe("concr", "CONCR")
+
+nlp.add_pipe("get_doc_summary_dict", "SUMMARY")  # CAUTION: This should be the last one TODO FIXME add parameter as well
+
+log0.info("DONE: nlp setup")
+#+end_src
+
+#+RESULTS:
+: I: DONE: nlp setup
+** prod: Checkup
+#+begin_src jupyter-python :async yes
+tok_exts = list(Underscore.token_extensions.keys())
+spn_exts = list(Underscore.span_extensions.keys())
+doc_exts = list(Underscore.doc_extensions.keys())
+
+log0.info(f"{doc_exts = }")
+log0.info(f"{spn_exts = }")
+log0.info(f"{tok_exts = }")
+log0.info(f"{nlp.pipe_names = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: doc_exts = ['index0', 'word_count', 'sents', 'WORD_count', 'NOUN_count', 'ADJ_count', 'VERB_count', 'VERB_count_without_be_and_have', 'VB_count', 'VB_count_without_be_and_have', 'JJ_count', 'JJRs_count', 'JJSs_count', 'count_of_is_big2c_agen_from_big2', 'count_of_is_big2a_agen_from_big2', 'count_of_is_big2a_comm_from_big2', 'count_of_is_big2b_agen_from_big2', 'count_of_is_big2b_comm_from_big2', 'count_of_is_nico_full_ability_posit_from_nico', 'count_of_is_nico_full_status_negat_from_nico', 'count_of_is_nico_seed_ability_negat_from_nico', 'count_of_is_nico_full_agency_posit_from_nico', 'count_of_is_nico_seed_agency_posit_from_nico', 'count_of_is_nico_seed_agency_negat_from_nico', 'count_of_is_nico_full_ability_negat_from_nico', 'count_of_is_nico_seed_ability_posit_from_nico', 'count_of_is_nico_full_agency_negat_from_nico', 'count_of_is_nico_full_status_posit_from_nico', 'count_of_is_nico_seed_status_negat_from_nico', 'count_of_is_nico_seed_status_posit_from_nico', 'SUMMARY']
+I: spn_exts = []
+I: tok_exts = ['is_VB', 'is_VB_without_be_and_have', 'is_big2c_agen_from_big2', 'is_big2a_agen_from_big2', 'is_big2a_comm_from_big2', 'is_big2b_agen_from_big2', 'is_big2b_comm_from_big2', 'is_nico_full_ability_posit_from_nico', 'is_nico_full_status_negat_from_nico', 'is_nico_seed_ability_negat_from_nico', 'is_nico_full_agency_posit_from_nico', 'is_nico_seed_agency_posit_from_nico', 'is_nico_seed_agency_negat_from_nico', 'is_nico_full_ability_negat_from_nico', 'is_nico_seed_ability_posit_from_nico', 'is_nico_full_agency_negat_from_nico', 'is_nico_full_status_posit_from_nico', 'is_nico_seed_status_negat_from_nico', 'is_nico_seed_status_posit_from_nico']
+I: nlp.pipe_names = ['tok2vec', 'tagger', 'parser', 'senter', 'attribute_ruler', 'lemmatizer', 'ner', 'WC', 'SENTS', 'BASIC', 'big2', 'nico', 'SUMMARY']
+#+end_example
+
+** prod: Checkup
+#+begin_src jupyter-python :async yes
+for name0 in nlp.pipe_names:
+    print(f"    \"{name0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "tok2vec",
+    "tagger",
+    "parser",
+    "senter",
+    "attribute_ruler",
+    "lemmatizer",
+    "ner",
+    "WC",
+    "SENTS",
+    "BASIC",
+    "big2",
+    "nico",
+    "SUMMARY",
+#+end_example
+
+** prod: Checkup
+#+begin_src jupyter-python :async yes
+for ext0 in doc_exts:
+    print(f"    \"{ext0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "index0",
+    "word_count",
+    "sents",
+    "WORD_count",
+    "NOUN_count",
+    "ADJ_count",
+    "VERB_count",
+    "VERB_count_without_be_and_have",
+    "VB_count",
+    "VB_count_without_be_and_have",
+    "JJ_count",
+    "JJRs_count",
+    "JJSs_count",
+    "count_of_is_big2c_agen_from_big2",
+    "count_of_is_big2a_agen_from_big2",
+    "count_of_is_big2a_comm_from_big2",
+    "count_of_is_big2b_agen_from_big2",
+    "count_of_is_big2b_comm_from_big2",
+    "count_of_is_nico_full_ability_posit_from_nico",
+    "count_of_is_nico_full_status_negat_from_nico",
+    "count_of_is_nico_seed_ability_negat_from_nico",
+    "count_of_is_nico_full_agency_posit_from_nico",
+    "count_of_is_nico_seed_agency_posit_from_nico",
+    "count_of_is_nico_seed_agency_negat_from_nico",
+    "count_of_is_nico_full_ability_negat_from_nico",
+    "count_of_is_nico_seed_ability_posit_from_nico",
+    "count_of_is_nico_full_agency_negat_from_nico",
+    "count_of_is_nico_full_status_posit_from_nico",
+    "count_of_is_nico_seed_status_negat_from_nico",
+    "count_of_is_nico_seed_status_posit_from_nico",
+    "SUMMARY",
+#+end_example
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0002_professions/p1003_merged-clean/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"jobs_20230514T151039_merged-clean"
+name0 = f"jobs_20230515T050009_merged-clean"
+name0 = f"jobs_20221024T020349_merged-clean"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0002_professions/p1003_merged-clean/jobs_20221024T020349_merged-clean.pkl...
+I: loading: ../../data/v0002_professions/p1003_merged-clean/jobs_20221024T020349_merged-clean.pkl... DONE
+I: df0.shape = (132, 9)
+#+end_example
+#+begin_example
+     occup_code  scale_agentic                           occupation  score0  eval2  eval0                                soc_title                               soc_definition                                         text
+1             2      44.850290                  Personal Care Aides     100      1      1                      Personal Care Aides  Provide personalized assistance to indiv...  Personal Care Aides, Provide personalize...
+2             3      32.656839     Laundry and Dry-Cleaning Workers     100      1      1         Laundry and Dry-Cleaning Workers  Operate or tend washing or dry-cleaning ...  Laundry and Dry-Cleaning Workers, Operat...
+5             6      69.886359                        Veterinarians     100      1      1                            Veterinarians  Diagnose, treat, or research diseases an...  Veterinarians, Diagnose, treat, or resea...
+7             8      59.318071                         Audiologists     100      1      1                             Audiologists  Assess and treat persons with hearing an...  Audiologists, Assess and treat persons w...
+8             9      57.760534  Commercial and Industrial Designers     100      1      1      Commercial and Industrial Designers  Design and develop manufactured products...  Commercial and Industrial Designers, Des...
+44           47      50.718189                           Carpenters     100      1      1                               Carpenters  Construct, erect, install, or repair str...  Carpenters, Construct, erect, install, o...
+91          101      51.228708                       Event Planners     100      1      0  Meeting, Convention, and Event Planners  Coordinate activities of staff, conventi...  Meeting, Convention, and Event Planners,...
+107         120      48.535994                             Plumbers     100      1      0  Plumbers, Pipefitters, and Steamfitters  Assemble, install, alter, and repair pip...  Plumbers, Pipefitters, and Steamfitters,...
+#+end_example
+:END:
+** prod: Prepare DOCS dictionary and list
+#+begin_src jupyter-python :async yes
+text_field = "text"
+
+assert df0.index.is_unique, "Dataframe index must be unique before dictionary creation!"
+txt_dict = df0[text_field].to_dict()
+txt_list = [[val0, {"index0": key0}] for key0, val0 in txt_dict.items()]
+assert len(df0) == len(txt_list)
+assert len(df0) == len(txt_dict)
+
+log0.info(f"{len(df0) = }")
+log0.info(f"{len(txt_dict) = }")
+log0.info(f"{len(txt_list) = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: len(df0) = 132
+I: len(txt_dict) = 132
+I: len(txt_list) = 132
+#+end_example
+** test: Checkup
+#+begin_src jupyter-python :async yes
+idx0 = 0
+idx0 = 3
+log0.info(f"{txt_list[idx0] = }")
+
+samp_size = 4
+for item0 in random.sample(txt_dict.items(), samp_size):
+    log0.info("- {}".format(item0))
+
+samp_size = 4
+for item0 in random.sample(txt_list, samp_size):
+    log0.info("- {}".format(item0))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: txt_list[idx0] = ['Cashiers, Receive and disburse money in establishments other than financial institutions. May use electronic scanners, cash registers, or related equipment. May process credit or debit card transactions and validate checks. Excludes “Gambling Change Persons and Booth Cashiers” (41-2012).', {'index0': 31}]
+I: - (119, 'Proofreaders and Copy Markers, Read transcript or proof type setup to detect and mark for correction any grammatical, typographical, or compositional errors. Excludes workers whose primary duty is editing copy. Includes proofreaders of braille.')
+I: - (75, 'Editors, Plan, coordinate, revise, or edit written material. May review proposals and drafts for possible publication.')
+I: - (9, 'Pest Control Workers, Apply or release chemical solutions or toxic gases and set traps to kill or remove pests and vermin that infest buildings and surrounding areas.')
+I: - (25, 'Special Education Teachers, Preschool, Teach academic, social, and life skills to preschool-aged students with learning, emotional, or physical disabilities. Includes teachers who specialize and work with students who are blind or have visual impairments; students who are deaf or have hearing impairments; and students with intellectual disabilities. Excludes “Substitute Teachers, Short-Term” (25-3031).')
+I: - ['Telephone Operators, Provide information by accessing alphabetical, geographical, or other directories. Assist customers with special billing requests, such as charges to a third party and credits or refunds for incorrectly dialed numbers or bad connections. May handle emergency calls and assist children or people with physical disabilities to make telephone calls.', {'index0': 86}]
+I: - ['Accountants and Auditors, Examine, analyze, and interpret accounting records to prepare financial statements, give advice, or audit and evaluate statements prepared by others. Install or advise on systems of recording costs or other financial and budgetary data. Excludes “Tax Examiners and Collectors, and Revenue Agents” (13-2081).', {'index0': 0}]
+I: - ['Dentists, General, Examine, diagnose, and treat diseases, injuries, and malformations of teeth and gums. May treat diseases of nerve, pulp, and other dental tissues affecting oral hygiene and retention of teeth. May fit dental appliances or provide preventive care. Excludes “Oral and Maxillofacial Surgeons” (29-1022), “Orthodontists” (29-1023), “Prosthodontists” (29-1024), and “Dentists, All Other Specialists” (29-1029).', {'index0': 98}]
+I: - ['Barbers, Provide barbering services, such as cutting, trimming, shampooing, and styling hair; trimming beards; or giving shaves.', {'index0': 60}]
+#+end_example
+
+** prod: COMPUTE (NLP.PIPE)
+#+begin_src jupyter-python :async yes
+log0.info("Starting SpaCy NLP pipeline")
+time_t0 = time.perf_counter()
+
+doc_list = list(tqdm(
+    nlp.pipe(txt_list, as_tuples=True),
+    desc="DOC_LIST",
+    total=len(txt_list),
+    leave=True,
+    disable=False,      # CONSIDER: turning that off for Emacs
+    mininterval=0.250,
+))
+time_t1 = time.perf_counter()
+time_d1 = time_t1-time_t0
+log0.info(f"DONE: processed: {len(doc_list)} documents.")
+log0.info(f"DONE: time elapsed: {hf.format_timespan(time_d1)}.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: Starting SpaCy NLP pipeline
+DOC_LIST: 100% 132/132 [00:00<00:00, 139.65it/s]
+I: DONE: processed: 132 documents.
+I: DONE: time elapsed: 0.95 seconds.
+#+end_example
+
+** test: Checkup DOC example
+#+begin_src jupyter-python :async yes
+idx0 = 0
+idx0 = 123
+idx0 = 42
+doc0, ctx0 = doc_list[idx0]
+log0.info(f"{doc0._.index0 = }")
+log0.info(f"{doc0._.WORD_count = }")
+# log0.info(f"{doc0._.concr_mean = }")
+log0.info(f"{doc0.text = }")
+log0.info(f"{ctx0 = }")
+for key0, val0 in doc0._.SUMMARY.items():
+    log0.info(f"- {key0}: {val0}")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: doc0._.index0 = None
+I: doc0._.WORD_count = 47
+I: doc0.text = 'Correctional Officers and Jailers, Guard inmates in penal or rehabilitative institutions in accordance with established regulations and procedures. May guard prisoners in transit between jail, courtroom, prison, or other point. Includes deputy sheriffs and police who spend the majority of their time guarding prisoners in correctional institutions.'
+I: ctx0 = {'index0': 20}
+I: - index0: None
+I: - word_count: 47
+I: - sents: ['Correctional Officers and Jailers, Guard inmates in penal or rehabilitative institutions in accordance with established regulations and procedures.', 'May guard prisoners in transit between jail, courtroom, prison, or other point.', 'Includes deputy sheriffs and police who spend the majority of their time guarding prisoners in correctional institutions.']
+I: - WORD_count: 47
+I: - NOUN_count: 16
+I: - ADJ_count: 5
+I: - VERB_count: 6
+I: - VERB_count_without_be_and_have: 6
+I: - VB_count: 1
+I: - VB_count_without_be_and_have: 1
+I: - JJ_count: 5
+I: - JJRs_count: 0
+I: - JJSs_count: 0
+I: - count_of_is_big2c_agen_from_big2: 1
+I: - count_of_is_big2a_agen_from_big2: 1
+I: - count_of_is_big2a_comm_from_big2: 0
+I: - count_of_is_big2b_agen_from_big2: 0
+I: - count_of_is_big2b_comm_from_big2: 0
+I: - count_of_is_nico_full_ability_posit_from_nico: 0
+I: - count_of_is_nico_full_status_negat_from_nico: 0
+I: - count_of_is_nico_seed_ability_negat_from_nico: 0
+I: - count_of_is_nico_full_agency_posit_from_nico: 1
+I: - count_of_is_nico_seed_agency_posit_from_nico: 0
+I: - count_of_is_nico_seed_agency_negat_from_nico: 0
+I: - count_of_is_nico_full_ability_negat_from_nico: 0
+I: - count_of_is_nico_seed_ability_posit_from_nico: 0
+I: - count_of_is_nico_full_agency_negat_from_nico: 0
+I: - count_of_is_nico_full_status_posit_from_nico: 1
+I: - count_of_is_nico_seed_status_negat_from_nico: 0
+I: - count_of_is_nico_seed_status_posit_from_nico: 0
+#+end_example
+
+** prod: Produce output dictionary
+#+begin_src jupyter-python :async yes
+log0.info("Adding index0 to DOC)")
+time_t0 = time.perf_counter()
+
+out_dict = {}
+for doc0, ctx0 in tqdm(
+        doc_list,
+        desc="OUT_DICT",
+        total=len(doc_list),
+        leave=True,
+        disable=False,
+        mininterval=0.50):
+    index0 = ctx0["index0"]
+    out_dict[index0] = doc0._.SUMMARY
+    out_dict[index0]["index0"] = index0
+    out_dict[index0] = {f"spacy_{key}": val for key, val in out_dict[index0].items()}
+    # out_dict[index0]["text0"] = str(doc0.text)
+
+time_t1 = time.perf_counter()
+time_d1 = time_t1-time_t0
+log0.info(f"DONE: processed: {len(out_dict)} documents.")
+log0.info(f"DONE: out_dict time elapsed: {hf.format_timespan(time_d1)}.")
+
+log0.info(f"TYPE: {type(out_dict)}.")
+log0.info(f"TYPE: {type(out_dict[11])}.")
+log0.info(f"EXAMPLE: {out_dict[11]}.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: Adding index0 to DOC)
+OUT_DICT: 100% 132/132 [00:00<00:00, 171037.42it/s]
+I: DONE: processed: 132 documents.
+I: DONE: out_dict time elapsed: 0 seconds.
+I: TYPE: <class 'dict'>.
+I: TYPE: <class 'dict'>.
+I: EXAMPLE: {'spacy_index0': 11, 'spacy_word_count': 19, 'spacy_sents': ['Baggage Porters and Bellhops, Handle baggage for travelers at transportation terminals or for guests at hotels or similar establishments.'], 'spacy_WORD_count': 19, 'spacy_NOUN_count': 7, 'spacy_ADJ_count': 1, 'spacy_VERB_count': 0, 'spacy_VERB_count_without_be_and_have': 0, 'spacy_VB_count': 0, 'spacy_VB_count_without_be_and_have': 0, 'spacy_JJ_count': 1, 'spacy_JJRs_count': 0, 'spacy_JJSs_count': 0, 'spacy_count_of_is_big2c_agen_from_big2': 0, 'spacy_count_of_is_big2a_agen_from_big2': 0, 'spacy_count_of_is_big2a_comm_from_big2': 0, 'spacy_count_of_is_big2b_agen_from_big2': 0, 'spacy_count_of_is_big2b_comm_from_big2': 0, 'spacy_count_of_is_nico_full_ability_posit_from_nico': 0, 'spacy_count_of_is_nico_full_status_negat_from_nico': 0, 'spacy_count_of_is_nico_seed_ability_negat_from_nico': 0, 'spacy_count_of_is_nico_full_agency_posit_from_nico': 0, 'spacy_count_of_is_nico_seed_agency_posit_from_nico': 0, 'spacy_count_of_is_nico_seed_agency_negat_from_nico': 0, 'spacy_count_of_is_nico_full_ability_negat_from_nico': 0, 'spacy_count_of_is_nico_seed_ability_posit_from_nico': 0, 'spacy_count_of_is_nico_full_agency_negat_from_nico': 0, 'spacy_count_of_is_nico_full_status_posit_from_nico': 0, 'spacy_count_of_is_nico_seed_status_negat_from_nico': 0, 'spacy_count_of_is_nico_seed_status_posit_from_nico': 0}.
+#+end_example
+
+** prod: Convert to dataframe
+#+begin_src jupyter-python :async yes
+df1 = pd.DataFrame.from_dict(out_dict, orient="index")
+# disp_df(df1)
+del out_dict
+log0.info("DONE")
+log0.info(f"{df1.shape = }")
+disp_df(df1.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: DONE
+I: df1.shape = (132, 30)
+#+end_example
+#+begin_example
+     spacy_index0  spacy_word_count                                  spacy_sents  spacy_WORD_count  spacy_NOUN_count  spacy_ADJ_count  spacy_VERB_count  spacy_VERB_count_without_be_and_have  spacy_VB_count  spacy_VB_count_without_be_and_have  spacy_JJ_count  spacy_JJRs_count  spacy_JJSs_count  spacy_count_of_is_big2c_agen_from_big2  spacy_count_of_is_big2a_agen_from_big2  spacy_count_of_is_big2a_comm_from_big2  spacy_count_of_is_big2b_agen_from_big2  spacy_count_of_is_big2b_comm_from_big2  spacy_count_of_is_nico_full_ability_posit_from_nico  spacy_count_of_is_nico_full_status_negat_from_nico  spacy_count_of_is_nico_seed_ability_negat_from_nico  spacy_count_of_is_nico_full_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_negat_from_nico  spacy_count_of_is_nico_full_ability_negat_from_nico  spacy_count_of_is_nico_seed_ability_posit_from_nico  spacy_count_of_is_nico_full_agency_negat_from_nico  spacy_count_of_is_nico_full_status_posit_from_nico  spacy_count_of_is_nico_seed_status_negat_from_nico  spacy_count_of_is_nico_seed_status_posit_from_nico
+2               2                42  [Laundry and Dry-Cleaning Workers, Opera...                42                17                5                 5                                     5               3                                   3               5                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+11             11                19  [Baggage Porters and Bellhops, Handle ba...                19                 7                1                 0                                     0               0                                   0               1                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+22             22                34  [Parking Attendants, Park vehicles or is...                34                16                2                 2                                     2               2                                   2               2                 0                 0                                       0                                       0                                       0                                       0                                       0                                            1                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+31             31                37  [Cashiers, Receive and disburse money in...                37                17                4                 4                                     4               3                                   3               4                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    1                                                   0                                                    1                                                   0                                                   0                                                   0                                                    0                                                    0                                                   1                                                   0                                                   0
+35             35                 9  [Dishwashers, Clean dishes, kitchen, foo...                 9                 7                1                 0                                     0               0                                   0               1                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+48             48                27  [Food Preparation Workers, Perform a var...                27                10                3                 4                                     4               1                                   1               3                 0                 0                                       0                                       0                                       0                                       0                                       0                                            2                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+84             84                12  [Telemarketers, Solicit donations or ord...                12                 6                0                 0                                     0               0                                   0               0                 0                 0                                       0                                       0                                       1                                       0                                       0                                            2                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+114           114                12  [Building Cleaning Workers, All Other, A...                12                 3                1                 2                                     2               0                                   0               1                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    1                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+#+end_example
+:END:
+** prod: Merge source and spacified DataFrames
+#+begin_src jupyter-python :async yes
+df2 = df0.copy()
+df2 = df2.join(df1, lsuffix="__OLD", rsuffix="")
+log0.info("DONE: merge")
+log0.info(f"{df2.shape = }")
+disp_df(df2.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: DONE: merge
+I: df2.shape = (132, 39)
+#+end_example
+#+begin_example
+     occup_code  scale_agentic                        occupation  score0  eval2  eval0                             soc_title                               soc_definition                                         text  spacy_index0  spacy_word_count                                  spacy_sents  spacy_WORD_count  spacy_NOUN_count  spacy_ADJ_count  spacy_VERB_count  spacy_VERB_count_without_be_and_have  spacy_VB_count  spacy_VB_count_without_be_and_have  spacy_JJ_count  spacy_JJRs_count  spacy_JJSs_count  spacy_count_of_is_big2c_agen_from_big2  spacy_count_of_is_big2a_agen_from_big2  spacy_count_of_is_big2a_comm_from_big2  spacy_count_of_is_big2b_agen_from_big2  spacy_count_of_is_big2b_comm_from_big2  spacy_count_of_is_nico_full_ability_posit_from_nico  spacy_count_of_is_nico_full_status_negat_from_nico  spacy_count_of_is_nico_seed_ability_negat_from_nico  spacy_count_of_is_nico_full_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_posit_from_nico  spacy_count_of_is_nico_seed_agency_negat_from_nico  spacy_count_of_is_nico_full_ability_negat_from_nico  spacy_count_of_is_nico_seed_ability_posit_from_nico  spacy_count_of_is_nico_full_agency_negat_from_nico  spacy_count_of_is_nico_full_status_posit_from_nico  spacy_count_of_is_nico_seed_status_negat_from_nico  spacy_count_of_is_nico_seed_status_posit_from_nico
+2             3      32.656839  Laundry and Dry-Cleaning Workers     100      1      1      Laundry and Dry-Cleaning Workers  Operate or tend washing or dry-cleaning ...  Laundry and Dry-Cleaning Workers, Operat...             2                42  [Laundry and Dry-Cleaning Workers, Opera...                42                17                5                 5                                     5               3                                   3               5                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+11           12      34.382530                   Baggage Porters     100      1      0          Baggage Porters and Bellhops  Handle baggage for travelers at transpor...  Baggage Porters and Bellhops, Handle bag...            11                19  [Baggage Porters and Bellhops, Handle ba...                19                 7                1                 0                                     0               0                                   0               1                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+22           23      29.765075            Parking Lot Attendants      78      1      0                    Parking Attendants  Park vehicles or issue tickets for custo...  Parking Attendants, Park vehicles or iss...            22                34  [Parking Attendants, Park vehicles or is...                34                16                2                 2                                     2               2                                   2               2                 0                 0                                       0                                       0                                       0                                       0                                       0                                            1                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+31           33      31.904150                          Cashiers     100      1      1                              Cashiers  Receive and disburse money in establishm...  Cashiers, Receive and disburse money in ...            31                37  [Cashiers, Receive and disburse money in...                37                17                4                 4                                     4               3                                   3               4                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    1                                                   0                                                    1                                                   0                                                   0                                                   0                                                    0                                                    0                                                   1                                                   0                                                   0
+35           37      26.251317                       Dishwashers     100      1      1                           Dishwashers  Clean dishes, kitchen, food preparation ...  Dishwashers, Clean dishes, kitchen, food...            35                 9  [Dishwashers, Clean dishes, kitchen, foo...                 9                 7                1                 0                                     0               0                                   0               1                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+48           51      34.753935          Food Preparation Workers     100      1      1              Food Preparation Workers  Perform a variety of food preparation du...  Food Preparation Workers, Perform a vari...            48                27  [Food Preparation Workers, Perform a var...                27                10                3                 4                                     4               1                                   1               3                 0                 0                                       0                                       0                                       0                                       0                                       0                                            2                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+84           93      30.882733                     Telemarketers     100      1      1                         Telemarketers  Solicit donations or orders for goods or...  Telemarketers, Solicit donations or orde...            84                12  [Telemarketers, Solicit donations or ord...                12                 6                0                 0                                     0               0                                   0               0                 0                 0                                       0                                       0                                       1                                       0                                       0                                            2                                                    0                                                   0                                                    0                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+114         129      34.414394         Building Cleaning Workers     100      1      0  Building Cleaning Workers, All Other  All building cleaning workers not listed...  Building Cleaning Workers, All Other, Al...           114                12  [Building Cleaning Workers, All Other, A...                12                 3                1                 2                                     2               0                                   0               1                 0                 0                                       0                                       0                                       0                                       0                                       0                                            0                                                    0                                                   0                                                    1                                                   0                                                   0                                                   0                                                    0                                                    0                                                   0                                                   0                                                   0
+#+end_example
+:END:
+** prod: Drop OLD cols
+#+begin_src jupyter-python :async yes
+log0.info(f"{df2.shape}")
+df2 = df2[df2.columns.drop(list(df2.filter(regex="spacy.*__OLD$")))]
+log0.info(f"{df2.shape}")
+for col0 in df2.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: (132, 39)
+I: (132, 39)
+    "occup_code",
+    "scale_agentic",
+    "occupation",
+    "score0",
+    "eval2",
+    "eval0",
+    "soc_title",
+    "soc_definition",
+    "text",
+    "spacy_index0",
+    "spacy_word_count",
+    "spacy_sents",
+    "spacy_WORD_count",
+    "spacy_NOUN_count",
+    "spacy_ADJ_count",
+    "spacy_VERB_count",
+    "spacy_VERB_count_without_be_and_have",
+    "spacy_VB_count",
+    "spacy_VB_count_without_be_and_have",
+    "spacy_JJ_count",
+    "spacy_JJRs_count",
+    "spacy_JJSs_count",
+    "spacy_count_of_is_big2c_agen_from_big2",
+    "spacy_count_of_is_big2a_agen_from_big2",
+    "spacy_count_of_is_big2a_comm_from_big2",
+    "spacy_count_of_is_big2b_agen_from_big2",
+    "spacy_count_of_is_big2b_comm_from_big2",
+    "spacy_count_of_is_nico_full_ability_posit_from_nico",
+    "spacy_count_of_is_nico_full_status_negat_from_nico",
+    "spacy_count_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_count_of_is_nico_full_agency_posit_from_nico",
+    "spacy_count_of_is_nico_seed_agency_posit_from_nico",
+    "spacy_count_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_count_of_is_nico_full_ability_negat_from_nico",
+    "spacy_count_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_count_of_is_nico_full_agency_negat_from_nico",
+    "spacy_count_of_is_nico_full_status_posit_from_nico",
+    "spacy_count_of_is_nico_seed_status_negat_from_nico",
+    "spacy_count_of_is_nico_seed_status_posit_from_nico",
+#+end_example
+
+** prod: Convert categorical data types to objects (important for Datasets)
+#+begin_src jupyter-python :async yes
+# df2[df2.select_dtypes(["category"]).columns] = df2.select_dtypes(["category"]).apply(lambda x: x.astype("object"))
+df2[df2.select_dtypes(["category"]).columns] = df2.select_dtypes(["category"]).apply(lambda x: x.astype(str))
+log0.info("DONE (categ to str)")
+disp_df(df2.dtypes, max_rows=500)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: DONE (categ to str)
+#+begin_example
+occup_code                                               int64
+scale_agentic                                          float64
+occupation                                              object
+score0                                                   int64
+eval2                                                    int64
+eval0                                                    int64
+soc_title                                               object
+soc_definition                                          object
+text                                                    object
+spacy_index0                                             int64
+spacy_word_count                                         int64
+spacy_sents                                             object
+spacy_WORD_count                                         int64
+spacy_NOUN_count                                         int64
+spacy_ADJ_count                                          int64
+spacy_VERB_count                                         int64
+spacy_VERB_count_without_be_and_have                     int64
+spacy_VB_count                                           int64
+spacy_VB_count_without_be_and_have                       int64
+spacy_JJ_count                                           int64
+spacy_JJRs_count                                         int64
+spacy_JJSs_count                                         int64
+spacy_count_of_is_big2c_agen_from_big2                   int64
+spacy_count_of_is_big2a_agen_from_big2                   int64
+spacy_count_of_is_big2a_comm_from_big2                   int64
+spacy_count_of_is_big2b_agen_from_big2                   int64
+spacy_count_of_is_big2b_comm_from_big2                   int64
+spacy_count_of_is_nico_full_ability_posit_from_nico      int64
+spacy_count_of_is_nico_full_status_negat_from_nico       int64
+spacy_count_of_is_nico_seed_ability_negat_from_nico      int64
+spacy_count_of_is_nico_full_agency_posit_from_nico       int64
+spacy_count_of_is_nico_seed_agency_posit_from_nico       int64
+spacy_count_of_is_nico_seed_agency_negat_from_nico       int64
+spacy_count_of_is_nico_full_ability_negat_from_nico      int64
+spacy_count_of_is_nico_seed_ability_posit_from_nico      int64
+spacy_count_of_is_nico_full_agency_negat_from_nico       int64
+spacy_count_of_is_nico_full_status_posit_from_nico       int64
+spacy_count_of_is_nico_seed_status_negat_from_nico       int64
+spacy_count_of_is_nico_seed_status_posit_from_nico       int64
+dtype: object
+#+end_example
+:END:
+
+** prod: Get means
+#+begin_src jupyter-python :async yes
+maybe_drop = False
+maybe_drop = True
+
+count_cols = [
+    col0 for col0 in df2.columns if
+    (col0.startswith("spacy_")) and \
+    ("count" in col0) and \
+    (col0!="spacy_WORD_count") and \
+    ("_as_dict" not in col0) and
+    ("votes_count" not in col0)
+]
+for col0 in count_cols:
+    log0.info(f"{col0 = }")
+    col1 = col0.replace("count", "mean")
+    df2[col1] = df2[col0]/df2["spacy_WORD_count"]
+    if maybe_drop:
+        df2.drop(columns=[col0], inplace=True)
+
+disp_cols = ["WORD_count", "spacy_mean_of_is_big2c_agen_from_big2", "spacy_mean_of_is_nico_full_status_posit_from_nico"]
+disp_df(df2.sample(n=5).sort_index(), width=4400)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: col0 = 'spacy_word_count'
+I: col0 = 'spacy_NOUN_count'
+I: col0 = 'spacy_ADJ_count'
+I: col0 = 'spacy_VERB_count'
+I: col0 = 'spacy_VERB_count_without_be_and_have'
+I: col0 = 'spacy_VB_count'
+I: col0 = 'spacy_VB_count_without_be_and_have'
+I: col0 = 'spacy_JJ_count'
+I: col0 = 'spacy_JJRs_count'
+I: col0 = 'spacy_JJSs_count'
+I: col0 = 'spacy_count_of_is_big2c_agen_from_big2'
+I: col0 = 'spacy_count_of_is_big2a_agen_from_big2'
+I: col0 = 'spacy_count_of_is_big2a_comm_from_big2'
+I: col0 = 'spacy_count_of_is_big2b_agen_from_big2'
+I: col0 = 'spacy_count_of_is_big2b_comm_from_big2'
+I: col0 = 'spacy_count_of_is_nico_full_ability_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_status_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_ability_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_agency_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_agency_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_agency_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_ability_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_ability_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_agency_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_full_status_posit_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_status_negat_from_nico'
+I: col0 = 'spacy_count_of_is_nico_seed_status_posit_from_nico'
+#+end_example
+#+begin_example
+     occup_code  scale_agentic          occupation  score0  eval2  eval0                 soc_title                               soc_definition                                         text  spacy_index0                                  spacy_sents  spacy_WORD_count  spacy_word_mean  spacy_NOUN_mean  spacy_ADJ_mean  spacy_VERB_mean  spacy_VERB_mean_without_be_and_have  spacy_VB_mean  spacy_VB_mean_without_be_and_have  spacy_JJ_mean  spacy_JJRs_mean  spacy_JJSs_mean  spacy_mean_of_is_big2c_agen_from_big2  spacy_mean_of_is_big2a_agen_from_big2  spacy_mean_of_is_big2a_comm_from_big2  spacy_mean_of_is_big2b_agen_from_big2  spacy_mean_of_is_big2b_comm_from_big2  spacy_mean_of_is_nico_full_ability_posit_from_nico  spacy_mean_of_is_nico_full_status_negat_from_nico  spacy_mean_of_is_nico_seed_ability_negat_from_nico  spacy_mean_of_is_nico_full_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_negat_from_nico  spacy_mean_of_is_nico_full_ability_negat_from_nico  spacy_mean_of_is_nico_seed_ability_posit_from_nico  spacy_mean_of_is_nico_full_agency_negat_from_nico  spacy_mean_of_is_nico_full_status_posit_from_nico  spacy_mean_of_is_nico_seed_status_negat_from_nico  spacy_mean_of_is_nico_seed_status_posit_from_nico
+7             8      59.318071        Audiologists     100      1      1              Audiologists  Assess and treat persons with hearing an...  Audiologists, Assess and treat persons w...             7  [Audiologists, Assess and treat persons ...                25              1.0         0.360000        0.120000         0.200000                             0.200000       0.120000                           0.120000       0.120000              0.0         0.000000                               0.000000                               0.000000                               0.040000                               0.000000                               0.000000                                     0.200000                                            0.000000                                                0.0                                            0.000000                                                0.0                                                0.0                                                0.0                                                 0.0                                                 0.0                                           0.000000                                                0.0                                                0.0
+53           57      47.393016            Bailiffs     100      1      1                  Bailiffs             Maintain order in courts of law.   Bailiffs, Maintain order in courts of law.            53  [Bailiffs, Maintain order in courts of l...                 7              1.0         0.571429        0.000000         0.142857                             0.142857       0.142857                           0.142857       0.000000              0.0         0.000000                               0.000000                               0.000000                               0.142857                               0.000000                               0.000000                                     0.142857                                            0.000000                                                0.0                                            0.000000                                                0.0                                                0.0                                                0.0                                                 0.0                                                 0.0                                           0.000000                                                0.0                                                0.0
+100         113      75.758087    Chief Executives     100      1      1          Chief Executives  Determine and formulate policies and pro...  Chief Executives, Determine and formulat...           100  [Chief Executives, Determine and formula...                52              1.0         0.346154        0.153846         0.096154                             0.096154       0.076923                           0.076923       0.134615              0.0         0.019231                               0.019231                               0.019231                               0.038462                               0.057692                               0.019231                                     0.057692                                            0.019231                                                0.0                                            0.076923                                                0.0                                                0.0                                                0.0                                                 0.0                                                 0.0                                           0.038462                                                0.0                                                0.0
+104         117      67.089120           Opticians     100      1      0     Opticians, Dispensing  Design, measure, fit, and adapt lenses a...  Opticians, Dispensing, Design, measure, ...           104  [Opticians, Dispensing, Design, measure,...                89              1.0         0.449438        0.089888         0.168539                             0.168539       0.067416                           0.067416       0.089888              0.0         0.000000                               0.011236                               0.011236                               0.044944                               0.000000                               0.033708                                     0.056180                                            0.000000                                                0.0                                            0.011236                                                0.0                                                0.0                                                0.0                                                 0.0                                                 0.0                                           0.011236                                                0.0                                                0.0
+123         139      57.757529  Advertising Agents      83      1      0  Advertising Sales Agents  Sell or solicit advertising space, time,...  Advertising Sales Agents, Sell or solici...           123  [Advertising Sales Agents, Sell or solic...                22              1.0         0.590909        0.045455         0.090909                             0.090909       0.090909                           0.090909       0.045455              0.0         0.000000                               0.000000                               0.000000                               0.045455                               0.000000                               0.000000                                     0.000000                                            0.000000                                                0.0                                            0.000000                                                0.0                                                0.0                                                0.0                                                 0.0                                                 0.0                                           0.000000                                                0.0                                                0.0
+#+end_example
+:END:
+** prod: Copy
+#+begin_src jupyter-python :async yes
+df8 = df2.copy()
+
+#+end_src
+
+#+RESULTS:
+
+** prod: Checkup columns
+#+begin_src jupyter-python :async yes
+log0.info(f"{df8.shape}")
+for col0 in df8.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: (132, 39)
+    "occup_code",
+    "scale_agentic",
+    "occupation",
+    "score0",
+    "eval2",
+    "eval0",
+    "soc_title",
+    "soc_definition",
+    "text",
+    "spacy_index0",
+    "spacy_sents",
+    "spacy_WORD_count",
+    "spacy_word_mean",
+    "spacy_NOUN_mean",
+    "spacy_ADJ_mean",
+    "spacy_VERB_mean",
+    "spacy_VERB_mean_without_be_and_have",
+    "spacy_VB_mean",
+    "spacy_VB_mean_without_be_and_have",
+    "spacy_JJ_mean",
+    "spacy_JJRs_mean",
+    "spacy_JJSs_mean",
+    "spacy_mean_of_is_big2c_agen_from_big2",
+    "spacy_mean_of_is_big2a_agen_from_big2",
+    "spacy_mean_of_is_big2a_comm_from_big2",
+    "spacy_mean_of_is_big2b_agen_from_big2",
+    "spacy_mean_of_is_big2b_comm_from_big2",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_status_posit_from_nico",
+#+end_example
+
+** Cleanup
+#+begin_src jupyter-python :async yes
+cols9 = {
+    "spacy_index0": "idx0",
+    # "SENT": "SENT",
+    # "EVAL_count": "HumEvalN",
+    # "EVAL_STD": "HumEvalSD",
+    "scale_agentic": "HumEval",
+    # "spacy_WORD_count": "WC",
+    "spacy_mean_of_is_big2a_agen_from_big2": "PietA",
+    "spacy_mean_of_is_big2b_agen_from_big2": "PietB",
+    "spacy_mean_of_is_big2c_agen_from_big2": "PietC",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico": "NicoPos",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico": "NicoNeg",
+    # "spacy_mean_of_is_nico_full_ability_posit_from_nico": "",
+    # "spacy_mean_of_is_nico_full_ability_negat_from_nico": "",
+    # "spacy_mean_of_is_nico_full_status_negat_from_nico": "",
+    # "spacy_mean_of_is_nico_full_status_posit_from_nico": "",
+    "spacy_sents": "sents",
+    "text": "text",
+}
+df9 = df8[cols9.keys()].copy()
+df9.rename(columns=cols9, inplace=True, errors="ignore")
+
+log0.info(f"{df9.shape = }")
+disp_df(df9.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df9.shape = (132, 9)
+#+begin_example
+     idx0    HumEval     PietA     PietB     PietC   NicoPos  NicoNeg                                        sents                                         text
+10     10  47.578905  0.000000  0.000000  0.000000  0.000000      0.0  [Dancers, Perform dances., May perform o...  Dancers, Perform dances. May perform on ...
+23     23  45.221690  0.000000  0.000000  0.000000  0.000000      0.0  [Bakers, Mix and bake ingredients to pro...  Bakers, Mix and bake ingredients to prod...
+35     35  26.251317  0.000000  0.000000  0.000000  0.000000      0.0  [Dishwashers, Clean dishes, kitchen, foo...  Dishwashers, Clean dishes, kitchen, food...
+43     43  42.290919  0.000000  0.000000  0.000000  0.000000      0.0  [Highway Maintenance Workers, Maintain h...  Highway Maintenance Workers, Maintain hi...
+69     69  46.508749  0.015152  0.030303  0.015152  0.015152      0.0  [Maintenance and Repair Workers, General...  Maintenance and Repair Workers, General,...
+85     85  47.117917  0.035714  0.035714  0.035714  0.000000      0.0  [Clergy, Conduct religious worship and p...  Clergy, Conduct religious worship and pe...
+93     93  42.819770  0.000000  0.000000  0.000000  0.000000      0.0  [Pressers, Textile, Garment, and Related...  Pressers, Textile, Garment, and Related ...
+106   106  49.176142  0.011905  0.047619  0.011905  0.035714      0.0  [Librarians and Media Collections Specia...  Librarians and Media Collections Special...
+#+end_example
+:END:
+** Insert NicoCom
+#+begin_src jupyter-python :async yes
+df9.insert(7, "NicoCom", df9.NicoPos-df9.NicoNeg)
+
+log0.info(f"{df9.shape = }")
+disp_df(df9.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df9.shape = (132, 10)
+#+begin_example
+     idx0    HumEval     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom                                        sents                                         text
+1       1  44.850290  0.036585  0.012195  0.036585  0.060976  0.000000  0.060976  [Personal Care Aides, Provide personaliz...  Personal Care Aides, Provide personalize...
+28     28  44.115109  0.000000  0.000000  0.000000  0.027027  0.000000  0.027027  [Chefs and Head Cooks, Direct and may pa...  Chefs and Head Cooks, Direct and may par...
+63     63  79.498007  0.111111  0.166667  0.111111  0.000000  0.000000  0.000000  [Astronomers, Observe, research, and int...  Astronomers, Observe, research, and inte...
+66     66  64.374809  0.000000  0.022727  0.000000  0.000000  0.000000  0.000000  [Statisticians, Develop or apply mathema...  Statisticians, Develop or apply mathemat...
+68     68  53.981589  0.000000  0.019608  0.000000  0.000000  0.000000  0.000000  [Hazardous Materials Removal Workers, Id...  Hazardous Materials Removal Workers, Ide...
+81     81  56.660196  0.024390  0.024390  0.024390  0.000000  0.073171 -0.073171  [Dental Hygienists, Administer oral hygi...  Dental Hygienists, Administer oral hygie...
+106   106  49.176142  0.011905  0.047619  0.011905  0.035714  0.000000  0.035714  [Librarians and Media Collections Specia...  Librarians and Media Collections Special...
+107   107  48.535994  0.000000  0.027778  0.000000  0.027778  0.000000  0.027778  [Plumbers, Pipefitters, and Steamfitters...  Plumbers, Pipefitters, and Steamfitters,...
+#+end_example
+:END:
+
+** Checkup
+#+begin_src jupyter-python :async yes
+cond = (df9.NicoPos>0) & (df9.NicoNeg>0)
+log0.info(f"{df9[cond].shape = }")
+disp_df(df9[cond].head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df9[cond].shape = (6, 10)
+#+begin_example
+     idx0    HumEval     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom                                        sents                                         text
+14     14  49.776132  0.033333  0.016667  0.033333  0.016667  0.016667  0.000000  [Healthcare Social Workers, Provide indi...  Healthcare Social Workers, Provide indiv...
+15     15  78.902065  0.000000  0.000000  0.000000  0.117647  0.029412  0.088235  [Physical Therapist Aides, Under close s...  Physical Therapist Aides, Under close su...
+79     79  52.514268  0.025641  0.025641  0.025641  0.025641  0.025641  0.000000  [Machinists, Set up and operate a variet...  Machinists, Set up and operate a variety...
+80     80  53.010654  0.000000  0.000000  0.000000  0.040000  0.040000  0.000000  [Ambulance Drivers and Attendants, Excep...  Ambulance Drivers and Attendants, Except...
+82     82  62.243797  0.016949  0.000000  0.016949  0.033898  0.016949  0.016949  [Marriage and Family Therapists, Diagnos...  Marriage and Family Therapists, Diagnose...
+105   105  70.421701  0.000000  0.027027  0.000000  0.027027  0.027027  0.000000  [Pharmacists, Dispense drugs prescribed ...  Pharmacists, Dispense drugs prescribed b...
+#+end_example
+:END:
+
+OLD
+#+RESULTS:
+:RESULTS:
+: I: df9[cond].shape = (6, 10)
+#+begin_example
+     idx0    HumEval     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom                                        sents                                         text
+14     14  49.776132  0.033333  0.016667  0.033333  0.016667  0.016667  0.000000  [Healthcare Social Workers, Provide indi...  Healthcare Social Workers, Provide indiv...
+15     15  78.902065  0.000000  0.000000  0.000000  0.117647  0.029412  0.088235  [Physical Therapist Aides, Under close s...  Physical Therapist Aides, Under close su...
+86     86  52.514268  0.025641  0.025641  0.025641  0.025641  0.025641  0.000000  [Machinists, Set up and operate a variet...  Machinists, Set up and operate a variety...
+88     88  53.010654  0.000000  0.000000  0.000000  0.040000  0.040000  0.000000  [Ambulance Drivers and Attendants, Excep...  Ambulance Drivers and Attendants, Except...
+90     90  62.243797  0.016949  0.000000  0.016949  0.033898  0.016949  0.016949  [Marriage and Family Therapists, Diagnos...  Marriage and Family Therapists, Diagnose...
+117   117  70.421701  0.000000  0.027027  0.000000  0.027027  0.027027  0.000000  [Pharmacists, Dispense drugs prescribed ...  Pharmacists, Dispense drugs prescribed b...
+#+end_example
+:END:
+
+** Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/v0002_professions/p1004_nlp/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["jobs"]
+sfx0 = ["nlp"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0002_professions/p1004_nlp/jobs_nlp.pkl...
+I: saving: ../../data/v0002_professions/p1004_nlp/jobs_nlp.csv...
+I: saving: ../../data/v0002_professions/p1004_nlp/jobs_nlp.xlsx...
+I: saving: ../../data/v0002_professions/p1004_nlp/jobs_nlp.jsonl...
+I: DONE
+#+end_example

@@ -1,0 +1,708 @@
+#+title: P0003_bert
+
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/")
+#+end_src
+
+** prod: Logger and Location
+#+begin_src jupyter-python :async yes
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load model
+#+begin_src jupyter-python :async yes
+dir0 = pathlib.Path().home()/"bertagent"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+from helpers import BERTAgentSentencesPredictor
+
+# model_path = dir0/"20230510T032633-model-roberta-base_data-df0x_testing-both_epo-064_status-DEPLOY/final"
+# ba0 = BERTAgentSentencesPredictor(
+#     model_path = model_path,
+#     tokenizer_path = model_path,
+# )
+
+model_path = dir0/"20230512T231630_status-DEPLOY_data-df4x_testing-both_epo-008_model-roberta-base/final"
+ba4 = BERTAgentSentencesPredictor(
+    model_path = model_path,
+    tokenizer_path = model_path,
+)
+#+end_src
+
+#+RESULTS:
+
+** test: Demo data
+#+begin_src jupyter-python :async yes
+sents = [
+    ["stiving to achieve my goals"],
+    ["struglling to survive"],
+    ["lost all hope"],
+    ["struglling to acheve something"],
+    ["I want to give up"],
+    ["hardly working individual"],
+    ["hard working individual"],
+]
+dfX = pd.DataFrame(dict(sents=sents))
+
+dfX["ba0"] = dfX.sents.progress_apply(ba0.predict)
+dfX["ba4"] = dfX.sents.progress_apply(ba4.predict)
+
+"""
+del ba0
+del ba4
+gc.collect()
+torch.cuda.empty_cache()
+
+"""
+
+log0.info(f"{dfX.shape = }")
+disp_df(dfX.head(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+100% 7/7 [00:00<00:00, 10.12it/s]
+100% 7/7 [00:00<00:00, 145.66it/s]
+I: dfX.shape = (7, 3)
+#+end_example
+#+begin_example
+                              sents                    ba0                     ba4
+0     [stiving to achieve my goals]    [0.811343789100647]   [0.46363115310668945]
+1           [struglling to survive]   [0.3093999922275543]    [0.2404521256685257]
+2                   [lost all hope]  [-0.9331526756286621]  [-0.35690292716026306]
+3  [struglling to acheve something]   [0.6140249371528625]   [0.32130008935928345]
+4               [I want to give up]  [-0.6370888352394104]  [-0.39004892110824585]
+5       [hardly working individual]  [-0.6461266279220581]    [-0.499760240316391]
+6         [hard working individual]   [0.7121863961219788]     [0.592132031917572]
+#+end_example
+:END:
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_20newsgroups/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"data_d0001_20newsgroups_nlp"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index(), width=6666)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0004_20newsgroups/data_d0001_20newsgroups_nlp.pkl...
+I: loading: ../../data/v0004_20newsgroups/data_d0001_20newsgroups_nlp.pkl... DONE
+I: df0.shape = (7850, 106)
+#+end_example
+#+begin_example
+                                             text target               label  spacy_index0                                  spacy_sents  spacy_WORD_count  spacy_word_mean  spacy_NOUN_mean  spacy_ADJ_mean  spacy_VERB_mean  spacy_VERB_mean_without_be_and_have  spacy_VB_mean  spacy_VB_mean_without_be_and_have  spacy_JJ_mean  spacy_JJRs_mean  spacy_JJSs_mean  spacy_mean_of_is_big2c_agen_from_big2  spacy_mean_of_is_big2a_agen_from_big2  spacy_mean_of_is_big2a_comm_from_big2  spacy_mean_of_is_big2b_agen_from_big2  spacy_mean_of_is_big2b_comm_from_big2  spacy_mean_of_is_nico_full_ability_posit_from_nico  spacy_mean_of_is_nico_full_status_negat_from_nico  spacy_mean_of_is_nico_seed_ability_negat_from_nico  spacy_mean_of_is_nico_full_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_negat_from_nico  spacy_mean_of_is_nico_full_ability_negat_from_nico  spacy_mean_of_is_nico_seed_ability_posit_from_nico  spacy_mean_of_is_nico_full_agency_negat_from_nico  spacy_mean_of_is_nico_full_status_posit_from_nico  spacy_mean_of_is_nico_seed_status_negat_from_nico  spacy_mean_of_is_nico_seed_status_posit_from_nico  spacy_mean_of_is_liwc_00001_Function_from_liwc  spacy_mean_of_is_liwc_00002_Pronoun_from_liwc  spacy_mean_of_is_liwc_00003_Ppron_from_liwc  spacy_mean_of_is_liwc_00004_I_from_liwc  spacy_mean_of_is_liwc_00005_We_from_liwc  spacy_mean_of_is_liwc_00006_You_from_liwc  spacy_mean_of_is_liwc_00007_SheHe_from_liwc  spacy_mean_of_is_liwc_00008_They_from_liwc  spacy_mean_of_is_liwc_00009_Ipron_from_liwc  spacy_mean_of_is_liwc_00010_Article_from_liwc  spacy_mean_of_is_liwc_00011_Prep_from_liwc  spacy_mean_of_is_liwc_00012_Auxverb_from_liwc  spacy_mean_of_is_liwc_00013_Adverb_from_liwc  spacy_mean_of_is_liwc_00014_Conj_from_liwc  spacy_mean_of_is_liwc_00015_Negate_from_liwc  spacy_mean_of_is_liwc_00020_Verb_from_liwc  spacy_mean_of_is_liwc_00021_Adj_from_liwc  spacy_mean_of_is_liwc_00022_Compare_from_liwc  spacy_mean_of_is_liwc_00023_Interrog_from_liwc  spacy_mean_of_is_liwc_00024_Number_from_liwc  spacy_mean_of_is_liwc_00025_Quant_from_liwc  spacy_mean_of_is_liwc_00030_Affect_from_liwc  spacy_mean_of_is_liwc_00031_Posemo_from_liwc  spacy_mean_of_is_liwc_00032_Negemo_from_liwc  spacy_mean_of_is_liwc_00033_Anx_from_liwc  spacy_mean_of_is_liwc_00034_Anger_from_liwc  spacy_mean_of_is_liwc_00035_Sad_from_liwc  spacy_mean_of_is_liwc_00040_Social_from_liwc  spacy_mean_of_is_liwc_00041_Family_from_liwc  spacy_mean_of_is_liwc_00042_Friend_from_liwc  spacy_mean_of_is_liwc_00043_Female_from_liwc  spacy_mean_of_is_liwc_00044_Male_from_liwc  spacy_mean_of_is_liwc_00050_CogProc_from_liwc  spacy_mean_of_is_liwc_00051_Insight_from_liwc  spacy_mean_of_is_liwc_00052_Cause_from_liwc  spacy_mean_of_is_liwc_00053_Discrep_from_liwc  spacy_mean_of_is_liwc_00054_Tentat_from_liwc  spacy_mean_of_is_liwc_00055_Certain_from_liwc  spacy_mean_of_is_liwc_00056_Differ_from_liwc  spacy_mean_of_is_liwc_00060_Percept_from_liwc  spacy_mean_of_is_liwc_00061_See_from_liwc  spacy_mean_of_is_liwc_00062_Hear_from_liwc  spacy_mean_of_is_liwc_00063_Feel_from_liwc  spacy_mean_of_is_liwc_00070_Bio_from_liwc  spacy_mean_of_is_liwc_00071_Body_from_liwc  spacy_mean_of_is_liwc_00072_Health_from_liwc  spacy_mean_of_is_liwc_00073_Sexual_from_liwc  spacy_mean_of_is_liwc_00074_Ingest_from_liwc  spacy_mean_of_is_liwc_00080_Drives_from_liwc  spacy_mean_of_is_liwc_00081_Affiliation_from_liwc  spacy_mean_of_is_liwc_00082_Achieve_from_liwc  spacy_mean_of_is_liwc_00083_Power_from_liwc  spacy_mean_of_is_liwc_00084_Reward_from_liwc  spacy_mean_of_is_liwc_00085_Risk_from_liwc  spacy_mean_of_is_liwc_00090_FocusPast_from_liwc  spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc  spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc  spacy_mean_of_is_liwc_00100_Relativ_from_liwc  spacy_mean_of_is_liwc_00101_Motion_from_liwc  spacy_mean_of_is_liwc_00102_Space_from_liwc  spacy_mean_of_is_liwc_00103_Time_from_liwc  spacy_mean_of_is_liwc_00110_Work_from_liwc  spacy_mean_of_is_liwc_00111_Leisure_from_liwc  spacy_mean_of_is_liwc_00112_Home_from_liwc  spacy_mean_of_is_liwc_00113_Money_from_liwc  spacy_mean_of_is_liwc_00114_Relig_from_liwc  spacy_mean_of_is_liwc_00115_Death_from_liwc  spacy_mean_of_is_liwc_00120_Informal_from_liwc  spacy_mean_of_is_liwc_00121_Swear_from_liwc  spacy_mean_of_is_liwc_00122_Netspeak_from_liwc  spacy_mean_of_is_liwc_00123_Assent_from_liwc  spacy_mean_of_is_liwc_00124_Nonflu_from_liwc  spacy_mean_of_is_liwc_00125_Filler_from_liwc
+564   When I say "black," I mean US-born black...      1  rec.sport.baseball           564  [When I say "black," I mean US-born blac...               144              1.0         0.187500        0.118056         0.138889                             0.131944       0.041667                           0.041667       0.111111         0.006944         0.000000                               0.034722                               0.041667                               0.055556                               0.006944                               0.006944                                     0.048611                                            0.027778                                                0.0                                            0.006944                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.006944                                           0.013889                                                0.0                                                0.0                                           0.534722                                        0.131944                                       0.076389                                 0.048611                                  0.013889                                   0.006944                                     0.000000                                    0.006944                                     0.055556                                     0.055556                                      0.138889                                     0.083333                                       0.055556                                     0.076389                                     0.027778                                     0.152778                                   0.083333                                     0.048611                                       0.006944                                        0.020833                                      0.055556                                     0.041667                                      0.027778                                      0.013889                                    0.013889                                     0.000000                                   0.000000                                     0.090278                                          0.00                                      0.000000                                          0.00                                     0.000000                                     0.173611                                       0.034722                                       0.027778                                     0.013889                                       0.027778                                      0.034722                                       0.048611                                      0.055556                                     0.041667                                    0.013889                                    0.000000                                   0.000000                                    0.000000                                          0.0                                      0.000000                                      0.000000                                      0.076389                                      0.034722                                           0.020833                                       0.027778                                     0.006944                                     0.000000                                     0.062500                                         0.152778                                            0.013889                                           0.173611                                       0.020833                                      0.090278                                    0.062500                                    0.013889                                     0.013889                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.027778                                        0.000000                                     0.006944                                        0.006944                                      0.013889                                           0.0
+3111  I keep hearing this, but every assertion...      6  talk.politics.guns          3111  [I keep hearing this, but every assertio...               237              1.0         0.151899        0.097046         0.118143                             0.118143       0.046414                           0.033755       0.092827         0.004219         0.000000                               0.046414                               0.046414                               0.008439                               0.016878                               0.000000                                     0.046414                                            0.012658                                                0.0                                            0.004219                                                0.0                                           0.004219                                           0.008439                                                 0.0                                            0.008439                                           0.012658                                                0.0                                                0.0                                           0.578059                                        0.151899                                       0.075949                                 0.016878                                  0.008439                                   0.000000                                     0.025316                                    0.025316                                     0.075949                                     0.063291                                      0.135021                                     0.097046                                       0.046414                                     0.084388                                     0.033755                                     0.164557                                   0.050633                                     0.021097                                       0.008439                                        0.021097                                      0.037975                                     0.067511                                      0.042194                                      0.021097                                    0.004219                                     0.008439                                   0.000000                                     0.088608                                          0.00                                      0.000000                                          0.00                                     0.025316                                     0.151899                                       0.012658                                       0.008439                                     0.025316                                       0.029536                                      0.046414                                       0.063291                                      0.016878                                     0.000000                                    0.016878                                    0.000000                                   0.000000                                    0.000000                                          0.0                                      0.000000                                      0.000000                                      0.054852                                      0.008439                                           0.012658                                       0.016878                                     0.008439                                     0.008439                                     0.050633                                         0.147679                                            0.008439                                           0.147679                                       0.021097                                      0.067511                                    0.063291                                    0.008439                                     0.000000                                      0.000000                                     0.000000                                     0.000000                                     0.016878                                     0.004219                                        0.000000                                     0.000000                                        0.000000                                      0.004219                                           0.0
+3779  Not to Sutter bash or anything since I i...      2    rec.sport.hockey          3779  [Not to Sutter bash or anything since I ...               144              1.0         0.152778        0.055556         0.131944                             0.131944       0.034722                           0.027778       0.048611         0.000000         0.006944                               0.041667                               0.055556                               0.020833                               0.000000                               0.013889                                     0.034722                                            0.013889                                                0.0                                            0.034722                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.000000                                           0.020833                                                0.0                                                0.0                                           0.506944                                        0.131944                                       0.076389                                 0.027778                                  0.000000                                   0.013889                                     0.000000                                    0.034722                                     0.055556                                     0.069444                                      0.131944                                     0.076389                                       0.076389                                     0.062500                                     0.006944                                     0.173611                                   0.090278                                     0.034722                                       0.000000                                        0.000000                                      0.034722                                     0.076389                                      0.062500                                      0.013889                                    0.000000                                     0.006944                                   0.006944                                     0.069444                                          0.00                                      0.000000                                          0.00                                     0.006944                                     0.111111                                       0.027778                                       0.013889                                     0.013889                                       0.027778                                      0.020833                                       0.020833                                      0.020833                                     0.000000                                    0.006944                                    0.006944                                   0.027778                                    0.006944                                          0.0                                      0.000000                                      0.020833                                      0.069444                                      0.006944                                           0.034722                                       0.027778                                     0.041667                                     0.006944                                     0.048611                                         0.131944                                            0.006944                                           0.159722                                       0.006944                                      0.097222                                    0.048611                                    0.020833                                     0.006944                                      0.006944                                     0.000000                                     0.000000                                     0.000000                                     0.013889                                        0.013889                                     0.000000                                        0.000000                                      0.000000                                           0.0
+4080  Make that ten, not eight. The Mets and A...      1  rec.sport.baseball          4080  [Make that ten, not eight., The Mets and...                12              1.0         0.000000        0.000000         0.166667                             0.166667       0.083333                           0.083333       0.000000         0.000000         0.000000                               0.083333                               0.083333                               0.000000                               0.000000                               0.000000                                     0.083333                                            0.000000                                                0.0                                            0.000000                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.000000                                           0.000000                                                0.0                                                0.0                                           0.500000                                        0.083333                                       0.000000                                 0.000000                                  0.000000                                   0.000000                                     0.000000                                    0.000000                                     0.083333                                     0.166667                                      0.083333                                     0.000000                                       0.000000                                     0.083333                                     0.083333                                     0.166667                                   0.000000                                     0.000000                                       0.000000                                        0.166667                                      0.000000                                     0.000000                                      0.000000                                      0.000000                                    0.000000                                     0.000000                                   0.000000                                     0.000000                                          0.00                                      0.000000                                          0.00                                     0.000000                                     0.166667                                       0.000000                                       0.083333                                     0.000000                                       0.000000                                      0.000000                                       0.083333                                      0.000000                                     0.000000                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                          0.0                                      0.000000                                      0.000000                                      0.083333                                      0.083333                                           0.000000                                       0.000000                                     0.000000                                     0.000000                                     0.083333                                         0.166667                                            0.000000                                           0.083333                                       0.000000                                      0.083333                                    0.000000                                    0.000000                                     0.000000                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0
+4677  I've had neither a baby nor a kidney sto...      3             sci.med          4677  [I've had neither a baby nor a kidney st...                25              1.0         0.280000        0.040000         0.120000                             0.040000       0.000000                           0.000000       0.000000         0.040000         0.000000                               0.000000                               0.000000                               0.040000                               0.000000                               0.000000                                     0.000000                                            0.000000                                                0.0                                            0.000000                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.000000                                           0.000000                                                0.0                                                0.0                                           0.600000                                        0.120000                                       0.080000                                 0.080000                                  0.000000                                   0.000000                                     0.000000                                    0.000000                                     0.040000                                     0.120000                                      0.080000                                     0.160000                                       0.000000                                     0.080000                                     0.080000                                     0.160000                                   0.080000                                     0.080000                                       0.040000                                        0.000000                                      0.080000                                     0.040000                                      0.000000                                      0.040000                                    0.000000                                     0.000000                                   0.000000                                     0.120000                                          0.08                                      0.000000                                          0.04                                     0.000000                                     0.120000                                       0.000000                                       0.000000                                     0.000000                                       0.000000                                      0.000000                                       0.120000                                      0.000000                                     0.000000                                    0.000000                                    0.000000                                   0.080000                                    0.080000                                          0.0                                      0.000000                                      0.000000                                      0.040000                                      0.000000                                           0.000000                                       0.000000                                     0.000000                                     0.040000                                     0.080000                                         0.200000                                            0.000000                                           0.040000                                       0.000000                                      0.040000                                    0.000000                                    0.000000                                     0.000000                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0
+6312  I could give much the same testimonial a...      0         alt.atheism          6312  [I could give much the same testimonial ...               139              1.0         0.187050        0.071942         0.115108                             0.115108       0.043165                           0.035971       0.071942         0.000000         0.000000                               0.043165                               0.064748                               0.021583                               0.028777                               0.007194                                     0.035971                                            0.007194                                                0.0                                            0.007194                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.000000                                           0.028777                                                0.0                                                0.0                                           0.589928                                        0.115108                                       0.064748                                 0.021583                                  0.000000                                   0.021583                                     0.021583                                    0.000000                                     0.050360                                     0.115108                                      0.136691                                     0.115108                                       0.043165                                     0.057554                                     0.021583                                     0.187050                                   0.035971                                     0.035971                                       0.007194                                        0.000000                                      0.021583                                     0.057554                                      0.035971                                      0.021583                                    0.007194                                     0.014388                                   0.000000                                     0.093525                                          0.00                                      0.000000                                          0.00                                     0.021583                                     0.122302                                       0.028777                                       0.000000                                     0.035971                                       0.028777                                      0.007194                                       0.043165                                      0.021583                                     0.007194                                    0.000000                                    0.000000                                   0.007194                                    0.000000                                          0.0                                      0.007194                                      0.000000                                      0.057554                                      0.007194                                           0.021583                                       0.021583                                     0.007194                                     0.014388                                     0.043165                                         0.136691                                            0.007194                                           0.107914                                       0.014388                                      0.079137                                    0.021583                                    0.014388                                     0.000000                                      0.000000                                     0.007194                                     0.007194                                     0.000000                                     0.007194                                        0.000000                                     0.000000                                        0.000000                                      0.007194                                           0.0
+6573  No....Hal McRae is the worst manager in ...      1  rec.sport.baseball          6573  [No....Hal McRae is the worst manager in...                55              1.0         0.181818        0.109091         0.109091                             0.109091       0.054545                           0.036364       0.072727         0.000000         0.036364                               0.036364                               0.036364                               0.000000                               0.018182                               0.000000                                     0.109091                                            0.018182                                                0.0                                            0.000000                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.000000                                           0.018182                                                0.0                                                0.0                                           0.563636                                        0.127273                                       0.090909                                 0.036364                                  0.000000                                   0.000000                                     0.054545                                    0.000000                                     0.036364                                     0.109091                                      0.127273                                     0.109091                                       0.036364                                     0.054545                                     0.036364                                     0.163636                                   0.090909                                     0.054545                                       0.018182                                        0.018182                                      0.000000                                     0.127273                                      0.090909                                      0.036364                                    0.000000                                     0.000000                                   0.018182                                     0.090909                                          0.00                                      0.018182                                          0.00                                     0.072727                                     0.109091                                       0.018182                                       0.036364                                     0.018182                                       0.018182                                      0.018182                                       0.036364                                      0.018182                                     0.018182                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                          0.0                                      0.000000                                      0.000000                                      0.127273                                      0.018182                                           0.054545                                       0.054545                                     0.018182                                     0.036364                                     0.036364                                         0.200000                                            0.000000                                           0.127273                                       0.000000                                      0.054545                                    0.072727                                    0.036364                                     0.018182                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0
+7866  Why would you want to do that? The goal ...      4           sci.space          7866  [Why would you want to do that?, The goa...                37              1.0         0.189189        0.054054         0.162162                             0.162162       0.135135                           0.135135       0.027027         0.027027         0.000000                               0.081081                               0.108108                               0.000000                               0.000000                               0.000000                                     0.081081                                            0.027027                                                0.0                                            0.027027                                                0.0                                           0.000000                                           0.000000                                                 0.0                                            0.000000                                           0.000000                                                0.0                                                0.0                                           0.594595                                        0.108108                                       0.027027                                 0.000000                                  0.000000                                   0.027027                                     0.000000                                    0.000000                                     0.081081                                     0.108108                                      0.108108                                     0.135135                                       0.081081                                     0.027027                                     0.027027                                     0.216216                                   0.054054                                     0.054054                                       0.027027                                        0.000000                                      0.027027                                     0.000000                                      0.000000                                      0.000000                                    0.000000                                     0.000000                                   0.000000                                     0.027027                                          0.00                                      0.000000                                          0.00                                     0.000000                                     0.243243                                       0.027027                                       0.108108                                     0.054054                                       0.000000                                      0.000000                                       0.054054                                      0.000000                                     0.000000                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                          0.0                                      0.000000                                      0.000000                                      0.108108                                      0.000000                                           0.027027                                       0.081081                                     0.027027                                     0.000000                                     0.027027                                         0.162162                                            0.000000                                           0.054054                                       0.054054                                      0.000000                                    0.000000                                    0.054054                                     0.000000                                      0.027027                                     0.108108                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0
+#+end_example
+:END:
+** test: Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "text",
+    "target",
+    "label",
+    "spacy_index0",
+    "spacy_sents",
+    "spacy_WORD_count",
+    "spacy_word_mean",
+    "spacy_NOUN_mean",
+    "spacy_ADJ_mean",
+    "spacy_VERB_mean",
+    "spacy_VERB_mean_without_be_and_have",
+    "spacy_VB_mean",
+    "spacy_VB_mean_without_be_and_have",
+    "spacy_JJ_mean",
+    "spacy_JJRs_mean",
+    "spacy_JJSs_mean",
+    "spacy_mean_of_is_big2c_agen_from_big2",
+    "spacy_mean_of_is_big2a_agen_from_big2",
+    "spacy_mean_of_is_big2a_comm_from_big2",
+    "spacy_mean_of_is_big2b_agen_from_big2",
+    "spacy_mean_of_is_big2b_comm_from_big2",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_status_posit_from_nico",
+    "spacy_mean_of_is_liwc_00001_Function_from_liwc",
+    "spacy_mean_of_is_liwc_00002_Pronoun_from_liwc",
+    "spacy_mean_of_is_liwc_00003_Ppron_from_liwc",
+    "spacy_mean_of_is_liwc_00004_I_from_liwc",
+    "spacy_mean_of_is_liwc_00005_We_from_liwc",
+    "spacy_mean_of_is_liwc_00006_You_from_liwc",
+    "spacy_mean_of_is_liwc_00007_SheHe_from_liwc",
+    "spacy_mean_of_is_liwc_00008_They_from_liwc",
+    "spacy_mean_of_is_liwc_00009_Ipron_from_liwc",
+    "spacy_mean_of_is_liwc_00010_Article_from_liwc",
+    "spacy_mean_of_is_liwc_00011_Prep_from_liwc",
+    "spacy_mean_of_is_liwc_00012_Auxverb_from_liwc",
+    "spacy_mean_of_is_liwc_00013_Adverb_from_liwc",
+    "spacy_mean_of_is_liwc_00014_Conj_from_liwc",
+    "spacy_mean_of_is_liwc_00015_Negate_from_liwc",
+    "spacy_mean_of_is_liwc_00020_Verb_from_liwc",
+    "spacy_mean_of_is_liwc_00021_Adj_from_liwc",
+    "spacy_mean_of_is_liwc_00022_Compare_from_liwc",
+    "spacy_mean_of_is_liwc_00023_Interrog_from_liwc",
+    "spacy_mean_of_is_liwc_00024_Number_from_liwc",
+    "spacy_mean_of_is_liwc_00025_Quant_from_liwc",
+    "spacy_mean_of_is_liwc_00030_Affect_from_liwc",
+    "spacy_mean_of_is_liwc_00031_Posemo_from_liwc",
+    "spacy_mean_of_is_liwc_00032_Negemo_from_liwc",
+    "spacy_mean_of_is_liwc_00033_Anx_from_liwc",
+    "spacy_mean_of_is_liwc_00034_Anger_from_liwc",
+    "spacy_mean_of_is_liwc_00035_Sad_from_liwc",
+    "spacy_mean_of_is_liwc_00040_Social_from_liwc",
+    "spacy_mean_of_is_liwc_00041_Family_from_liwc",
+    "spacy_mean_of_is_liwc_00042_Friend_from_liwc",
+    "spacy_mean_of_is_liwc_00043_Female_from_liwc",
+    "spacy_mean_of_is_liwc_00044_Male_from_liwc",
+    "spacy_mean_of_is_liwc_00050_CogProc_from_liwc",
+    "spacy_mean_of_is_liwc_00051_Insight_from_liwc",
+    "spacy_mean_of_is_liwc_00052_Cause_from_liwc",
+    "spacy_mean_of_is_liwc_00053_Discrep_from_liwc",
+    "spacy_mean_of_is_liwc_00054_Tentat_from_liwc",
+    "spacy_mean_of_is_liwc_00055_Certain_from_liwc",
+    "spacy_mean_of_is_liwc_00056_Differ_from_liwc",
+    "spacy_mean_of_is_liwc_00060_Percept_from_liwc",
+    "spacy_mean_of_is_liwc_00061_See_from_liwc",
+    "spacy_mean_of_is_liwc_00062_Hear_from_liwc",
+    "spacy_mean_of_is_liwc_00063_Feel_from_liwc",
+    "spacy_mean_of_is_liwc_00070_Bio_from_liwc",
+    "spacy_mean_of_is_liwc_00071_Body_from_liwc",
+    "spacy_mean_of_is_liwc_00072_Health_from_liwc",
+    "spacy_mean_of_is_liwc_00073_Sexual_from_liwc",
+    "spacy_mean_of_is_liwc_00074_Ingest_from_liwc",
+    "spacy_mean_of_is_liwc_00080_Drives_from_liwc",
+    "spacy_mean_of_is_liwc_00081_Affiliation_from_liwc",
+    "spacy_mean_of_is_liwc_00082_Achieve_from_liwc",
+    "spacy_mean_of_is_liwc_00083_Power_from_liwc",
+    "spacy_mean_of_is_liwc_00084_Reward_from_liwc",
+    "spacy_mean_of_is_liwc_00085_Risk_from_liwc",
+    "spacy_mean_of_is_liwc_00090_FocusPast_from_liwc",
+    "spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc",
+    "spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc",
+    "spacy_mean_of_is_liwc_00100_Relativ_from_liwc",
+    "spacy_mean_of_is_liwc_00101_Motion_from_liwc",
+    "spacy_mean_of_is_liwc_00102_Space_from_liwc",
+    "spacy_mean_of_is_liwc_00103_Time_from_liwc",
+    "spacy_mean_of_is_liwc_00110_Work_from_liwc",
+    "spacy_mean_of_is_liwc_00111_Leisure_from_liwc",
+    "spacy_mean_of_is_liwc_00112_Home_from_liwc",
+    "spacy_mean_of_is_liwc_00113_Money_from_liwc",
+    "spacy_mean_of_is_liwc_00114_Relig_from_liwc",
+    "spacy_mean_of_is_liwc_00115_Death_from_liwc",
+    "spacy_mean_of_is_liwc_00120_Informal_from_liwc",
+    "spacy_mean_of_is_liwc_00121_Swear_from_liwc",
+    "spacy_mean_of_is_liwc_00122_Netspeak_from_liwc",
+    "spacy_mean_of_is_liwc_00123_Assent_from_liwc",
+    "spacy_mean_of_is_liwc_00124_Nonflu_from_liwc",
+    "spacy_mean_of_is_liwc_00125_Filler_from_liwc",
+#+end_example
+
+** prod: Add sents
+#+begin_src jupyter-python :async yes
+df0["sents"] = df0.spacy_sents
+#+end_src
+
+#+RESULTS:
+
+** prod: Predict using =ba4=
+#+begin_src jupyter-python :async yes
+df0["ba4"] = df0.sents.progress_apply(ba4.predict)
+log0.info("DONE: predictions")
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+  6% 454/7850 [00:17<04:51, 25.39it/s]
+#+end_example
+# [goto error]
+#+begin_example
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mRuntimeError[0m                              Traceback (most recent call last)
+Cell [0;32mIn[17], line 1[0m
+[0;32m----> 1[0m df0[[38;5;124m"[39m[38;5;124mba4[39m[38;5;124m"[39m] [38;5;241m=[39m [43mdf0[49m[38;5;241;43m.[39;49m[43msents[49m[38;5;241;43m.[39;49m[43mprogress_apply[49m[43m([49m[43mba4[49m[38;5;241;43m.[39;49m[43mpredict[49m[43m)[49m
+[1;32m      2[0m log0[38;5;241m.[39minfo([38;5;124m"[39m[38;5;124mDONE: predictions[39m[38;5;124m"[39m)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/tqdm/std.py:805[0m, in [0;36mtqdm.pandas.<locals>.inner_generator.<locals>.inner[0;34m(df, func, *args, **kwargs)[0m
+[1;32m    802[0m [38;5;66;03m# Apply the provided function (in **kwargs)[39;00m
+[1;32m    803[0m [38;5;66;03m# on the df using our wrapper (which provides bar updating)[39;00m
+[1;32m    804[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 805[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mgetattr[39;49m[43m([49m[43mdf[49m[43m,[49m[43m [49m[43mdf_function[49m[43m)[49m[43m([49m[43mwrapper[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    806[0m [38;5;28;01mfinally[39;00m:
+[1;32m    807[0m     t[38;5;241m.[39mclose()
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/pandas/core/series.py:4626[0m, in [0;36mSeries.apply[0;34m(self, func, convert_dtype, args, **kwargs)[0m
+[1;32m   4516[0m [38;5;28;01mdef[39;00m [38;5;21mapply[39m(
+[1;32m   4517[0m     [38;5;28mself[39m,
+[1;32m   4518[0m     func: AggFuncType,
+[0;32m   (...)[0m
+[1;32m   4521[0m     [38;5;241m*[39m[38;5;241m*[39mkwargs,
+[1;32m   4522[0m ) [38;5;241m-[39m[38;5;241m>[39m DataFrame [38;5;241m|[39m Series:
+[1;32m   4523[0m [38;5;250m    [39m[38;5;124;03m"""[39;00m
+[1;32m   4524[0m [38;5;124;03m    Invoke function on values of Series.[39;00m
+[1;32m   4525[0m
+[0;32m   (...)[0m
+[1;32m   4624[0m [38;5;124;03m    dtype: float64[39;00m
+[1;32m   4625[0m [38;5;124;03m    """[39;00m
+[0;32m-> 4626[0m     [38;5;28;01mreturn[39;00m [43mSeriesApply[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfunc[49m[43m,[49m[43m [49m[43mconvert_dtype[49m[43m,[49m[43m [49m[43margs[49m[43m,[49m[43m [49m[43mkwargs[49m[43m)[49m[38;5;241;43m.[39;49m[43mapply[49m[43m([49m[43m)[49m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/pandas/core/apply.py:1025[0m, in [0;36mSeriesApply.apply[0;34m(self)[0m
+[1;32m   1022[0m     [38;5;28;01mreturn[39;00m [38;5;28mself[39m[38;5;241m.[39mapply_str()
+[1;32m   1024[0m [38;5;66;03m# self.f is Callable[39;00m
+[0;32m-> 1025[0m [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mapply_standard[49m[43m([49m[43m)[49m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/pandas/core/apply.py:1076[0m, in [0;36mSeriesApply.apply_standard[0;34m(self)[0m
+[1;32m   1074[0m     [38;5;28;01melse[39;00m:
+[1;32m   1075[0m         values [38;5;241m=[39m obj[38;5;241m.[39mastype([38;5;28mobject[39m)[38;5;241m.[39m_values
+[0;32m-> 1076[0m         mapped [38;5;241m=[39m [43mlib[49m[38;5;241;43m.[39;49m[43mmap_infer[49m[43m([49m
+[1;32m   1077[0m [43m            [49m[43mvalues[49m[43m,[49m
+[1;32m   1078[0m [43m            [49m[43mf[49m[43m,[49m
+[1;32m   1079[0m [43m            [49m[43mconvert[49m[38;5;241;43m=[39;49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mconvert_dtype[49m[43m,[49m
+[1;32m   1080[0m [43m        [49m[43m)[49m
+[1;32m   1082[0m [38;5;28;01mif[39;00m [38;5;28mlen[39m(mapped) [38;5;129;01mand[39;00m [38;5;28misinstance[39m(mapped[[38;5;241m0[39m], ABCSeries):
+[1;32m   1083[0m     [38;5;66;03m# GH#43986 Need to do list(mapped) in order to get treated as nested[39;00m
+[1;32m   1084[0m     [38;5;66;03m#  See also GH#25959 regarding EA support[39;00m
+[1;32m   1085[0m     [38;5;28;01mreturn[39;00m obj[38;5;241m.[39m_constructor_expanddim([38;5;28mlist[39m(mapped), index[38;5;241m=[39mobj[38;5;241m.[39mindex)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/pandas/_libs/lib.pyx:2834[0m, in [0;36mpandas._libs.lib.map_infer[0;34m()[0m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/tqdm/std.py:800[0m, in [0;36mtqdm.pandas.<locals>.inner_generator.<locals>.inner.<locals>.wrapper[0;34m(*args, **kwargs)[0m
+[1;32m    794[0m [38;5;28;01mdef[39;00m [38;5;21mwrapper[39m([38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m    795[0m     [38;5;66;03m# update tbar correctly[39;00m
+[1;32m    796[0m     [38;5;66;03m# it seems `pandas apply` calls `func` twice[39;00m
+[1;32m    797[0m     [38;5;66;03m# on the first column/row to decide whether it can[39;00m
+[1;32m    798[0m     [38;5;66;03m# take a fast or slow code path; so stop when t.total==t.n[39;00m
+[1;32m    799[0m     t[38;5;241m.[39mupdate(n[38;5;241m=[39m[38;5;241m1[39m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m t[38;5;241m.[39mtotal [38;5;129;01mor[39;00m t[38;5;241m.[39mn [38;5;241m<[39m t[38;5;241m.[39mtotal [38;5;28;01melse[39;00m [38;5;241m0[39m)
+[0;32m--> 800[0m     [38;5;28;01mreturn[39;00m [43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m~/cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/helpers/bertagent.py:110[0m, in [0;36mBERTAgentSentencesPredictor.predict[0;34m(self, sentences)[0m
+[1;32m    105[0m [38;5;66;03m# CONSIDER: adding here a warning if text contains too many tokens[39;00m
+[1;32m    106[0m
+[1;32m    107[0m [38;5;66;03m# with torch.inference_mode():[39;00m
+[1;32m    108[0m [38;5;28;01mwith[39;00m torch[38;5;241m.[39mno_grad():
+[1;32m    109[0m     predictions [38;5;241m=[39m (
+[0;32m--> 110[0m         [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mmodel[49m[43m([49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mbatch_encodings[49m[43m)[49m[[38;5;124m"[39m[38;5;124mlogits[39m[38;5;124m"[39m][38;5;241m.[39mcpu()[38;5;241m.[39mdetach()[38;5;241m.[39mnumpy()
+[1;32m    111[0m         [38;5;241m*[39m [38;5;28mself[39m[38;5;241m.[39mfactor
+[1;32m    112[0m         [38;5;241m+[39m [38;5;28mself[39m[38;5;241m.[39mbias
+[1;32m    113[0m     )
+[1;32m    115[0m predictions [38;5;241m=[39m predictions[38;5;241m.[39mravel()[38;5;241m.[39mtolist()
+[1;32m    116[0m batch_encodings[38;5;241m.[39mto([38;5;28mself[39m[38;5;241m.[39mmodel[38;5;241m.[39mdevice)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/modules/module.py:727[0m, in [0;36mModule._call_impl[0;34m(self, *input, **kwargs)[0m
+[1;32m    725[0m     result [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_slow_forward([38;5;241m*[39m[38;5;28minput[39m, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m    726[0m [38;5;28;01melse[39;00m:
+[0;32m--> 727[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward[49m[43m([49m[38;5;241;43m*[39;49m[38;5;28;43minput[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    728[0m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m itertools[38;5;241m.[39mchain(
+[1;32m    729[0m         _global_forward_hooks[38;5;241m.[39mvalues(),
+[1;32m    730[0m         [38;5;28mself[39m[38;5;241m.[39m_forward_hooks[38;5;241m.[39mvalues()):
+[1;32m    731[0m     hook_result [38;5;241m=[39m hook([38;5;28mself[39m, [38;5;28minput[39m, result)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/models/roberta/modeling_roberta.py:1206[0m, in [0;36mRobertaForSequenceClassification.forward[0;34m(self, input_ids, attention_mask, token_type_ids, position_ids, head_mask, inputs_embeds, labels, output_attentions, output_hidden_states, return_dict)[0m
+[1;32m   1198[0m [38;5;250m[39m[38;5;124mr[39m[38;5;124;03m"""[39;00m
+[1;32m   1199[0m [38;5;124;03mlabels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):[39;00m
+[1;32m   1200[0m [38;5;124;03m    Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,[39;00m
+[1;32m   1201[0m [38;5;124;03m    config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If[39;00m
+[1;32m   1202[0m [38;5;124;03m    `config.num_labels > 1` a classification loss is computed (Cross-Entropy).[39;00m
+[1;32m   1203[0m [38;5;124;03m"""[39;00m
+[1;32m   1204[0m return_dict [38;5;241m=[39m return_dict [38;5;28;01mif[39;00m return_dict [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m [38;5;28;01melse[39;00m [38;5;28mself[39m[38;5;241m.[39mconfig[38;5;241m.[39muse_return_dict
+[0;32m-> 1206[0m outputs [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mroberta[49m[43m([49m
+[1;32m   1207[0m [43m    [49m[43minput_ids[49m[43m,[49m
+[1;32m   1208[0m [43m    [49m[43mattention_mask[49m[38;5;241;43m=[39;49m[43mattention_mask[49m[43m,[49m
+[1;32m   1209[0m [43m    [49m[43mtoken_type_ids[49m[38;5;241;43m=[39;49m[43mtoken_type_ids[49m[43m,[49m
+[1;32m   1210[0m [43m    [49m[43mposition_ids[49m[38;5;241;43m=[39;49m[43mposition_ids[49m[43m,[49m
+[1;32m   1211[0m [43m    [49m[43mhead_mask[49m[38;5;241;43m=[39;49m[43mhead_mask[49m[43m,[49m
+[1;32m   1212[0m [43m    [49m[43minputs_embeds[49m[38;5;241;43m=[39;49m[43minputs_embeds[49m[43m,[49m
+[1;32m   1213[0m [43m    [49m[43moutput_attentions[49m[38;5;241;43m=[39;49m[43moutput_attentions[49m[43m,[49m
+[1;32m   1214[0m [43m    [49m[43moutput_hidden_states[49m[38;5;241;43m=[39;49m[43moutput_hidden_states[49m[43m,[49m
+[1;32m   1215[0m [43m    [49m[43mreturn_dict[49m[38;5;241;43m=[39;49m[43mreturn_dict[49m[43m,[49m
+[1;32m   1216[0m [43m[49m[43m)[49m
+[1;32m   1217[0m sequence_output [38;5;241m=[39m outputs[[38;5;241m0[39m]
+[1;32m   1218[0m logits [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mclassifier(sequence_output)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/modules/module.py:727[0m, in [0;36mModule._call_impl[0;34m(self, *input, **kwargs)[0m
+[1;32m    725[0m     result [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_slow_forward([38;5;241m*[39m[38;5;28minput[39m, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m    726[0m [38;5;28;01melse[39;00m:
+[0;32m--> 727[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward[49m[43m([49m[38;5;241;43m*[39;49m[38;5;28;43minput[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    728[0m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m itertools[38;5;241m.[39mchain(
+[1;32m    729[0m         _global_forward_hooks[38;5;241m.[39mvalues(),
+[1;32m    730[0m         [38;5;28mself[39m[38;5;241m.[39m_forward_hooks[38;5;241m.[39mvalues()):
+[1;32m    731[0m     hook_result [38;5;241m=[39m hook([38;5;28mself[39m, [38;5;28minput[39m, result)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/models/roberta/modeling_roberta.py:848[0m, in [0;36mRobertaModel.forward[0;34m(self, input_ids, attention_mask, token_type_ids, position_ids, head_mask, inputs_embeds, encoder_hidden_states, encoder_attention_mask, past_key_values, use_cache, output_attentions, output_hidden_states, return_dict)[0m
+[1;32m    839[0m head_mask [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mget_head_mask(head_mask, [38;5;28mself[39m[38;5;241m.[39mconfig[38;5;241m.[39mnum_hidden_layers)
+[1;32m    841[0m embedding_output [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39membeddings(
+[1;32m    842[0m     input_ids[38;5;241m=[39minput_ids,
+[1;32m    843[0m     position_ids[38;5;241m=[39mposition_ids,
+[0;32m   (...)[0m
+[1;32m    846[0m     past_key_values_length[38;5;241m=[39mpast_key_values_length,
+[1;32m    847[0m )
+[0;32m--> 848[0m encoder_outputs [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mencoder[49m[43m([49m
+[1;32m    849[0m [43m    [49m[43membedding_output[49m[43m,[49m
+[1;32m    850[0m [43m    [49m[43mattention_mask[49m[38;5;241;43m=[39;49m[43mextended_attention_mask[49m[43m,[49m
+[1;32m    851[0m [43m    [49m[43mhead_mask[49m[38;5;241;43m=[39;49m[43mhead_mask[49m[43m,[49m
+[1;32m    852[0m [43m    [49m[43mencoder_hidden_states[49m[38;5;241;43m=[39;49m[43mencoder_hidden_states[49m[43m,[49m
+[1;32m    853[0m [43m    [49m[43mencoder_attention_mask[49m[38;5;241;43m=[39;49m[43mencoder_extended_attention_mask[49m[43m,[49m
+[1;32m    854[0m [43m    [49m[43mpast_key_values[49m[38;5;241;43m=[39;49m[43mpast_key_values[49m[43m,[49m
+[1;32m    855[0m [43m    [49m[43muse_cache[49m[38;5;241;43m=[39;49m[43muse_cache[49m[43m,[49m
+[1;32m    856[0m [43m    [49m[43moutput_attentions[49m[38;5;241;43m=[39;49m[43moutput_attentions[49m[43m,[49m
+[1;32m    857[0m [43m    [49m[43moutput_hidden_states[49m[38;5;241;43m=[39;49m[43moutput_hidden_states[49m[43m,[49m
+[1;32m    858[0m [43m    [49m[43mreturn_dict[49m[38;5;241;43m=[39;49m[43mreturn_dict[49m[43m,[49m
+[1;32m    859[0m [43m[49m[43m)[49m
+[1;32m    860[0m sequence_output [38;5;241m=[39m encoder_outputs[[38;5;241m0[39m]
+[1;32m    861[0m pooled_output [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mpooler(sequence_output) [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39mpooler [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m [38;5;28;01melse[39;00m [38;5;28;01mNone[39;00m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/modules/module.py:727[0m, in [0;36mModule._call_impl[0;34m(self, *input, **kwargs)[0m
+[1;32m    725[0m     result [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_slow_forward([38;5;241m*[39m[38;5;28minput[39m, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m    726[0m [38;5;28;01melse[39;00m:
+[0;32m--> 727[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward[49m[43m([49m[38;5;241;43m*[39;49m[38;5;28;43minput[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    728[0m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m itertools[38;5;241m.[39mchain(
+[1;32m    729[0m         _global_forward_hooks[38;5;241m.[39mvalues(),
+[1;32m    730[0m         [38;5;28mself[39m[38;5;241m.[39m_forward_hooks[38;5;241m.[39mvalues()):
+[1;32m    731[0m     hook_result [38;5;241m=[39m hook([38;5;28mself[39m, [38;5;28minput[39m, result)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/models/roberta/modeling_roberta.py:524[0m, in [0;36mRobertaEncoder.forward[0;34m(self, hidden_states, attention_mask, head_mask, encoder_hidden_states, encoder_attention_mask, past_key_values, use_cache, output_attentions, output_hidden_states, return_dict)[0m
+[1;32m    515[0m     layer_outputs [38;5;241m=[39m torch[38;5;241m.[39mutils[38;5;241m.[39mcheckpoint[38;5;241m.[39mcheckpoint(
+[1;32m    516[0m         create_custom_forward(layer_module),
+[1;32m    517[0m         hidden_states,
+[0;32m   (...)[0m
+[1;32m    521[0m         encoder_attention_mask,
+[1;32m    522[0m     )
+[1;32m    523[0m [38;5;28;01melse[39;00m:
+[0;32m--> 524[0m     layer_outputs [38;5;241m=[39m [43mlayer_module[49m[43m([49m
+[1;32m    525[0m [43m        [49m[43mhidden_states[49m[43m,[49m
+[1;32m    526[0m [43m        [49m[43mattention_mask[49m[43m,[49m
+[1;32m    527[0m [43m        [49m[43mlayer_head_mask[49m[43m,[49m
+[1;32m    528[0m [43m        [49m[43mencoder_hidden_states[49m[43m,[49m
+[1;32m    529[0m [43m        [49m[43mencoder_attention_mask[49m[43m,[49m
+[1;32m    530[0m [43m        [49m[43mpast_key_value[49m[43m,[49m
+[1;32m    531[0m [43m        [49m[43moutput_attentions[49m[43m,[49m
+[1;32m    532[0m [43m    [49m[43m)[49m
+[1;32m    534[0m hidden_states [38;5;241m=[39m layer_outputs[[38;5;241m0[39m]
+[1;32m    535[0m [38;5;28;01mif[39;00m use_cache:
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/modules/module.py:727[0m, in [0;36mModule._call_impl[0;34m(self, *input, **kwargs)[0m
+[1;32m    725[0m     result [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_slow_forward([38;5;241m*[39m[38;5;28minput[39m, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m    726[0m [38;5;28;01melse[39;00m:
+[0;32m--> 727[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward[49m[43m([49m[38;5;241;43m*[39;49m[38;5;28;43minput[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    728[0m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m itertools[38;5;241m.[39mchain(
+[1;32m    729[0m         _global_forward_hooks[38;5;241m.[39mvalues(),
+[1;32m    730[0m         [38;5;28mself[39m[38;5;241m.[39m_forward_hooks[38;5;241m.[39mvalues()):
+[1;32m    731[0m     hook_result [38;5;241m=[39m hook([38;5;28mself[39m, [38;5;28minput[39m, result)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/models/roberta/modeling_roberta.py:451[0m, in [0;36mRobertaLayer.forward[0;34m(self, hidden_states, attention_mask, head_mask, encoder_hidden_states, encoder_attention_mask, past_key_value, output_attentions)[0m
+[1;32m    448[0m     cross_attn_present_key_value [38;5;241m=[39m cross_attention_outputs[[38;5;241m-[39m[38;5;241m1[39m]
+[1;32m    449[0m     present_key_value [38;5;241m=[39m present_key_value [38;5;241m+[39m cross_attn_present_key_value
+[0;32m--> 451[0m layer_output [38;5;241m=[39m [43mapply_chunking_to_forward[49m[43m([49m
+[1;32m    452[0m [43m    [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfeed_forward_chunk[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mchunk_size_feed_forward[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mseq_len_dim[49m[43m,[49m[43m [49m[43mattention_output[49m
+[1;32m    453[0m [43m[49m[43m)[49m
+[1;32m    454[0m outputs [38;5;241m=[39m (layer_output,) [38;5;241m+[39m outputs
+[1;32m    456[0m [38;5;66;03m# if decoder, return the attn key/values as the last output[39;00m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/pytorch_utils.py:241[0m, in [0;36mapply_chunking_to_forward[0;34m(forward_fn, chunk_size, chunk_dim, *input_tensors)[0m
+[1;32m    238[0m     [38;5;66;03m# concatenate output at same dimension[39;00m
+[1;32m    239[0m     [38;5;28;01mreturn[39;00m torch[38;5;241m.[39mcat(output_chunks, dim[38;5;241m=[39mchunk_dim)
+[0;32m--> 241[0m [38;5;28;01mreturn[39;00m [43mforward_fn[49m[43m([49m[38;5;241;43m*[39;49m[43minput_tensors[49m[43m)[49m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/models/roberta/modeling_roberta.py:463[0m, in [0;36mRobertaLayer.feed_forward_chunk[0;34m(self, attention_output)[0m
+[1;32m    462[0m [38;5;28;01mdef[39;00m [38;5;21mfeed_forward_chunk[39m([38;5;28mself[39m, attention_output):
+[0;32m--> 463[0m     intermediate_output [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mintermediate[49m[43m([49m[43mattention_output[49m[43m)[49m
+[1;32m    464[0m     layer_output [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39moutput(intermediate_output, attention_output)
+[1;32m    465[0m     [38;5;28;01mreturn[39;00m layer_output
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/modules/module.py:727[0m, in [0;36mModule._call_impl[0;34m(self, *input, **kwargs)[0m
+[1;32m    725[0m     result [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_slow_forward([38;5;241m*[39m[38;5;28minput[39m, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m    726[0m [38;5;28;01melse[39;00m:
+[0;32m--> 727[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward[49m[43m([49m[38;5;241;43m*[39;49m[38;5;28;43minput[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    728[0m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m itertools[38;5;241m.[39mchain(
+[1;32m    729[0m         _global_forward_hooks[38;5;241m.[39mvalues(),
+[1;32m    730[0m         [38;5;28mself[39m[38;5;241m.[39m_forward_hooks[38;5;241m.[39mvalues()):
+[1;32m    731[0m     hook_result [38;5;241m=[39m hook([38;5;28mself[39m, [38;5;28minput[39m, result)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/models/roberta/modeling_roberta.py:362[0m, in [0;36mRobertaIntermediate.forward[0;34m(self, hidden_states)[0m
+[1;32m    360[0m [38;5;28;01mdef[39;00m [38;5;21mforward[39m([38;5;28mself[39m, hidden_states: torch[38;5;241m.[39mTensor) [38;5;241m-[39m[38;5;241m>[39m torch[38;5;241m.[39mTensor:
+[1;32m    361[0m     hidden_states [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mdense(hidden_states)
+[0;32m--> 362[0m     hidden_states [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mintermediate_act_fn[49m[43m([49m[43mhidden_states[49m[43m)[49m
+[1;32m    363[0m     [38;5;28;01mreturn[39;00m hidden_states
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/modules/module.py:727[0m, in [0;36mModule._call_impl[0;34m(self, *input, **kwargs)[0m
+[1;32m    725[0m     result [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_slow_forward([38;5;241m*[39m[38;5;28minput[39m, [38;5;241m*[39m[38;5;241m*[39mkwargs)
+[1;32m    726[0m [38;5;28;01melse[39;00m:
+[0;32m--> 727[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mforward[49m[43m([49m[38;5;241;43m*[39;49m[38;5;28;43minput[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    728[0m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m itertools[38;5;241m.[39mchain(
+[1;32m    729[0m         _global_forward_hooks[38;5;241m.[39mvalues(),
+[1;32m    730[0m         [38;5;28mself[39m[38;5;241m.[39m_forward_hooks[38;5;241m.[39mvalues()):
+[1;32m    731[0m     hook_result [38;5;241m=[39m hook([38;5;28mself[39m, [38;5;28minput[39m, result)
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/transformers/activations.py:56[0m, in [0;36mGELUActivation.forward[0;34m(self, input)[0m
+[1;32m     55[0m [38;5;28;01mdef[39;00m [38;5;21mforward[39m([38;5;28mself[39m, [38;5;28minput[39m: Tensor) [38;5;241m-[39m[38;5;241m>[39m Tensor:
+[0;32m---> 56[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mact[49m[43m([49m[38;5;28;43minput[39;49m[43m)[49m
+
+File [0;32m~/anaconda3/envs/fast8/lib/python3.8/site-packages/torch/nn/functional.py:1383[0m, in [0;36mgelu[0;34m(input)[0m
+[1;32m   1381[0m     [38;5;28;01mif[39;00m [38;5;28mtype[39m([38;5;28minput[39m) [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m Tensor [38;5;129;01mand[39;00m has_torch_function(([38;5;28minput[39m,)):
+[1;32m   1382[0m         [38;5;28;01mreturn[39;00m handle_torch_function(gelu, ([38;5;28minput[39m,), [38;5;28minput[39m)
+[0;32m-> 1383[0m [38;5;28;01mreturn[39;00m [43mtorch[49m[38;5;241;43m.[39;49m[43m_C[49m[38;5;241;43m.[39;49m[43m_nn[49m[38;5;241;43m.[39;49m[43mgelu[49m[43m([49m[38;5;28;43minput[39;49m[43m)[49m
+
+[0;31mRuntimeError[0m: CUDA out of memory. Tried to allocate 440.00 MiB (GPU 0; 3.81 GiB total capacity; 1.68 GiB already allocated; 216.94 MiB free; 2.41 GiB reserved in total by PyTorch)
+#+end_example
+:END:
+** prod: Summarize predictions
+#+begin_src jupyter-python :async yes
+df0["sents_count"] = df0.sents.apply(len)
+# df0["ba0Tot_sum"] = df0["ba0"].apply(lambda x: sum([val for val in x]))
+# df0["ba0Pos_sum"] = df0["ba0"].apply(lambda x: sum([val for val in x if val > 0]))
+# df0["ba0Neg_sum"] = df0["ba0"].apply(lambda x: sum([abs(val) for val in x if val < 0]))
+# df0["ba0Abs_sum"] = df0["ba0"].apply(lambda x: sum([abs(val) for val in x]))
+
+model_id = "ba4"
+
+df0["baTot_sum"] = df0[model_id].apply(lambda x: sum([val for val in x]))
+df0["baPos_sum"] = df0[model_id].apply(lambda x: sum([val for val in x if val > 0]))
+df0["baNeg_sum"] = df0[model_id].apply(lambda x: sum([abs(val) for val in x if val < 0]))
+df0["baAbs_sum"] = df0[model_id].apply(lambda x: sum([abs(val) for val in x]))
+
+# df0["BA0Pos"] = df0["ba0Pos_sum"]/df0["sents_count"]
+# df0["BA0Neg"] = df0["ba0Neg_sum"]/df0["sents_count"]
+# df0["BA0Tot"] = df0["ba0Tot_sum"]/df0["sents_count"]
+# df0["BA0Abs"] = df0["ba0Abs_sum"]/df0["sents_count"]
+
+df0["BAPos"] = df0["baPos_sum"]/df0["sents_count"]
+df0["BANeg"] = df0["baNeg_sum"]/df0["sents_count"]
+df0["BATot"] = df0["baTot_sum"]/df0["sents_count"]
+df0["BAAbs"] = df0["baAbs_sum"]/df0["sents_count"]
+
+
+log0.info(f"{df0.shape = }")
+disp_df(
+    df0.sample(n=5).sort_index(),
+    max_colwidth=33,
+    width=5555,
+    max_columns=155,
+)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df0.shape = (216, 26)
+#+begin_example
+       useful  imageable  thought_provoking   unusual  intentional_agency  strategic_knowledge  acts_in_the_world  motivates_rituals  PietA  PietB  PietC   NicoPos  NicoNeg   NicoCom                             sents                              text                     ba4  sents_count  baTot_sum  baPos_sum  baNeg_sum  baAbs_sum     BAPos     BANeg     BATot     BAAbs
+34   1.619048   2.714286           2.809524  4.333333            4.375000             4.312500           4.625000           3.187500    0.0    0.0    0.0  0.000000      0.0  0.000000  [Person who hops everywhere t...  Person who hops everywhere th...   [0.05983783304691315]            1   0.059838   0.059838   0.000000   0.059838  0.059838  0.000000  0.059838  0.059838
+50   1.950000   4.400000           1.550000  1.300000            3.071429             2.642857           3.357143           1.928571    0.0    0.0    0.0  0.000000      0.0  0.000000  [Rabbit that is very fluffy t...  Rabbit that is very fluffy to...  [-0.02917657047510147]            1  -0.029177   0.000000   0.029177   0.029177  0.000000  0.029177 -0.029177  0.029177
+105  2.400000   4.500000           1.800000  1.300000            4.666667             4.666667           4.083333           2.666667    0.0    0.0    0.0  0.142857      0.0  0.142857  [Child that likes to play wit...  Child that likes to play with...   [0.01723690889775753]            1   0.017237   0.017237   0.000000   0.017237  0.017237  0.000000  0.017237  0.017237
+173  2.500000   3.363636           3.272727  4.500000            3.600000             3.100000           4.000000           2.800000    0.0    0.0    0.0  0.000000      0.0  0.000000  [Cactus that hates all non-pl...  Cactus that hates all non-pla...   [0.08076096326112747]            1   0.080761   0.080761   0.000000   0.080761  0.080761  0.000000  0.080761  0.080761
+214  1.888889   4.222222           1.666667  1.222222            4.555556             3.777778           4.444444           2.444444    0.0    0.0    0.0  0.000000      0.0  0.000000  [Child that has just learned ...  Child that has just learned t...  [-0.16645747423171997]            1  -0.166457   0.000000   0.166457   0.166457  0.000000  0.166457 -0.166457  0.166457
+#+end_example
+:END:
+
+** prod: Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+df9 = df0.copy()
+
+dir0 = "../../data/v0004_20newsgroups/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["data_d0002_20newsgroups"]
+sfx0 = ["bert"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+# xtn0 = ".xlsx"
+# ofn0 = bfn0.with_suffix(xtn0)
+# log0.info(f"saving: {ofn0}...")
+# df9.to_excel(ofn0)
+
+# xtn0 = ".jsonl"
+# ofn0 = bfn0.with_suffix(xtn0)
+# log0.info(f"saving: {ofn0}...")
+# with open(ofn0, "w") as fh: pass
+# srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src

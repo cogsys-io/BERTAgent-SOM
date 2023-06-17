@@ -1,0 +1,316 @@
+#+title: P0003_select Columns
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0003_valid-03-part-001-supernatural/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0003_valid-03-part-001-supernatural/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0003_valid-03-part-001-supernatural/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0003_supernatural/u1005_bert/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"supernatural_bertagent-clean"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0003_supernatural/u1005_bert/supernatural_bertagent-clean.pkl...
+I: loading: ../../data/v0003_supernatural/u1005_bert/supernatural_bertagent-clean.pkl... DONE
+I: df0.shape = (216, 26)
+#+end_example
+#+begin_example
+       useful  imageable  thought_provoking   unusual  intentional_agency  strategic_knowledge  acts_in_the_world  motivates_rituals  PietA  PietB  PietC  NicoPos  NicoNeg  NicoCom                                        sents                                         text                      ba4  sents_count  baTot_sum  baPos_sum  baNeg_sum  baAbs_sum     BAPos     BANeg     BATot     BAAbs
+14   2.055556   2.444444           3.111111  4.611111            3.083333             2.500000           3.833333           2.416667    0.0    0.0    0.0      0.0      0.0      0.0  [Rabbit that is invisible and can speak ...  Rabbit that is invisible and can speak t...    [0.15461966395378113]            1   0.154620   0.154620   0.000000   0.154620  0.154620  0.000000  0.154620  0.154620
+33   1.400000   3.850000           2.350000  3.850000            4.500000             4.375000           4.500000           3.125000    0.0    0.0    0.0      0.0      0.0      0.0         [Person who hops everywhere they go]           Person who hops everywhere they go    [0.07291575521230698]            1   0.072916   0.072916   0.000000   0.072916  0.072916  0.000000  0.072916  0.072916
+38   2.750000   4.000000           2.000000  1.350000            1.307692             1.615385           3.076923           1.846154    0.0    0.0    0.0      0.0      0.0      0.0  [Cloud that is grey and full of rain and...  Cloud that is grey and full of rain and ...  [-0.017984464764595032]            1  -0.017984   0.000000   0.017984   0.017984  0.000000  0.017984 -0.017984  0.017984
+47   3.250000   4.450000           2.000000  1.500000            2.357143             2.214286           3.214286           3.071429    0.0    0.0    0.0      0.0      0.0      0.0  [Tree that has moss growing on its trunk...  Tree that has moss growing on its trunk ...  [0.0039388202130794525]            1   0.003939   0.003939   0.000000   0.003939  0.003939  0.000000  0.003939  0.003939
+61   2.210526   2.894737           3.315789  4.473684            3.583333             2.916667           2.916667           2.666667    0.0    0.0    0.0      0.0      0.0      0.0  [Icicle that communicates telepathically...  Icicle that communicates telepathically ...   [-0.04983598366379738]            1  -0.049836   0.000000   0.049836   0.049836  0.000000  0.049836 -0.049836  0.049836
+62   2.294118   2.588235           3.411765  4.470588            3.090909             2.636364           3.181818           2.636364    0.0    0.0    0.0      0.0      0.0      0.0  [Icicle that communicates telepathically...  Icicle that communicates telepathically ...   [0.002519718836992979]            1   0.002520   0.002520   0.000000   0.002520  0.002520  0.000000  0.002520  0.002520
+123  3.368421   3.789474           4.105263  4.052632            4.642857             4.642857           4.571429           4.214286    0.0    0.0    0.0      0.0      0.0      0.0           [Person who can turn into animals]             Person who can turn into animals    [0.12019415944814682]            1   0.120194   0.120194   0.000000   0.120194  0.120194  0.000000  0.120194  0.120194
+155  4.500000   4.545455           2.363636  1.772727            2.250000             2.166667           3.500000           3.583333    0.0    0.0    0.0      0.0      0.0      0.0  [Tree that grows delicious apples and pr...  Tree that grows delicious apples and pro...   [0.028688060119748116]            1   0.028688   0.028688   0.000000   0.028688  0.028688  0.000000  0.028688  0.028688
+#+end_example
+:END:
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "useful",
+    "imageable",
+    "thought_provoking",
+    "unusual",
+    "intentional_agency",
+    "strategic_knowledge",
+    "acts_in_the_world",
+    "motivates_rituals",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "sents",
+    "text",
+    "ba4",
+    "sents_count",
+    "baTot_sum",
+    "baPos_sum",
+    "baNeg_sum",
+    "baAbs_sum",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+#+end_example
+
+** Select
+#+begin_src jupyter-python :async yes
+cols2 = [
+    "intentional_agency",
+    "strategic_knowledge",
+    "acts_in_the_world",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "BATot",
+    "BAPos",
+    "BANeg",
+    "BAAbs",
+    "text",
+]
+df2 = df0[cols2]
+
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df2.shape = (216, 14)
+#+begin_example
+     intentional_agency  strategic_knowledge  acts_in_the_world     PietA  PietB     PietC   NicoPos  NicoNeg   NicoCom     BATot     BAPos     BANeg     BAAbs                                         text
+30             2.666667             2.533333           3.800000  0.000000    0.0  0.000000  0.000000      0.0  0.000000  0.080976  0.080976  0.000000  0.080976               Rabbit wearing a tie-dyed robe
+50             3.071429             2.642857           3.357143  0.000000    0.0  0.000000  0.000000      0.0  0.000000 -0.029177  0.000000  0.029177  0.029177  Rabbit that is very fluffy to the touch ...
+60             3.500000             3.000000           2.300000  0.000000    0.0  0.000000  0.000000      0.0  0.000000  0.090864  0.090864  0.000000  0.090864  Icicle that communicates telepathically ...
+72             1.000000             1.000000           2.153846  0.000000    0.0  0.000000  0.000000      0.0  0.000000 -0.055816  0.000000  0.055816  0.055816           Puddle that is located in a desert
+101            1.700000             1.200000           1.600000  0.000000    0.0  0.000000  0.000000      0.0  0.000000  0.033514  0.033514  0.000000  0.033514  Cactus that has prickly spines all over ...
+110            4.500000             4.300000           4.400000  0.095238    0.0  0.095238  0.047619      0.0  0.047619  0.025310  0.025310  0.000000  0.025310  Cloud that watches everything people do ...
+136            1.583333             1.583333           3.666667  0.000000    0.0  0.000000  0.000000      0.0  0.000000  0.208168  0.208168  0.000000  0.208168  Tree that has been genetically engineere...
+175            3.428571             3.285714           3.714286  0.000000    0.0  0.000000  0.000000      0.0  0.000000 -0.149849  0.000000  0.149849  0.149849  Bird whose song hypnotizes those who hea...
+#+end_example
+:END:
+
+** Rename and save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+feature = "strategic_knowledge"
+feature = "intentional_agency"
+feature = "acts_in_the_world"
+
+df9 = df2.copy()
+df9.insert(0,"HumEval", df9[feature])
+
+df9.drop(columns=["acts_in_the_world", "strategic_knowledge", "intentional_agency"], inplace=True)
+
+dir0 = "../../data/v0003_supernatural/u1006_clean/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["supernatural"]
+sfx0 = [feature]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0003_supernatural/u1006_clean/supernatural_acts_in_the_world.pkl...
+I: saving: ../../data/v0003_supernatural/u1006_clean/supernatural_acts_in_the_world.csv...
+I: saving: ../../data/v0003_supernatural/u1006_clean/supernatural_acts_in_the_world.xlsx...
+I: saving: ../../data/v0003_supernatural/u1006_clean/supernatural_acts_in_the_world.jsonl...
+I: DONE
+#+end_example

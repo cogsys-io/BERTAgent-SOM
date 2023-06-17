@@ -1,0 +1,986 @@
+#+title: P0001_data Collection
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0002_valid-02-part-001-professions/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+from thefuzz import fuzz
+from thefuzz import process
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+- textcite:&ImhoffEtAl2018a
+  - TITLE: (Pre)Occupations: A Data-Driven Model of Jobs and Its Consequences for Categorization and Evaluation
+- textcite:&ImhoffEtAl2018bAccepted
+  - TITLE: (Pre)Occupations: A Data-Driven Model of Jobs and Its Consequences for Categorization and Evaluation
+- =Study 1a_Computing the cognitive map of U.S. occupations.xlsx=
+- https://osf.io/4rmnv/files/osfstorage?view_only=fee3f4f700b54af3ab8ee45e299507d0
+- http://www.bls.gov/oes/special.requests/oesm12all.zip
+  - U.S. Department of Labor’s Occupational Employment Survey (OES) of 2012
+* Load Imhoff Data
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = (
+    "../../data/v0002_professions/"
+    "p0001_osf_imhoff/"
+    "osfstorage-archive/"
+    "List of US and German Occupations incl. Ratings")
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"US_Occupations"
+extn0 = ".xlsx"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_excel(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0002_professions/p0001_osf_imhoff/osfstorage-archive/List of US and German Occupations incl. Ratings/US_Occupations.xlsx...
+I: loading: ../../data/v0002_professions/p0001_osf_imhoff/osfstorage-archive/List of US and German Occupations incl. Ratings/US_Occupations.xlsx... DONE
+I: df0.shape = (150, 66)
+#+end_example
+#+begin_example
+     occup_code               occupation soc_standard_occupational_classification  oesm_frequency  oesm_annual_income  MDS_3D_dimens1  MDS_3D_dimens2  MDS_3D_dimens3  scale_agentic  scale_progressive  scale_sociable  scale_communal     R     I     A     S     E     C  dominance  confidence  compettiveness  scienceorient  sincerity   likeable  efficient  benevolent    capable  friendly  wellintent  goodnatured     warmth  competence  masculine    skilled      smart  innovative  sophisticated      tough   sociable     people     stable    playful  egocentric   outgoing   rational   reliable  trustworthy   creative  self_opinionated  attention  hard_to_reach  interconnected  prevention  unpleasant    modern  alternative  conservative      power     wealth    status  avg_trustworthiness_after_negative_cop_priming  avg_trustworthiness_after_positive_cop_priming  cohens_d_cop_priming  avg_trustworthiness_after_negative_politician_priming  avg_trustworthiness_after_positive_politician_priming  cohens_d_politician_priming
+36           37              Dishwashers                                  27-2030          501910             18930.0        -1.83173        -0.00407         0.25457      26.251317          40.431282       34.103400       58.843778  7.00  1.33  1.00  1.33  2.33  4.00      18.00   40.555556           28.96      49.500000  67.629630  58.035714  49.739130   71.153846  49.148148     42.56       69.08    56.461538  42.727273   47.633333  62.814815  13.258065  19.066667   14.151515      12.705882  43.750000  31.965517  29.515152  46.575758  56.032258   42.548387  32.851852  69.243243  50.969697    57.347826  13.433333         42.419355     27.700      42.766667       42.081081   50.272727   73.807692  30.37500    32.060606     39.684211  12.333333  11.032258  15.53125                                         6.39                                        6.135135                -0.133044                                     6.567901                                               6.152542                              -0.214490
+39           40             Fine artists                                  13-2010           84990             73870.0         0.05890         1.85538        -0.67383      51.743567          75.265562       46.882385       60.556021  5.00  2.67  7.00  2.00  3.33  1.00      44.88   57.851852           57.12      50.730769  70.481481  69.785714  39.478261   73.615385  68.185185     52.12       68.88    68.461538  65.272727   60.366667  44.444444  63.677419  56.866667   78.030303      60.088235  19.464286  57.448276  54.909091  35.878788  73.483871   59.290323  49.037037  22.135135  53.909091    59.347826  94.633333         64.903226     64.900      53.300000       26.135135   25.090909   23.576923  34.06250    70.212121     18.000000  30.090909  33.129032  43.31250                                         6.97                                        6.621622                -0.173661                                     6.802469                                               6.610169                              -0.097677
+70           71               Plasterers                                  43-4050           21040             41860.0        -1.76626        -0.22070        -0.62159      42.718061          34.607514       35.404703       59.244160  7.00  1.00  2.33  1.00  2.00  2.33      40.92   55.259259           42.96      60.384615  70.555556  61.571429  50.826087   71.423077  60.925926     45.52       67.20    53.692308  42.090909   57.533333  80.703704  45.129032  37.133333   15.878788      22.852941  57.464286  40.448276  25.818182  65.909091  38.129032   44.677419  36.703704  72.081081  54.181818    61.565217  23.300000         45.161290     24.375      41.333333       38.648649   51.272727   60.576923  33.40625    34.424242     54.105263  21.575758  31.903226  36.28125                                         6.42                                        6.013514                -0.224171                                     6.802469                                               6.101695                              -0.407442
+76           77            Office Clerks                                  41-2010         2808100             29270.0        -0.07528         0.77138         1.41568      40.620016          36.617873       56.907813       60.695814  3.67  1.67  1.00  3.67  4.33  7.00      27.04   49.555556           36.52      52.307692  71.851852  67.535714  58.956522   71.846154  60.259259     50.72       61.00    56.538462  48.969697   54.033333  27.481481  36.967742  42.766667   17.666667      34.882353  32.178571  55.586207  58.333333  60.848485  41.032258   45.774194  59.333333  71.837838  60.484848    62.021739  19.333333         47.516129     35.050      30.933333       54.378378   41.818182   46.615385  48.12500    24.242424     52.210526  22.757576  28.000000  38.25000                                         6.67                                        6.608108                -0.033305                                     6.765432                                               6.593220                              -0.095073
+97           98         Lodging Managers                                  33-3010           29730             54800.0        -0.47603         0.52760         0.89762      46.795236          39.431485       55.175360       58.029837  3.00  1.67  1.33  4.00  7.00  5.33      46.72   56.000000           48.92      53.076923  64.851852  63.428571  51.826087   57.038462  61.925926     61.68       63.72    61.653846  54.030303   51.533333  58.740741  43.903226  45.166667   25.757576      38.529412  37.357143  64.931034  53.181818  65.090909  36.419355   49.677419  60.777778  61.621622  58.060606    56.869565  25.066667         49.677419     33.550      39.000000       41.810811   32.545455   50.423077  47.12500    31.121212     51.447368  33.484848  40.032258  44.37500                                         6.66                                        6.540541                -0.067092                                     6.827160                                               6.525424                              -0.159432
+110         111   Ship and Boat Captains                                  49-9070           33900             70610.0        -0.94562        -0.14447        -1.11488      62.738650          37.453312       51.234944       62.602585  6.00  2.33  1.00  2.33  6.67  3.67      78.92   72.666667           61.48      57.192308  76.703704  70.035714  71.130435   63.884615  82.407407     57.00       75.84    59.961538  52.030303   71.000000  89.925926  65.612903  58.166667   29.909091      37.911765  73.107143  50.896552  52.575758  71.333333  35.741935   48.000000  64.629630  55.459459  67.969697    65.826087  26.633333         58.225806     26.300      61.800000       36.837838   46.863636   40.038462  21.12500    46.818182     62.210526  57.727273  51.645161  56.87500                                         6.90                                        6.527027                -0.194767                                     6.827160                                               6.627119                              -0.109167
+122         123  Environmental Engineers                                  27-3030           50850             85140.0         1.50513        -0.16970        -1.15602      68.628679          37.107800       44.384967       66.422748  4.67  7.00  3.00  1.67  3.67  4.33      54.00   66.851852           45.04      79.615385  74.629630  72.535714  67.478261   72.576923  76.703704     53.24       75.04    68.500000  50.424242   71.966667  71.111111  78.354839  79.966667   58.424242      60.970588  50.392857  38.689655  41.151515  74.151515  23.000000   34.129032  47.185185  68.675676  69.272727    70.086957  46.266667         54.709677     25.025      59.566667       50.513514   69.181818   34.038462  78.43750    56.606061     42.026316  52.939394  60.483871  73.06250                                         6.82                                        6.824324                 0.002413                                     7.530864                                               7.118644                              -0.206796
+126         127       Survey Researchers                                  53-1010           17370             50890.0         1.15036         0.73112         0.90377      53.166275          44.237774       53.566982       63.790676  1.00  6.67  2.00  1.33  4.67  5.00      38.60   60.777778           44.52      65.769231  71.777778  71.107143  57.565217   69.538462  68.259259     54.48       72.72    65.500000  55.393939   64.100000  49.296296  54.129032  65.433333   47.575758      57.617647  33.142857  53.379310  64.303030  62.000000  41.645161   37.483871  47.666667  64.567568  59.545455    63.130435  43.666667         53.322581     29.075      45.633333       48.918919   36.636364   38.115385  73.59375    51.666667     48.947368  30.303030  33.870968  45.96875                                         6.70                                        6.837838                 0.075493                                     6.913580                                               7.016949                               0.054780
+#+end_example
+:END:
+** Check sample
+#+begin_src jupyter-python :async yes
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df0.shape = (150, 66)
+#+begin_example
+     occup_code                 occupation soc_standard_occupational_classification  oesm_frequency  oesm_annual_income  MDS_3D_dimens1  MDS_3D_dimens2  MDS_3D_dimens3  scale_agentic  scale_progressive  scale_sociable  scale_communal     R     I     A     S     E     C  dominance  confidence  compettiveness  scienceorient  sincerity   likeable  efficient  benevolent    capable  friendly  wellintent  goodnatured     warmth  competence  masculine    skilled      smart  innovative  sophisticated      tough   sociable     people     stable    playful  egocentric   outgoing   rational   reliable  trustworthy   creative  self_opinionated  attention  hard_to_reach  interconnected  prevention  unpleasant    modern  alternative  conservative      power     wealth    status  avg_trustworthiness_after_negative_cop_priming  avg_trustworthiness_after_positive_cop_priming  cohens_d_cop_priming  avg_trustworthiness_after_negative_politician_priming  avg_trustworthiness_after_positive_politician_priming  cohens_d_politician_priming
+24           25            Aircraft Pilots                                  13-1080          101260            111960.0         0.11091        -0.40780        -1.43715      73.691845          30.508758       52.844890       65.596562  7.00  4.33  1.33  1.67  3.00  5.33      72.24   82.370370           57.04      67.538462  75.333333  81.714286  75.217391   53.961538  87.074074     68.16       75.60    66.692308  51.242424   82.000000  82.518519  81.096774  73.333333   39.727273      61.088235  59.035714  55.517241  43.606061  72.787879  24.645161   45.290323  64.148148  75.594595  76.484848    76.130435  23.533333         55.903226     18.475      62.333333       48.108108   50.500000   28.000000  68.59375    38.272727     61.973684  66.545455  64.354839  72.96875                                         7.00                                        7.229730                 0.128702                                     7.530864                                               7.694915                               0.091803
+32           33                   Cashiers                                  19-3030         3335980             20410.0        -1.35046         0.44560         0.72079      31.904150          38.214010       67.559144       60.841362  2.67  1.00  1.33  2.67  4.33  6.67      30.84   47.592593           33.44      49.269231  69.296296  60.892857  61.391304   66.384615  52.592593     60.28       66.36    59.000000  55.545455   46.433333  22.259259  21.806452  30.966667   13.969697      19.794118  33.000000  74.137931  67.393939  54.969697  48.129032   43.161290  71.407407  73.972973  57.636364    52.717391  15.633333         36.258065     32.075      23.533333       57.297297   38.545455   58.576923  28.87500    22.757576     45.394737  12.727273  13.548387  25.37500                                         6.57                                        6.148649                -0.233083                                     6.654321                                               6.779661                               0.069375
+66           67    Air Traffic Controllers                                  11-9080           30250            102670.0        -1.50892        -0.50447         0.09291      64.994290          26.431396       52.715520       65.649716  3.67  2.33  1.00  2.33  6.33  6.00      64.76   72.407407           45.24      61.769231  82.740741  72.000000  79.130435   60.384615  80.000000     44.44       75.16    59.038462  43.666667   74.033333  83.814815  73.451613  69.566667   24.909091      45.911765  57.464286  47.310345  51.575758  66.848485  14.032258   45.354839  47.111111  75.702703  76.787879    74.847826  17.300000         42.774194     19.950      57.733333       64.864865   69.181818   47.692308  65.84375    32.454545     60.552632  57.939394  51.129032  63.96875                                         6.82                                        6.702703                -0.061298                                     7.358025                                               7.135593                              -0.124635
+75           76          Agents of Artists                                  11-9010           11770             88620.0         0.71056         1.31793        -0.14704      53.741552          54.883417       68.929139       43.311286  1.33  1.33  3.00  4.33  7.00  4.67      55.40   66.962963           64.68      62.269231  46.555556  52.000000  46.695652   55.000000  59.777778     35.92       50.12    46.076923  41.303030   56.733333  59.777778  44.032258  49.166667   41.454545      52.235294  38.857143  82.379310  67.878788  56.030303  43.064516   73.096774  78.296296  52.945946  43.969697    42.152174  52.233333         70.967742     53.225      54.133333       47.162162   25.954545   38.615385  69.21875    64.212121     38.736842  44.454545  54.000000  46.12500                                         5.57                                        5.391892                -0.084815                                     5.209877                                               5.355932                               0.065085
+86           87                 Machinists                                  33-3050          388370             40860.0        -1.59956        -0.38194        -0.77644      52.514268          32.303335       36.242924       60.766019  7.00  4.67  2.00  1.00  1.33  5.33      48.60   60.962963           51.64      66.653846  73.333333  68.892857  67.695652   67.576923  72.074074     45.20       67.44    54.500000  42.090909   69.000000  89.555556  65.774194  55.466667   28.090909      29.411765  69.535714  31.517241  23.000000  69.484848  28.161290   43.000000  43.481481  80.675676  66.303030    63.652174  30.266667         53.129032     16.550      49.433333       46.972973   47.090909   47.230769  48.37500    35.121212     54.421053  29.363636  38.193548  42.15625                                         6.69                                        6.378378                -0.168235                                     6.641975                                               6.254237                              -0.199400
+105         106   Shoe and Leather Workers                                  51-3010            9180             25880.0        -1.58484         0.04003        -0.78399      41.073334          38.921028       37.378233       64.062097  7.00  1.67  4.00  1.67  1.67  4.67      38.96   49.037037           37.68      57.961538  77.148148  66.678571  59.217391   70.846154  62.259259     51.76       70.12    62.615385  49.303030   57.166667  80.481481  47.903226  37.900000   25.545455      20.882353  52.142857  37.689655  30.606061  62.606061  44.806452   40.032258  40.703704  68.027027  61.030303    65.782609  39.833333         42.870968     24.525      43.933333       40.513514   52.227273   55.269231  14.03125    35.484848     50.421053  17.848485  27.419355  34.46875                                         6.72                                        6.513514                -0.115163                                     7.074074                                               6.610169                              -0.261715
+111         112     Waiters and Waitresses                                  53-7060         2332020             20710.0        -1.59749         0.17174         0.57175      36.377640          49.370243       79.345144       65.239827  4.33  1.00  2.33  5.67  5.33  5.00      31.08   57.444444           59.24      54.692308  69.259259  71.785714  61.043478   66.500000  57.481481     79.96       69.72    68.692308  69.000000   53.366667  37.851852  28.129032  34.800000   26.303030      21.147059  41.964286  85.931034  79.121212  50.636364  67.548387   39.322581  86.814815  53.324324  53.121212    55.739130  28.266667         32.096774     46.850      18.100000       65.513514   31.818182   67.384615  30.06250    28.575758     40.500000  14.969697  19.387097  27.65625                                         6.96                                        6.648649                -0.173137                                     6.654321                                               6.694915                               0.020816
+128         129  Building Cleaning Workers                                  19-1020         3005830             23970.0        -1.86324        -0.21631        -0.25734      34.414394          35.409408       39.783814       62.180252  7.00  1.33  1.00  1.00  1.33  2.67      28.08   48.296296           34.72      53.769231  76.370370  66.321429  60.130435   67.653846  63.666667     44.32       70.76    56.692308  47.787879   51.166667  65.370370  21.612903  32.433333   16.363636      19.147059  51.785714  39.344828  34.515152  59.757576  42.419355   41.225806  42.518519  70.702703  55.000000    63.152174  18.500000         40.709677     29.250      37.166667       42.756757   62.636364   70.923077  36.53125    30.939394     44.736842  15.545455  21.903226  22.93750                                         6.58                                        6.391892                -0.099693                                     6.901235                                               6.237288                              -0.354569
+#+end_example
+:END:
+
+** Check columns
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "occup_code",
+    "occupation",
+    "soc_standard_occupational_classification",
+    "oesm_frequency",
+    "oesm_annual_income",
+    "MDS_3D_dimens1",
+    "MDS_3D_dimens2",
+    "MDS_3D_dimens3",
+    "scale_agentic",
+    "scale_progressive",
+    "scale_sociable",
+    "scale_communal",
+    "R",
+    "I",
+    "A",
+    "S",
+    "E",
+    "C",
+    "dominance",
+    "confidence",
+    "compettiveness",
+    "scienceorient",
+    "sincerity",
+    "likeable",
+    "efficient",
+    "benevolent",
+    "capable",
+    "friendly",
+    "wellintent",
+    "goodnatured",
+    "warmth",
+    "competence",
+    "masculine",
+    "skilled",
+    "smart",
+    "innovative",
+    "sophisticated",
+    "tough",
+    "sociable",
+    "people",
+    "stable",
+    "playful",
+    "egocentric",
+    "outgoing",
+    "rational",
+    "reliable",
+    "trustworthy",
+    "creative",
+    "self_opinionated",
+    "attention",
+    "hard_to_reach",
+    "interconnected",
+    "prevention",
+    "unpleasant",
+    "modern",
+    "alternative",
+    "conservative",
+    "power",
+    "wealth",
+    "status",
+    "avg_trustworthiness_after_negative_cop_priming",
+    "avg_trustworthiness_after_positive_cop_priming",
+    "cohens_d_cop_priming",
+    "avg_trustworthiness_after_negative_politician_priming",
+    "avg_trustworthiness_after_positive_politician_priming",
+    "cohens_d_politician_priming",
+#+end_example
+
+** Select columns
+#+begin_src jupyter-python :async yes
+cols_select = [
+    "occup_code",
+    "soc_standard_occupational_classification",
+    "scale_agentic",
+    "occupation",
+    # "oesm_annual_income",
+    # "oesm_frequency",
+]
+df0 = df0[cols_select].copy()
+log0.info(f"{df0.shape = }")
+# disp_df(df0.sort_values(by="scale_agentic", ascending=False), max_rows=222)
+disp_df(df0, max_rows=222)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df0.shape = (150, 4)
+#+begin_example
+     occup_code soc_standard_occupational_classification  scale_agentic                           occupation
+0             1                                  11-1010      64.847476                          Accountants
+1             2                                  41-9020      44.850290                  Personal Care Aides
+2             3                                  29-2080      32.656839     Laundry and Dry-Cleaning Workers
+3             4                                  19-2010      43.164655                             Butchers
+4             5                                  53-5020      45.445530                        Travel Agents
+5             6                                  53-6020      69.886359                        Veterinarians
+6             7                                  47-2160      36.431808                  Retail Salespersons
+7             8                                  15-1130      59.318071                         Audiologists
+8             9                                  27-2010      57.760534  Commercial and Industrial Designers
+9            10                                  41-9040      41.771439                 Pest Control Workers
+10           11                                  27-1010      47.578905                              Dancers
+11           12                                  15-1130      34.382530                      Baggage Porters
+12           13                                  39-9020      82.936123                    Nuclear Engineers
+13           14                                  17-2080      76.100315                            Biologist
+14           15                                  51-3020      49.776132            Healthcare Social Workers
+15           16                                  43-3070      78.902065  Physical Medicine and Rehabilitatio
+16           17                                  39-7010      54.242382                            Musicians
+17           18                                  27-4020      49.201771       Farmworkers and Laborers, Crop
+18           19                                  43-3030      48.990469                        Photographers
+19           20                                  35-9020      72.889738                       Mathematicians
+20           21                                  29-1160      45.333731                               Jailer
+21           22                                  41-3020      55.033042                           Paralegals
+22           23                                  41-9010      29.765075               Parking Lot Attendants
+23           24                                  15-2040      45.221690                               Bakers
+24           25                                  13-1080      73.691845                      Aircraft Pilots
+25           26                                  27-3010      59.259332                         Electricians
+26           27                                  51-6020      54.860619           Special Education Teachers
+27           28                                  29-1010      60.602494                         Firefighters
+28           29                                  29-2020      48.676573                Kindergarten Teachers
+29           30                                  23-2010      44.115109                                Cooks
+30           31                                  35-2010      58.493794                             Managers
+31           32                                  27-3020      49.961240                            Embalmers
+32           33                                  19-3030      31.904150                             Cashiers
+33           34                                  29-1180      73.585223                               Judges
+34           35                                  51-6050      42.122094       Subway and Streetcar Operators
+35           36                                  25-4020      36.750320     Customer Service Representatives
+36           37                                  27-2030      26.251317                          Dishwashers
+37           38                                  19-1040      36.989338                          Bus Drivers
+38           39                                  41-3010      43.559607                             Painters
+39           40                                  13-2010      51.743567                         Fine artists
+40           41                                  29-1060      43.517899                             Glaziers
+41           42                                  47-2030      48.133883                      Radio Operators
+42           43                                  49-3020      42.756861                      Security Guards
+43           44                                  25-4010      55.942984                             Curators
+44           45                                  47-5030      41.073058                          Secretaries
+45           46                                  29-1120      42.290919          Highway Maintenance Workers
+46           47                                  19-3020      50.718189                           Carpenters
+47           48                                  53-2020      59.666798                        Tax Examiners
+48           49                                  21-1010      43.406230                    Childcare Workers
+49           50                                  23-1020      41.931315                Construction Laborers
+50           51                                  29-1050      34.753935             Food Preparation Workers
+51           52                                  13-2080      60.398687                             Athletes
+52           53                                  47-2110      56.887736                  Real Estate Brokers
+53           54                                  17-2010      41.583154                           Bartenders
+54           55                                  29-1130      50.958752               Insurance Sales Agents
+55           56                                  29-1170      53.894422                             Jewelers
+56           57                                  15-2020      47.393016                             Bailiffs
+57           58                                  47-2150      55.306506                            Reporters
+58           59                                  25-2030      58.999561                      Credit Analysts
+59           60                                  33-3020      43.880719                      Logging Workers
+60           61                                  45-3010      69.124742                        Psychologists
+61           62                                  39-5010      43.631109        Motion Picture Projectionists
+62           63                                  13-1160      71.747317                           Architects
+63           64                                  47-2120      38.784240                        Receptionists
+64           65                                  47-2180      44.299345                              Roofers
+65           66                                  17-1010      42.111400                              Barbers
+66           67                                  11-9080      64.994290              Air Traffic Controllers
+67           68                                  53-5010      47.006671               Tour and Travel Guides
+68           69                                  13-2040      79.498007           Astronomers and Physicists
+69           70                                  45-4020      56.156315         Public Relations Specialists
+70           71                                  43-4050      42.718061                           Plasterers
+71           72                                  51-6040      64.374809                        Statisticians
+72           73                                  39-3020      47.981642                             Midwives
+73           74                                  29-1080      53.981589  Hazardous Materials Removal Workers
+74           75                                  33-9030      46.508749       Maintenance and Repair Workers
+75           76                                  11-9010      53.741552                    Agents of Artists
+76           77                                  41-2010      40.620016                        Office Clerks
+77           78                                  53-2030      38.111112          Taxi Drivers and Chauffeurs
+78           79                                  27-2030      51.856258                           Dietitians
+79           80                                  51-6010      69.718769                  Software Developers
+80           81                                  53-7060      58.615668                  Writers and Editors
+81           82                                  39-6010      69.834738                      Movie Directors
+82           83                                  19-3010      53.114646                         Car Mechanic
+83           84                                  47-4040      50.207763                              Sailors
+84           85                                  29-1030      45.149542                    Flight Attendants
+85           86                                  43-9060      68.687375                          Programmers
+86           87                                  33-3050      52.514268                           Machinists
+87           88                                  13-1010      39.287870              Aircraft Cargo Handlers
+88           89                                  13-1120      53.010654                    Ambulance Drivers
+89           90                                  27-1020      56.660196                    Dental Hygienists
+90           91                                  53-4040      62.243797                           Therapists
+91           92                                  27-3020      50.896039           Elementary School Teachers
+92           93                                  53-3010      30.882733                        Telemarketers
+93           94                                  23-1010      47.117917                               Clergy
+94           95                                  53-3020      38.634000                  Telephone Operators
+95           96                                  35-3010      47.190274                   Massage Therapists
+96           97                                  13-1130      49.028760                           Announcers
+97           98                                  33-3010      46.795236                     Lodging Managers
+98           99                                  47-2140      45.689970       Recreation and Fitness Workers
+99          100                                  25-2020      37.952141              Couriers and Messengers
+100         101                                  27-3040      51.228708                       Event Planners
+101         102                                  39-4010      47.469406                               Models
+102         103                                  43-6010      42.819770                             Pressers
+103         104                                  51-9070      85.288650                             Surgeons
+104         105                                  29-2040      36.928206                             Laborers
+105         106                                  51-3010      41.073334             Shoe and Leather Workers
+106         107                                  17-2160      50.191640                           Bookkeeper
+107         108                                  11-1030      59.708217                               Actors
+108         109                                  39-4030      53.896335                           Morticians
+109         110                                  27-2010      72.470231                             Dentists
+110         111                                  49-9070      62.738650               Ship and Boat Captains
+111         112                                  53-7060      36.377640               Waiters and Waitresses
+112         113                                  19-3040      75.758087                     Chief Executives
+113         114                                  43-5020      64.322211                          Podiatrists
+114         115                                  51-4040      59.736340                         Sociologists
+115         116                                  21-2010      52.891392                       Choreographers
+116         117                                  41-2030      67.089120                            Opticians
+117         118                                  43-2020      70.421701                          Pharmacists
+118         119                                  33-3010      49.176142                           Librarians
+119         120                                  43-4170      48.535994                             Plumbers
+120         121                                  33-3020      64.514525                         Logisticians
+121         122                                  29-1060      47.812736                          Fundraisers
+122         123                                  27-3030      68.628679              Environmental Engineers
+123         124                                  37-2020      36.623490                        Meter Readers
+124         125                                  21-1020      59.716755                        Chiropractors
+125         126                                  43-5040      59.315620                      Police Officers
+126         127                                  53-1010      53.166275                   Survey Researchers
+127         128                                  39-9010      55.844776                        News Analysts
+128         129                                  19-1020      34.414394            Building Cleaning Workers
+129         130                                  11-9010      81.747827                  Aerospace Engineers
+130         131                                  47-2060      48.744516                             Ranchers
+131         132                                  29-1020      42.186608                              Fishers
+132         133                                  31-9010      76.533530                              Lawyers
+133         134                                  27-4010      61.506522                   Explosives Workers
+134         135                                  43-9080      51.175230                         Proofreaders
+135         136                                  53-2010      47.840317                              Tailors
+136         137                                  39-9030      63.537058                                Nurse
+137         138                                  33-2010      63.524618                          Legislators
+138         139                                  11-3010      57.757529                   Advertising Agents
+139         140                                  25-2050      67.581707               Criminal Investigators
+140         141                                  43-5050      39.811671               Postal Service Workers
+141         142                                  25-2010      56.792399                           Counselors
+142         143                                  35-3030      38.941821                      Material Movers
+143         144                                  37-2010      78.189179                   Medical Scientists
+144         145                                  41-3040      63.978395                           Paramedics
+145         146                                  47-4050      52.219115            Secondary School Teachers
+146         147                                  35-2020      60.762297             Market Research Analysts
+147         148                                  27-2020      67.892423                           Detectives
+148         149                                  27-2040      66.167052                           Economists
+149         150                                  53-3040      41.921157                              Tellers
+#+end_example
+:END:
+
+
+** Checkup
+#+begin_src jupyter-python :async yes
+disp_df(df0.describe().T)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+               count       mean        std        min        25%        50%         75%        max
+occup_code     150.0  75.500000  43.445368   1.000000  38.250000  75.500000  112.750000  150.00000
+scale_agentic  150.0  52.933319  12.425986  26.251317  43.528326  51.066991   60.551543   85.28865
+#+end_example
+* Process occupations data
+** Load data
+#+begin_src jupyter-python :async yes
+dir0 = (
+    "../../data/v0002_professions/"
+    "p0003_us_oes_data_2018/")
+
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found! BTW: Are we on the right host?"
+
+name0 = f"soc_2018_definitions_clean"
+extn0 = ".xlsx"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df2 = pd.read_excel(if0)
+log0.info(f"loading: {if0}... DONE")
+
+cols_rename = {
+    "SOC Group": "soc_group",
+    "SOC Code": "soc_code",
+    "SOC Title": "soc_title",
+    "SOC Definition": "soc_definition",
+}
+df2 = df2.rename(columns=cols_rename)
+
+df2.dropna(subset=["soc_definition"], inplace=True)
+
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=8).sort_index(), max_colwidth=120 )
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0002_professions/p0003_us_oes_data_2018/soc_2018_definitions_clean.xlsx...
+I: loading: ../../data/v0002_professions/p0003_us_oes_data_2018/soc_2018_definitions_clean.xlsx... DONE
+I: df2.shape = (867, 4)
+#+end_example
+#+begin_example
+     soc_group soc_code                                               soc_title                                                                                                           soc_definition
+137   Detailed  15-1211                               Computer Systems Analysts  Analyze science, engineering, business, and other data processing problems to develop and implement solutions to com...
+375   Detailed  25-1064                       Geography Teachers, Postsecondary  Teach courses in geography. Includes both teachers primarily engaged in teaching and those who do a combination of t...
+451   Detailed  25-9099  Educational Instruction and Library Workers, All Other                                                   All educational instruction and library workers not listed separately.
+640   Detailed  31-9094                               Medical Transcriptionists  Transcribe medical reports recorded by physicians and other healthcare practitioners using various electronic device...
+757   Detailed  39-3021                           Motion Picture Projectionists                                   Set up and operate motion picture projection and related sound reproduction equipment.
+868   Detailed  43-3071                                                 Tellers  Receive and pay out money. Keep records of money and negotiable instruments involved in a financial institution’s va...
+1153  Detailed  49-9095        Manufactured Building and Mobile Home Installers                                                                 Move or install mobile homes or prefabricated buildings.
+1357  Detailed  53-3099                      Motor Vehicle Operators, All Other                                                                       All motor vehicle operators not listed separately.
+#+end_example
+:END:
+** Checkups
+#+begin_src jupyter-python :async yes
+disp_df(df2[df2.soc_title.str.lower().str.contains("astronomer")], max_colwidth=120)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    soc_group soc_code    soc_title                                                                                                           soc_definition
+252  Detailed  19-2011  Astronomers  Observe, research, and interpret astronomical phenomena to increase basic knowledge or apply such information to pra...
+#+end_example
+
+** Manual search
+#+begin_src jupyter-python :async yes
+disp_df(df2[df2.soc_title.str.lower().str.contains("detectives")], max_colwidth=120)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    soc_group soc_code                                        soc_title                                                                                                           soc_definition
+649  Detailed  33-1012  First-Line Supervisors of Police and Detectives                                                 Directly supervise and coordinate activities of members of police force.
+666  Detailed  33-3021            Detectives and Criminal Investigators  Conduct investigations related to suspected violations of federal, state, or local laws to prevent or solve crimes. ...
+678  Detailed  33-9021             Private Detectives and Investigators  Gather, analyze, compile, and report information regarding individuals or organizations to clients, or detect occurr...
+#+end_example
+
+* Prepare for merging
+** Fuzzy match
+#+begin_src jupyter-python :async yes :eval query
+list2 = df2.soc_title.to_list()
+
+df3 = df0.copy()
+df3["best_match"] = df3.occupation.apply(lambda x: process.extract(x, list2, limit=1, scorer=fuzz.partial_ratio)[0])
+df3[["match0", "score0"]] = df3["best_match"].apply(pd.Series)
+df3["eval2"] = df3.apply(lambda row: 1 if row.match0 == row.occupation else 0, axis=1)
+df3["eval0"] = df3["eval2"]
+df3.drop(columns=["best_match"], inplace=True)
+
+log0.info("DONE")
+#+end_src
+
+#+RESULTS:
+: I: DONE
+
+** Checkup 100
+#+begin_src jupyter-python :async yes :eval query
+temp3a = df3[df3.score0==100]
+log0.info(f"{temp3a.shape = }")
+disp_df(temp3a, max_rows=222, max_colwidth=120)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: temp3a.shape = (135, 8)
+#+begin_example
+     occup_code soc_standard_occupational_classification  scale_agentic                           occupation                                                                    match0  score0  eval2  eval0
+0             1                                  11-1010      64.847476                          Accountants                                                  Accountants and Auditors     100      0      0
+1             2                                  41-9020      44.850290                  Personal Care Aides                                                       Personal Care Aides     100      1      1
+2             3                                  29-2080      32.656839     Laundry and Dry-Cleaning Workers                                          Laundry and Dry-Cleaning Workers     100      1      1
+3             4                                  19-2010      43.164655                             Butchers                                                 Butchers and Meat Cutters     100      0      0
+4             5                                  53-5020      45.445530                        Travel Agents                                                             Travel Agents     100      1      1
+5             6                                  53-6020      69.886359                        Veterinarians                                                             Veterinarians     100      1      1
+6             7                                  47-2160      36.431808                  Retail Salespersons                                                       Retail Salespersons     100      1      1
+7             8                                  15-1130      59.318071                         Audiologists                                                              Audiologists     100      1      1
+8             9                                  27-2010      57.760534  Commercial and Industrial Designers                                       Commercial and Industrial Designers     100      1      1
+9            10                                  41-9040      41.771439                 Pest Control Workers                                                      Pest Control Workers     100      1      1
+10           11                                  27-1010      47.578905                              Dancers                                                                   Dancers     100      1      1
+11           12                                  15-1130      34.382530                      Baggage Porters                                              Baggage Porters and Bellhops     100      0      0
+12           13                                  39-9020      82.936123                    Nuclear Engineers                                                         Nuclear Engineers     100      1      1
+13           14                                  17-2080      76.100315                            Biologist                                                           Microbiologists     100      0      0
+14           15                                  51-3020      49.776132            Healthcare Social Workers                                                 Healthcare Social Workers     100      1      1
+16           17                                  39-7010      54.242382                            Musicians                                                     Musicians and Singers     100      0      0
+17           18                                  27-4020      49.201771       Farmworkers and Laborers, Crop                   Farmworkers and Laborers, Crop, Nursery, and Greenhouse     100      0      0
+18           19                                  43-3030      48.990469                        Photographers                                                             Photographers     100      1      1
+19           20                                  35-9020      72.889738                       Mathematicians                                                            Mathematicians     100      1      1
+20           21                                  29-1160      45.333731                               Jailer                                         Correctional Officers and Jailers     100      0      0
+21           22                                  41-3020      55.033042                           Paralegals                                           Paralegals and Legal Assistants     100      0      0
+23           24                                  15-2040      45.221690                               Bakers                                                                    Bakers     100      1      1
+25           26                                  27-3010      59.259332                         Electricians                                                              Electricians     100      1      1
+26           27                                  51-6020      54.860619           Special Education Teachers                                     Special Education Teachers, Preschool     100      0      0
+27           28                                  29-1010      60.602494                         Firefighters                                                              Firefighters     100      1      1
+28           29                                  29-2020      48.676573                Kindergarten Teachers                           Kindergarten Teachers, Except Special Education     100      0      0
+29           30                                  23-2010      44.115109                                Cooks                                                      Chefs and Head Cooks     100      0      0
+30           31                                  35-2010      58.493794                             Managers                                           General and Operations Managers     100      0      0
+31           32                                  27-3020      49.961240                            Embalmers                                                                 Embalmers     100      1      1
+32           33                                  19-3030      31.904150                             Cashiers                                                                  Cashiers     100      1      1
+33           34                                  29-1180      73.585223                               Judges             Administrative Law Judges, Adjudicators, and Hearing Officers     100      0      0
+34           35                                  51-6050      42.122094       Subway and Streetcar Operators                                            Subway and Streetcar Operators     100      1      1
+35           36                                  25-4020      36.750320     Customer Service Representatives                                          Customer Service Representatives     100      1      1
+36           37                                  27-2030      26.251317                          Dishwashers                                                               Dishwashers     100      1      1
+37           38                                  19-1040      36.989338                          Bus Drivers                                                       Bus Drivers, School     100      0      0
+38           39                                  41-3010      43.559607                             Painters             Fine Artists, Including Painters, Sculptors, and Illustrators     100      0      0
+39           40                                  13-2010      51.743567                         Fine artists             Fine Artists, Including Painters, Sculptors, and Illustrators     100      0      0
+40           41                                  29-1060      43.517899                             Glaziers                                                                  Glaziers     100      1      1
+42           43                                  49-3020      42.756861                      Security Guards                                                           Security Guards     100      1      1
+43           44                                  25-4010      55.942984                             Curators                                                                  Curators     100      1      1
+44           45                                  47-5030      41.073058                          Secretaries             Executive Secretaries and Executive Administrative Assistants     100      0      0
+45           46                                  29-1120      42.290919          Highway Maintenance Workers                                               Highway Maintenance Workers     100      1      1
+46           47                                  19-3020      50.718189                           Carpenters                                                                Carpenters     100      1      1
+47           48                                  53-2020      59.666798                        Tax Examiners                          Tax Examiners and Collectors, and Revenue Agents     100      0      0
+48           49                                  21-1010      43.406230                    Childcare Workers                                                         Childcare Workers     100      1      1
+49           50                                  23-1020      41.931315                Construction Laborers                                                     Construction Laborers     100      1      1
+50           51                                  29-1050      34.753935             Food Preparation Workers                                                  Food Preparation Workers     100      1      1
+51           52                                  13-2080      60.398687                             Athletes         Agents and Business Managers of Artists, Performers, and Athletes     100      0      0
+52           53                                  47-2110      56.887736                  Real Estate Brokers                                                       Real Estate Brokers     100      1      1
+53           54                                  17-2010      41.583154                           Bartenders                                                                Bartenders     100      1      1
+54           55                                  29-1130      50.958752               Insurance Sales Agents                                                    Insurance Sales Agents     100      1      1
+55           56                                  29-1170      53.894422                             Jewelers                             Jewelers and Precious Stone and Metal Workers     100      0      0
+56           57                                  15-2020      47.393016                             Bailiffs                                                                  Bailiffs     100      1      1
+57           58                                  47-2150      55.306506                            Reporters                                 News Analysts, Reporters, and Journalists     100      0      0
+58           59                                  25-2030      58.999561                      Credit Analysts                                                           Credit Analysts     100      1      1
+59           60                                  33-3020      43.880719                      Logging Workers                                                Logging Workers, All Other     100      0      0
+60           61                                  45-3010      69.124742                        Psychologists                                   Industrial-Organizational Psychologists     100      0      0
+61           62                                  39-5010      43.631109        Motion Picture Projectionists                                             Motion Picture Projectionists     100      1      1
+62           63                                  13-1160      71.747317                           Architects                                               Computer Network Architects     100      0      0
+63           64                                  47-2120      38.784240                        Receptionists                                      Receptionists and Information Clerks     100      0      0
+64           65                                  47-2180      44.299345                              Roofers                                                                   Roofers     100      1      1
+65           66                                  17-1010      42.111400                              Barbers                                                                   Barbers     100      1      1
+66           67                                  11-9080      64.994290              Air Traffic Controllers                                                   Air Traffic Controllers     100      1      1
+67           68                                  53-5010      47.006671               Tour and Travel Guides                                                             Travel Guides     100      0      0
+68           69                                  13-2040      79.498007           Astronomers and Physicists                                                               Astronomers     100      0      0
+69           70                                  45-4020      56.156315         Public Relations Specialists                                              Public Relations Specialists     100      1      1
+70           71                                  43-4050      42.718061                           Plasterers                                              Plasterers and Stucco Masons     100      0      0
+71           72                                  51-6040      64.374809                        Statisticians                                                             Statisticians     100      1      1
+72           73                                  39-3020      47.981642                             Midwives                                                            Nurse Midwives     100      0      0
+73           74                                  29-1080      53.981589  Hazardous Materials Removal Workers                                       Hazardous Materials Removal Workers     100      1      1
+74           75                                  33-9030      46.508749       Maintenance and Repair Workers                                   Maintenance and Repair Workers, General     100      0      0
+76           77                                  41-2010      40.620016                        Office Clerks                                                    Office Clerks, General     100      0      0
+77           78                                  53-2030      38.111112          Taxi Drivers and Chauffeurs                                                              Taxi Drivers     100      0      0
+78           79                                  27-2030      51.856258                           Dietitians                                              Dietitians and Nutritionists     100      0      0
+79           80                                  51-6010      69.718769                  Software Developers                                                       Software Developers     100      1      1
+80           81                                  53-7060      58.615668                  Writers and Editors                                                                   Editors     100      0      0
+83           84                                  47-4040      50.207763                              Sailors                                                 Sailors and Marine Oilers     100      0      0
+84           85                                  29-1030      45.149542                    Flight Attendants                                                         Flight Attendants     100      1      1
+85           86                                  43-9060      68.687375                          Programmers                                                      Computer Programmers     100      0      0
+86           87                                  33-3050      52.514268                           Machinists                                                                Machinists     100      1      1
+88           89                                  13-1120      53.010654                    Ambulance Drivers    Ambulance Drivers and Attendants, Except Emergency Medical Technicians     100      0      0
+89           90                                  27-1020      56.660196                    Dental Hygienists                                                         Dental Hygienists     100      1      1
+90           91                                  53-4040      62.243797                           Therapists                                            Marriage and Family Therapists     100      0      0
+91           92                                  27-3020      50.896039           Elementary School Teachers                      Elementary School Teachers, Except Special Education     100      0      0
+92           93                                  53-3010      30.882733                        Telemarketers                                                             Telemarketers     100      1      1
+93           94                                  23-1010      47.117917                               Clergy                                                                    Clergy     100      1      1
+94           95                                  53-3020      38.634000                  Telephone Operators                                                       Telephone Operators     100      1      1
+95           96                                  35-3010      47.190274                   Massage Therapists                                                        Massage Therapists     100      1      1
+96           97                                  13-1130      49.028760                           Announcers                               Broadcast Announcers and Radio Disc Jockeys     100      0      0
+97           98                                  33-3010      46.795236                     Lodging Managers                                                          Lodging Managers     100      1      1
+99          100                                  25-2020      37.952141              Couriers and Messengers                                                   Couriers and Messengers     100      1      1
+100         101                                  27-3040      51.228708                       Event Planners                                   Meeting, Convention, and Event Planners     100      0      0
+101         102                                  39-4010      47.469406                               Models                                                                    Models     100      1      1
+102         103                                  43-6010      42.819770                             Pressers                         Pressers, Textile, Garment, and Related Materials     100      0      0
+103         104                                  51-9070      85.288650                             Surgeons                                           Oral and Maxillofacial Surgeons     100      0      0
+104         105                                  29-2040      36.928206                             Laborers                   Farmworkers and Laborers, Crop, Nursery, and Greenhouse     100      0      0
+105         106                                  51-3010      41.073334             Shoe and Leather Workers                                    Shoe and Leather Workers and Repairers     100      0      0
+107         108                                  11-1030      59.708217                               Actors                                                    Farm Labor Contractors     100      0      0
+108         109                                  39-4030      53.896335                           Morticians                            Morticians, Undertakers, and Funeral Arrangers     100      0      0
+109         110                                  27-2010      72.470231                             Dentists                                                         Dentists, General     100      0      0
+111         112                                  53-7060      36.377640               Waiters and Waitresses                                                    Waiters and Waitresses     100      1      1
+112         113                                  19-3040      75.758087                     Chief Executives                                                          Chief Executives     100      1      1
+113         114                                  43-5020      64.322211                          Podiatrists                                                               Podiatrists     100      1      1
+114         115                                  51-4040      59.736340                         Sociologists                                                              Sociologists     100      1      1
+115         116                                  21-2010      52.891392                       Choreographers                                                            Choreographers     100      1      1
+116         117                                  41-2030      67.089120                            Opticians                                                     Opticians, Dispensing     100      0      0
+117         118                                  43-2020      70.421701                          Pharmacists                                                               Pharmacists     100      1      1
+118         119                                  33-3010      49.176142                           Librarians                              Librarians and Media Collections Specialists     100      0      0
+119         120                                  43-4170      48.535994                             Plumbers                                   Plumbers, Pipefitters, and Steamfitters     100      0      0
+120         121                                  33-3020      64.514525                         Logisticians                                                              Logisticians     100      1      1
+121         122                                  29-1060      47.812736                          Fundraisers                                                               Fundraisers     100      1      1
+122         123                                  27-3030      68.628679              Environmental Engineers                                                   Environmental Engineers     100      1      1
+123         124                                  37-2020      36.623490                        Meter Readers                                                  Meter Readers, Utilities     100      0      0
+124         125                                  21-1020      59.716755                        Chiropractors                                                                    Actors     100      0      0
+126         127                                  53-1010      53.166275                   Survey Researchers                                                        Survey Researchers     100      1      1
+127         128                                  39-9010      55.844776                        News Analysts                                 News Analysts, Reporters, and Journalists     100      0      0
+128         129                                  19-1020      34.414394            Building Cleaning Workers                                      Building Cleaning Workers, All Other     100      0      0
+129         130                                  11-9010      81.747827                  Aerospace Engineers                                                       Aerospace Engineers     100      1      1
+130         131                                  47-2060      48.744516                             Ranchers                        Farmers, Ranchers, and Other Agricultural Managers     100      0      0
+132         133                                  31-9010      76.533530                              Lawyers                                                                   Lawyers     100      1      1
+133         134                                  27-4010      61.506522                   Explosives Workers               Explosives Workers, Ordnance Handling Experts, and Blasters     100      0      0
+134         135                                  43-9080      51.175230                         Proofreaders                                             Proofreaders and Copy Markers     100      0      0
+135         136                                  53-2010      47.840317                              Tailors                                   Tailors, Dressmakers, and Custom Sewers     100      0      0
+136         137                                  39-9030      63.537058                                Nurse                                                         Registered Nurses     100      0      0
+137         138                                  33-2010      63.524618                          Legislators                                                               Legislators     100      1      1
+139         140                                  25-2050      67.581707               Criminal Investigators                                     Detectives and Criminal Investigators     100      0      0
+141         142                                  25-2010      56.792399                           Counselors                                                         Credit Counselors     100      0      0
+142         143                                  35-3030      38.941821                      Material Movers    First-Line Supervisors of Helpers, Laborers, and Material Movers, Hand     100      0      0
+143         144                                  37-2010      78.189179                   Medical Scientists                                Medical Scientists, Except Epidemiologists     100      0      0
+144         145                                  41-3040      63.978395                           Paramedics                                                                Paramedics     100      1      1
+145         146                                  47-4050      52.219115            Secondary School Teachers  Secondary School Teachers, Except Special and Career/Technical Education     100      0      0
+146         147                                  35-2020      60.762297             Market Research Analysts                        Market Research Analysts and Marketing Specialists     100      0      0
+147         148                                  27-2020      67.892423                           Detectives                           First-Line Supervisors of Police and Detectives     100      0      0
+148         149                                  27-2040      66.167052                           Economists                                                                Economists     100      1      1
+149         150                                  53-3040      41.921157                              Tellers                                                                   Tellers     100      1      1
+#+end_example
+:END:
+
+** Checkup <100
+#+begin_src jupyter-python :async yes :eval query
+temp3b = df3[df3.score0<100]
+log0.info(f"{temp3b.shape = }")
+disp_df(temp3b, max_rows=222, max_colwidth=120)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: temp3b.shape = (15, 8)
+#+begin_example
+     occup_code soc_standard_occupational_classification  scale_agentic                           occupation                                                             match0  score0  eval2  eval0
+15           16                                  43-3070      78.902065  Physical Medicine and Rehabilitatio                                           Physical Therapist Aides      62      0      0
+22           23                                  41-9010      29.765075               Parking Lot Attendants                                                 Parking Attendants      78      0      0
+24           25                                  13-1080      73.691845                      Aircraft Pilots                                                      Craft Artists      72      0      0
+41           42                                  47-2030      48.133883                      Radio Operators                   Gas Compressor and Gas Pumping Station Operators      87      0      0
+75           76                                  11-9010      53.741552                    Agents of Artists  Agents and Business Managers of Artists, Performers, and Athletes      88      0      0
+81           82                                  39-6010      69.834738                      Movie Directors                                                             Actors      83      0      0
+82           83                                  19-3010      53.114646                         Car Mechanic  Electro-Mechanical and Mechatronics Technologists and Technicians      83      0      0
+87           88                                  13-1010      39.287870              Aircraft Cargo Handlers                                Aircraft Cargo Handling Supervisors      87      0      0
+98           99                                  47-2140      45.689970       Recreation and Fitness Workers             Recreation and Fitness Studies Teachers, Postsecondary      83      0      0
+106         107                                  17-2160      50.191640                           Bookkeeper                       Bookkeeping, Accounting, and Auditing Clerks      80      0      0
+110         111                                  49-9070      62.738650               Ship and Boat Captains                         Gambling Change Persons and Booth Cashiers      64      0      0
+125         126                                  43-5040      59.315620                      Police Officers                                                Compliance Officers      87      0      0
+131         132                                  29-1020      42.186608                              Fishers                                                 Desktop Publishers      86      0      0
+138         139                                  11-3010      57.757529                   Advertising Agents                                           Advertising Sales Agents      83      0      0
+140         141                                  43-5050      39.811671               Postal Service Workers                 First-Line Supervisors of Personal Service Workers      86      0      0
+#+end_example
+:END:
+
+** Save merge candidates
+#+begin_src jupyter-python :async yes :eval query
+dir0 = "../../data/d0002a_professional_occupations/p1001_merge_candidates/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found! BTW: Are we on the right host?"
+
+date0 = dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")
+suff0 = "merge-candidates"
+name0 = f"jobs_{date0}_{suff0}"
+of0 = dir0/name0
+
+log0.info(f"saving: {of0}...")
+df3.to_excel(of0.with_suffix(".xlsx"))
+log0.info(f"saving: {of0}... DONE")
+
+log0.info("ALL DONE")
+#+end_src
+
+* Merge
+** Load merge candidates
+#+begin_src jupyter-python :async yes
+dir0 = (
+    "../../data/v0002_professions/"
+    "p1001_merge_candidates/")
+
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found! BTW: Are we on the right host?"
+
+name0 = f"jobs_20221024T013829_merge-candidates__man_FIX"
+extn0 = ".xlsx"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df4 = pd.read_excel(if0, index_col=0)
+log0.info(f"loading: {if0}... DONE")
+
+
+log0.info(f"{df4.shape = }")
+disp_df(df4.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0002_professions/p1001_merge_candidates/jobs_20221024T013829_merge-candidates__man_FIX.xlsx...
+I: loading: ../../data/v0002_professions/p1001_merge_candidates/jobs_20221024T013829_merge-candidates__man_FIX.xlsx... DONE
+I: df4.shape = (150, 9)
+#+end_example
+#+begin_example
+     occup_code soc_standard_occupational_classification  scale_agentic                     occupation                                       match0                                       match2  score0  eval2  eval0
+22           23                                  41-9010      29.765075         Parking Lot Attendants                           Parking Attendants                           Parking Attendants      78      1      0
+39           40                                  13-2010      51.743567                   Fine artists  Fine Artists, Including Painters, Sculpt...  Fine Artists, Including Painters, Sculpt...     100      1      0
+40           41                                  29-1060      43.517899                       Glaziers                                     Glaziers                                     Glaziers     100      1      1
+59           60                                  33-3020      43.880719                Logging Workers                   Logging Workers, All Other                  Logging Equipment Operators     100      3      0
+61           62                                  39-5010      43.631109  Motion Picture Projectionists                Motion Picture Projectionists                Motion Picture Projectionists     100      1      1
+103         104                                  51-9070      85.288650                       Surgeons              Oral and Maxillofacial Surgeons        Orthopedic Surgeons, Except Pediatric     100      2      0
+108         109                                  39-4030      53.896335                     Morticians  Morticians, Undertakers, and Funeral Arr...  Morticians, Undertakers, and Funeral Arr...     100      1      0
+127         128                                  39-9010      55.844776                  News Analysts    News Analysts, Reporters, and Journalists    News Analysts, Reporters, and Journalists     100      1      0
+#+end_example
+:END:
+** Limit
+#+begin_src jupyter-python :async yes
+log0.info(f"{df4.shape = }")
+df4 = df4[df4.eval2>0]
+log0.info(f"{df4.shape = }")
+disp_df(df4.sample(n=8).sort_index())
+disp_df(df4.tail(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df4.shape = (150, 9)
+I: df4.shape = (150, 9)
+#+end_example
+#+begin_example
+     occup_code soc_standard_occupational_classification  scale_agentic              occupation                                       match0                                       match2  score0  eval2  eval0
+10           11                                  27-1010      47.578905                 Dancers                                      Dancers                                      Dancers     100      1      1
+22           23                                  41-9010      29.765075  Parking Lot Attendants                           Parking Attendants                           Parking Attendants      78      1      0
+24           25                                  13-1080      73.691845         Aircraft Pilots                                Craft Artists                            Commercial Pilots      72      2      0
+27           28                                  29-1010      60.602494            Firefighters                                 Firefighters                                 Firefighters     100      1      1
+39           40                                  13-2010      51.743567            Fine artists  Fine Artists, Including Painters, Sculpt...  Fine Artists, Including Painters, Sculpt...     100      1      0
+64           65                                  47-2180      44.299345                 Roofers                                      Roofers                                      Roofers     100      1      1
+88           89                                  13-1120      53.010654       Ambulance Drivers  Ambulance Drivers and Attendants, Except...  Ambulance Drivers and Attendants, Except...     100      1      0
+121         122                                  29-1060      47.812736             Fundraisers                                  Fundraisers                                  Fundraisers     100      1      1
+#+end_example
+#+begin_example
+     occup_code soc_standard_occupational_classification  scale_agentic                 occupation                                       match0                                       match2  score0  eval2  eval0
+142         143                                  35-3030      38.941821            Material Movers  First-Line Supervisors of Helpers, Labor...  Laborers and Freight, Stock, and Materia...     100      2      0
+143         144                                  37-2010      78.189179         Medical Scientists   Medical Scientists, Except Epidemiologists   Medical Scientists, Except Epidemiologists     100      1      0
+144         145                                  41-3040      63.978395                 Paramedics                                   Paramedics                                   Paramedics     100      1      1
+145         146                                  47-4050      52.219115  Secondary School Teachers  Secondary School Teachers, Except Specia...  Secondary School Teachers, Except Specia...     100      1      0
+146         147                                  35-2020      60.762297   Market Research Analysts  Market Research Analysts and Marketing S...  Market Research Analysts and Marketing S...     100      1      0
+147         148                                  27-2020      67.892423                 Detectives  First-Line Supervisors of Police and Det...        Detectives and Criminal Investigators     100      3      0
+148         149                                  27-2040      66.167052                 Economists                                   Economists                                   Economists     100      1      1
+149         150                                  53-3040      41.921157                    Tellers                                      Tellers                                      Tellers     100      1      1
+#+end_example
+:END:
+** Merge
+#+begin_src jupyter-python :async yes
+log0.info(f"{df2.shape = }")
+log0.info(f"{df4.shape = }")
+df8 = pd.merge(
+    df4,
+    df2,
+    how="left",
+    left_on="match2",
+    right_on="soc_title",
+    sort=False,
+    suffixes=("_x", "_y"),
+    copy=True,
+    indicator=False,
+    validate=None,
+)
+log0.info(f"{df8.shape = }")
+df8.dropna(inplace=True)
+log0.info(f"{df8.shape = }")
+
+df8 = df8.sort_values(by="scale_agentic")
+
+# cols_extract = [
+#     "occupation",
+#     "scale_agentic",
+#     "soc_title",
+#     "soc_definition",
+# ]
+# df8 = df8[cols_extract]
+
+df8.drop(columns=["soc_standard_occupational_classification", "soc_group", "soc_code", "match0"], inplace=True)
+df8["text"] = df8.soc_title + ", " + df8.soc_definition
+
+disp_df(df8.sample(n=8))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df2.shape = (867, 4)
+I: df4.shape = (150, 9)
+I: df8.shape = (150, 13)
+I: df8.shape = (150, 13)
+#+end_example
+#+begin_example
+     occup_code  scale_agentic           occupation                                       match2  score0  eval2  eval0                                    soc_title                               soc_definition                                         text
+0             1      64.847476          Accountants                     Accountants and Auditors     100      1      0                     Accountants and Auditors  Examine, analyze, and interpret accounti...  Accountants and Auditors, Examine, analy...
+149         150      41.921157              Tellers                                      Tellers     100      1      1                                      Tellers  Receive and pay out money. Keep records ...  Tellers, Receive and pay out money. Keep...
+120         121      64.514525         Logisticians                                 Logisticians     100      1      1                                 Logisticians  Analyze and coordinate the ongoing logis...  Logisticians, Analyze and coordinate the...
+44           45      41.073058          Secretaries  Secretaries and Administrative Assistant...     100      3      0  Secretaries and Administrative Assistant...  Perform routine administrative functions...  Secretaries and Administrative Assistant...
+127         128      55.844776        News Analysts    News Analysts, Reporters, and Journalists     100      1      0    News Analysts, Reporters, and Journalists  Narrate or write news stories, reviews, ...  News Analysts, Reporters, and Journalist...
+118         119      49.176142           Librarians  Librarians and Media Collections Special...     100      1      0  Librarians and Media Collections Special...  Administer and maintain libraries or col...  Librarians and Media Collections Special...
+58           59      58.999561      Credit Analysts                              Credit Analysts     100      1      1                              Credit Analysts  Analyze credit data and financial statem...  Credit Analysts, Analyze credit data and...
+6             7      36.431808  Retail Salespersons                          Retail Salespersons     100      1      1                          Retail Salespersons  Sell merchandise, such as furniture, mot...  Retail Salespersons, Sell merchandise, s...
+#+end_example
+:END:
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df8.columns:
+    print(f"    \"{col0}\",")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "occup_code",
+    "scale_agentic",
+    "occupation",
+    "match2",
+    "score0",
+    "eval2",
+    "eval0",
+    "soc_title",
+    "soc_definition",
+    "text",
+#+end_example
+
+** Save
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+df9 = df8.copy()
+
+dir0 = (
+    "../../data/v0002_professions/"
+    "p1002_merged/")
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["jobs"]
+sfx0 = ["merged"]
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df9.to_excel(ofn0)
+
+xtn0 = ".jsonl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+with open(ofn0, "w") as fh: pass
+srsly.write_jsonl(ofn0, df9.to_dict(orient="records"))
+
+log0.info("DONE")
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/v0002_professions/p1002_merged/jobs_merged.pkl...
+I: saving: ../../data/v0002_professions/p1002_merged/jobs_merged.csv...
+I: saving: ../../data/v0002_professions/p1002_merged/jobs_merged.xlsx...
+I: saving: ../../data/v0002_professions/p1002_merged/jobs_merged.jsonl...
+I: DONE
+#+end_example

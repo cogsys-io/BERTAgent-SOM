@@ -1,0 +1,1049 @@
+#+title: P0004_checkups
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+
+* Boilerplate
+** test: Remote on buka2
+#+begin_src emacs-lisp :tangle no :eval no
+(find-file "/ssh:jiko@buka2:/home/jiko/cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/")
+#+end_src
+
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/p0004_valid-04-part-001-20newsgroups/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+#+RESULTS:
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+#+RESULTS:
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+#+RESULTS:
+: I: DONE: basic imports
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: 0 seconds
+I: DONE: extra imports and settings
+#+end_example
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+import plotly.graph_objects as go
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+#+RESULTS:
+: I: DONE: more extra imports and settings
+
+* Notes
+** test: Local
+** test: Remote
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/v0004_20newsgroups/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"data_d0002_20newsgroups_bert"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index(), width=7777)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/v0004_20newsgroups/data_d0002_20newsgroups_bert.pkl...
+I: loading: ../../data/v0004_20newsgroups/data_d0002_20newsgroups_bert.pkl... DONE
+I: df0.shape = (7850, 117)
+#+end_example
+#+begin_example
+                                             text target               label  spacy_index0                                  spacy_sents  spacy_WORD_count  spacy_word_mean  spacy_NOUN_mean  spacy_ADJ_mean  spacy_VERB_mean  spacy_VERB_mean_without_be_and_have  spacy_VB_mean  spacy_VB_mean_without_be_and_have  spacy_JJ_mean  spacy_JJRs_mean  spacy_JJSs_mean  spacy_mean_of_is_big2c_agen_from_big2  spacy_mean_of_is_big2a_agen_from_big2  spacy_mean_of_is_big2a_comm_from_big2  spacy_mean_of_is_big2b_agen_from_big2  spacy_mean_of_is_big2b_comm_from_big2  spacy_mean_of_is_nico_full_ability_posit_from_nico  spacy_mean_of_is_nico_full_status_negat_from_nico  spacy_mean_of_is_nico_seed_ability_negat_from_nico  spacy_mean_of_is_nico_full_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_posit_from_nico  spacy_mean_of_is_nico_seed_agency_negat_from_nico  spacy_mean_of_is_nico_full_ability_negat_from_nico  spacy_mean_of_is_nico_seed_ability_posit_from_nico  spacy_mean_of_is_nico_full_agency_negat_from_nico  spacy_mean_of_is_nico_full_status_posit_from_nico  spacy_mean_of_is_nico_seed_status_negat_from_nico  spacy_mean_of_is_nico_seed_status_posit_from_nico  spacy_mean_of_is_liwc_00001_Function_from_liwc  spacy_mean_of_is_liwc_00002_Pronoun_from_liwc  spacy_mean_of_is_liwc_00003_Ppron_from_liwc  spacy_mean_of_is_liwc_00004_I_from_liwc  spacy_mean_of_is_liwc_00005_We_from_liwc  spacy_mean_of_is_liwc_00006_You_from_liwc  spacy_mean_of_is_liwc_00007_SheHe_from_liwc  spacy_mean_of_is_liwc_00008_They_from_liwc  spacy_mean_of_is_liwc_00009_Ipron_from_liwc  spacy_mean_of_is_liwc_00010_Article_from_liwc  spacy_mean_of_is_liwc_00011_Prep_from_liwc  spacy_mean_of_is_liwc_00012_Auxverb_from_liwc  spacy_mean_of_is_liwc_00013_Adverb_from_liwc  spacy_mean_of_is_liwc_00014_Conj_from_liwc  spacy_mean_of_is_liwc_00015_Negate_from_liwc  spacy_mean_of_is_liwc_00020_Verb_from_liwc  spacy_mean_of_is_liwc_00021_Adj_from_liwc  spacy_mean_of_is_liwc_00022_Compare_from_liwc  spacy_mean_of_is_liwc_00023_Interrog_from_liwc  spacy_mean_of_is_liwc_00024_Number_from_liwc  spacy_mean_of_is_liwc_00025_Quant_from_liwc  spacy_mean_of_is_liwc_00030_Affect_from_liwc  spacy_mean_of_is_liwc_00031_Posemo_from_liwc  spacy_mean_of_is_liwc_00032_Negemo_from_liwc  spacy_mean_of_is_liwc_00033_Anx_from_liwc  spacy_mean_of_is_liwc_00034_Anger_from_liwc  spacy_mean_of_is_liwc_00035_Sad_from_liwc  spacy_mean_of_is_liwc_00040_Social_from_liwc  spacy_mean_of_is_liwc_00041_Family_from_liwc  spacy_mean_of_is_liwc_00042_Friend_from_liwc  spacy_mean_of_is_liwc_00043_Female_from_liwc  spacy_mean_of_is_liwc_00044_Male_from_liwc  spacy_mean_of_is_liwc_00050_CogProc_from_liwc  spacy_mean_of_is_liwc_00051_Insight_from_liwc  spacy_mean_of_is_liwc_00052_Cause_from_liwc  spacy_mean_of_is_liwc_00053_Discrep_from_liwc  spacy_mean_of_is_liwc_00054_Tentat_from_liwc  spacy_mean_of_is_liwc_00055_Certain_from_liwc  spacy_mean_of_is_liwc_00056_Differ_from_liwc  spacy_mean_of_is_liwc_00060_Percept_from_liwc  spacy_mean_of_is_liwc_00061_See_from_liwc  spacy_mean_of_is_liwc_00062_Hear_from_liwc  spacy_mean_of_is_liwc_00063_Feel_from_liwc  spacy_mean_of_is_liwc_00070_Bio_from_liwc  spacy_mean_of_is_liwc_00071_Body_from_liwc  spacy_mean_of_is_liwc_00072_Health_from_liwc  spacy_mean_of_is_liwc_00073_Sexual_from_liwc  spacy_mean_of_is_liwc_00074_Ingest_from_liwc  spacy_mean_of_is_liwc_00080_Drives_from_liwc  spacy_mean_of_is_liwc_00081_Affiliation_from_liwc  spacy_mean_of_is_liwc_00082_Achieve_from_liwc  spacy_mean_of_is_liwc_00083_Power_from_liwc  spacy_mean_of_is_liwc_00084_Reward_from_liwc  spacy_mean_of_is_liwc_00085_Risk_from_liwc  spacy_mean_of_is_liwc_00090_FocusPast_from_liwc  spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc  spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc  spacy_mean_of_is_liwc_00100_Relativ_from_liwc  spacy_mean_of_is_liwc_00101_Motion_from_liwc  spacy_mean_of_is_liwc_00102_Space_from_liwc  spacy_mean_of_is_liwc_00103_Time_from_liwc  spacy_mean_of_is_liwc_00110_Work_from_liwc  spacy_mean_of_is_liwc_00111_Leisure_from_liwc  spacy_mean_of_is_liwc_00112_Home_from_liwc  spacy_mean_of_is_liwc_00113_Money_from_liwc  spacy_mean_of_is_liwc_00114_Relig_from_liwc  spacy_mean_of_is_liwc_00115_Death_from_liwc  spacy_mean_of_is_liwc_00120_Informal_from_liwc  spacy_mean_of_is_liwc_00121_Swear_from_liwc  spacy_mean_of_is_liwc_00122_Netspeak_from_liwc  spacy_mean_of_is_liwc_00123_Assent_from_liwc  spacy_mean_of_is_liwc_00124_Nonflu_from_liwc  spacy_mean_of_is_liwc_00125_Filler_from_liwc                                        sents                                          ba4  sents_count  baTot_sum  baPos_sum  baNeg_sum  baAbs_sum     BAPos     BANeg     BATot     BAAbs
+1389  ETHER IMPLODES 2 EARTH CORE, IS GRAVITY!...      4           sci.space          1389  [ETHER IMPLODES 2 EARTH CORE, IS GRAVITY...              2177              1.0         0.219568        0.064309         0.142398                             0.135048       0.058797                           0.049150       0.056500         0.006890         0.000459                               0.028939                               0.042260                               0.018374                               0.009646                               0.002756                                     0.042260                                            0.008728                                           0.000459                                            0.020671                                           0.000459                                                0.0                                           0.000919                                            0.002297                                            0.000919                                           0.012862                                                0.0                                           0.000459                                           0.548461                                        0.137345                                       0.075333                                 0.016077                                  0.013321                                   0.013321                                     0.022508                                    0.010106                                     0.062012                                     0.093707                                      0.142398                                     0.084520                                       0.045016                                     0.054203                                     0.016077                                     0.159853                                   0.039963                                     0.031236                                       0.022508                                        0.012862                                      0.026183                                     0.027102                                      0.014699                                      0.011024                                    0.000919                                     0.005053                                   0.002756                                     0.088195                                      0.000459                                      0.001837                                      0.001837                                     0.024345                                     0.117593                                       0.018374                                       0.021130                                     0.018833                                       0.027561                                      0.011484                                       0.033992                                      0.031695                                     0.020211                                    0.005053                                    0.004134                                   0.027561                                    0.011943                                     0.006890                                      0.000459                                      0.010106                                      0.057418                                      0.014240                                           0.012862                                       0.020671                                     0.009187                                     0.004593                                     0.026183                                         0.143776                                            0.009187                                           0.158016                                       0.029858                                      0.079467                                    0.054203                                    0.017915                                     0.005972                                      0.000459                                     0.005512                                     0.005972                                     0.005512                                     0.003675                                        0.000919                                     0.001837                                        0.000919                                      0.000000                                           0.0   [ETHER IMPLODES 2 EARTH CORE, IS GRAVITY...  [0.1545403152704239, 0.07310940325260162...          139  10.668544  14.766168   4.097625  18.863793  0.106231  0.029479  0.076752  0.135711
+3428  Perhaps it's time to start rec.sport.bas...      1  rec.sport.baseball          3428  [Perhaps it's time to start rec.sport.ba...                25              1.0         0.240000        0.040000         0.160000                             0.160000       0.160000                           0.160000       0.040000         0.000000         0.000000                               0.000000                               0.000000                               0.040000                               0.000000                               0.000000                                     0.040000                                            0.000000                                           0.000000                                            0.000000                                           0.000000                                                0.0                                           0.000000                                            0.000000                                            0.000000                                           0.000000                                                0.0                                           0.000000                                           0.600000                                        0.120000                                       0.040000                                 0.000000                                  0.040000                                   0.000000                                     0.000000                                    0.000000                                     0.080000                                     0.080000                                      0.160000                                     0.080000                                       0.080000                                     0.080000                                     0.000000                                     0.200000                                   0.000000                                     0.000000                                       0.040000                                        0.000000                                      0.040000                                     0.120000                                      0.040000                                      0.080000                                    0.000000                                     0.080000                                   0.000000                                     0.080000                                      0.000000                                      0.000000                                      0.000000                                     0.000000                                     0.080000                                       0.000000                                       0.000000                                     0.000000                                       0.040000                                      0.000000                                       0.040000                                      0.040000                                     0.000000                                    0.040000                                    0.000000                                   0.000000                                    0.000000                                     0.000000                                      0.000000                                      0.000000                                      0.040000                                      0.040000                                           0.000000                                       0.000000                                     0.000000                                     0.000000                                     0.000000                                         0.240000                                            0.000000                                           0.280000                                       0.080000                                      0.120000                                    0.080000                                    0.000000                                     0.000000                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0   [Perhaps it's time to start rec.sport.ba...                        [0.12873369455337524]            1   0.128734   0.128734   0.000000   0.128734  0.128734  0.000000  0.128734  0.128734
+3549  Nope. Here in Northern California, a new...      6  talk.politics.guns          3549  [Nope., Here in Northern California, a n...               145              1.0         0.158621        0.110345         0.131034                             0.131034       0.062069                           0.055172       0.103448         0.006897         0.000000                               0.041379                               0.062069                               0.041379                               0.034483                               0.006897                                     0.048276                                            0.006897                                           0.000000                                            0.048276                                           0.000000                                                0.0                                           0.020690                                            0.006897                                            0.000000                                           0.027586                                                0.0                                           0.000000                                           0.517241                                        0.089655                                       0.062069                                 0.027586                                  0.006897                                   0.020690                                     0.006897                                    0.000000                                     0.027586                                     0.103448                                      0.096552                                     0.089655                                       0.082759                                     0.041379                                     0.048276                                     0.144828                                   0.089655                                     0.048276                                       0.000000                                        0.027586                                      0.013793                                     0.089655                                      0.048276                                      0.041379                                    0.000000                                     0.013793                                   0.006897                                     0.096552                                      0.000000                                      0.006897                                      0.000000                                     0.006897                                     0.165517                                       0.013793                                       0.034483                                     0.020690                                       0.027586                                      0.013793                                       0.082759                                      0.013793                                     0.006897                                    0.006897                                    0.000000                                   0.006897                                    0.006897                                     0.000000                                      0.000000                                      0.000000                                      0.103448                                      0.020690                                           0.027586                                       0.041379                                     0.006897                                     0.013793                                     0.034483                                         0.117241                                            0.013793                                           0.096552                                       0.000000                                      0.062069                                    0.034483                                    0.013793                                     0.000000                                      0.006897                                     0.000000                                     0.000000                                     0.006897                                     0.013793                                        0.000000                                     0.006897                                        0.000000                                      0.006897                                           0.0   [Nope., Here in Northern California, a n...  [-0.21432512998580933, 0.184590280055999...           11   0.773810   1.500352   0.726542   2.226894  0.136396  0.066049  0.070346  0.202445
+6500  FMGs. particularly FMGs who are not citi...      3             sci.med          6500  [FMGs., particularly FMGs who are not ci...                72              1.0         0.291667        0.069444         0.083333                             0.069444       0.041667                           0.027778       0.069444         0.000000         0.000000                               0.027778                               0.027778                               0.000000                               0.027778                               0.013889                                     0.013889                                            0.013889                                           0.000000                                            0.013889                                           0.000000                                                0.0                                           0.000000                                            0.000000                                            0.000000                                           0.000000                                                0.0                                           0.027778                                           0.541667                                        0.041667                                       0.000000                                 0.000000                                  0.000000                                   0.000000                                     0.000000                                    0.000000                                     0.041667                                     0.097222                                      0.138889                                     0.097222                                       0.125000                                     0.041667                                     0.027778                                     0.111111                                   0.027778                                     0.027778                                       0.013889                                        0.000000                                      0.013889                                     0.041667                                      0.027778                                      0.013889                                    0.000000                                     0.000000                                   0.000000                                     0.069444                                      0.000000                                      0.000000                                      0.000000                                     0.000000                                     0.111111                                       0.013889                                       0.000000                                     0.000000                                       0.041667                                      0.041667                                       0.027778                                      0.013889                                     0.000000                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                     0.000000                                      0.000000                                      0.000000                                      0.055556                                      0.000000                                           0.000000                                       0.027778                                     0.013889                                     0.013889                                     0.000000                                         0.083333                                            0.027778                                           0.083333                                       0.000000                                      0.055556                                    0.027778                                    0.013889                                     0.013889                                      0.027778                                     0.000000                                     0.000000                                     0.000000                                     0.013889                                        0.000000                                     0.000000                                        0.000000                                      0.013889                                           0.0   [FMGs., particularly FMGs who are not ci...  [0.12027309089899063, -0.075275763869285...            5   0.237764   0.317380   0.079615   0.396995  0.063476  0.015923  0.047553  0.079399
+6586  He's a shortstop by training, but he's b...      1  rec.sport.baseball          6586  [He's a shortstop by training, but he's ...                18              1.0         0.166667        0.055556         0.000000                             0.000000       0.000000                           0.000000       0.055556         0.000000         0.000000                               0.000000                               0.000000                               0.000000                               0.000000                               0.000000                                     0.000000                                            0.000000                                           0.000000                                            0.000000                                           0.000000                                                0.0                                           0.000000                                            0.000000                                            0.000000                                           0.000000                                                0.0                                           0.000000                                           0.777778                                        0.166667                                       0.111111                                 0.000000                                  0.000000                                   0.000000                                     0.111111                                    0.000000                                     0.055556                                     0.111111                                      0.166667                                     0.166667                                       0.055556                                     0.111111                                     0.000000                                     0.166667                                   0.000000                                     0.000000                                       0.000000                                        0.111111                                      0.000000                                     0.000000                                      0.000000                                      0.000000                                    0.000000                                     0.000000                                   0.000000                                     0.111111                                      0.000000                                      0.000000                                      0.000000                                     0.111111                                     0.111111                                       0.000000                                       0.000000                                     0.000000                                       0.055556                                      0.000000                                       0.055556                                      0.000000                                     0.000000                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                     0.000000                                      0.000000                                      0.000000                                      0.000000                                      0.000000                                           0.000000                                       0.000000                                     0.000000                                     0.000000                                     0.055556                                         0.166667                                            0.000000                                           0.111111                                       0.000000                                      0.055556                                    0.055556                                    0.000000                                     0.000000                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0   [He's a shortstop by training, but he's ...                        [0.01822170987725258]            1   0.018222   0.018222   0.000000   0.018222  0.018222  0.000000  0.018222  0.018222
+6617  There have been a few postings in the pa...      3             sci.med          6617  [There have been a few postings in the p...               123              1.0         0.227642        0.121951         0.105691                             0.105691       0.016260                           0.016260       0.121951         0.000000         0.000000                               0.008130                               0.008130                               0.024390                               0.016260                               0.024390                                     0.040650                                            0.008130                                           0.000000                                            0.032520                                           0.000000                                                0.0                                           0.000000                                            0.000000                                            0.016260                                           0.008130                                                0.0                                           0.000000                                           0.365854                                        0.024390                                       0.008130                                 0.008130                                  0.000000                                   0.000000                                     0.000000                                    0.000000                                     0.016260                                     0.089431                                      0.138211                                     0.056911                                       0.024390                                     0.032520                                     0.000000                                     0.081301                                   0.040650                                     0.008130                                       0.000000                                        0.016260                                      0.065041                                     0.048780                                      0.040650                                      0.008130                                    0.008130                                     0.000000                                   0.000000                                     0.024390                                      0.000000                                      0.000000                                      0.000000                                     0.000000                                     0.178862                                       0.065041                                       0.008130                                     0.040650                                       0.089431                                      0.000000                                       0.032520                                      0.024390                                     0.024390                                    0.000000                                    0.000000                                   0.016260                                    0.000000                                     0.016260                                      0.000000                                      0.000000                                      0.040650                                      0.008130                                           0.008130                                       0.016260                                     0.000000                                     0.008130                                     0.024390                                         0.065041                                            0.000000                                           0.113821                                       0.016260                                      0.048780                                    0.040650                                    0.056911                                     0.040650                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0   [There have been a few postings in the p...  [-0.10042472183704376, -0.01768166199326...           10   1.376006   1.507665   0.131658   1.639323  0.150766  0.013166  0.137601  0.163932
+7001  [reply to frank@D012S658.uucp (Frank O'D...      0         alt.atheism          7001  [[reply to frank@D012S658.uucp (Frank O'...               276              1.0         0.181159        0.083333         0.134058                             0.119565       0.086957                           0.061594       0.083333         0.000000         0.000000                               0.054348                               0.054348                               0.028986                               0.025362                               0.032609                                     0.054348                                            0.003623                                           0.000000                                            0.018116                                           0.000000                                                0.0                                           0.000000                                            0.003623                                            0.000000                                           0.003623                                                0.0                                           0.003623                                           0.579710                                        0.119565                                       0.032609                                 0.000000                                  0.003623                                   0.000000                                     0.018116                                    0.010870                                     0.086957                                     0.076087                                      0.155797                                     0.123188                                       0.043478                                     0.057971                                     0.025362                                     0.170290                                   0.032609                                     0.010870                                       0.025362                                        0.010870                                      0.021739                                     0.065217                                      0.050725                                      0.014493                                    0.000000                                     0.000000                                   0.007246                                     0.076087                                      0.000000                                      0.000000                                      0.000000                                     0.018116                                     0.231884                                       0.047101                                       0.003623                                     0.050725                                       0.050725                                      0.065217                                       0.050725                                      0.014493                                     0.007246                                    0.000000                                    0.007246                                   0.003623                                    0.000000                                     0.003623                                      0.000000                                      0.000000                                      0.043478                                      0.007246                                           0.000000                                       0.021739                                     0.007246                                     0.007246                                     0.010870                                         0.137681                                            0.018116                                           0.072464                                       0.018116                                      0.043478                                    0.018116                                    0.014493                                     0.000000                                      0.000000                                     0.000000                                     0.021739                                     0.000000                                     0.003623                                        0.000000                                     0.000000                                        0.000000                                      0.003623                                           0.0   [[reply to frank@D012S658.uucp (Frank O'...  [0.08285529166460037, 0.0581257753074169...           10   0.697754   0.765870   0.068117   0.833987  0.076587  0.006812  0.069775  0.083399
+7869  A friend of mine is going in later this ...      3             sci.med          7869  [A friend of mine is going in later this...               105              1.0         0.238095        0.057143         0.161905                             0.133333       0.028571                           0.028571       0.047619         0.009524         0.000000                               0.019048                               0.019048                               0.009524                               0.019048                               0.009524                                     0.057143                                            0.000000                                           0.000000                                            0.028571                                           0.000000                                                0.0                                           0.000000                                            0.009524                                            0.000000                                           0.000000                                                0.0                                           0.000000                                           0.523810                                        0.171429                                       0.133333                                 0.057143                                  0.000000                                   0.000000                                     0.076190                                    0.000000                                     0.038095                                     0.066667                                      0.133333                                     0.076190                                       0.066667                                     0.019048                                     0.019048                                     0.161905                                   0.028571                                     0.019048                                       0.000000                                        0.009524                                      0.019048                                     0.038095                                      0.028571                                      0.000000                                    0.000000                                     0.000000                                   0.000000                                     0.104762                                      0.009524                                      0.009524                                      0.000000                                     0.085714                                     0.123810                                       0.028571                                       0.000000                                     0.009524                                       0.066667                                      0.019048                                       0.028571                                      0.028571                                     0.028571                                    0.000000                                    0.000000                                   0.104762                                    0.019048                                     0.085714                                      0.000000                                      0.028571                                      0.066667                                      0.009524                                           0.019048                                       0.028571                                     0.009524                                     0.000000                                     0.019048                                         0.161905                                            0.009524                                           0.123810                                       0.009524                                      0.057143                                    0.057143                                    0.019048                                     0.019048                                      0.000000                                     0.009524                                     0.009524                                     0.009524                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0   [A friend of mine is going in later this...  [0.008059648796916008, 0.034974999725818...           10  -0.011285   0.699474   0.710759   1.410233  0.069947  0.071076 -0.001128  0.141023
+#+end_example
+:END:
+
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "text",
+    "target",
+    "label",
+    "spacy_index0",
+    "spacy_sents",
+    "spacy_WORD_count",
+    "spacy_word_mean",
+    "spacy_NOUN_mean",
+    "spacy_ADJ_mean",
+    "spacy_VERB_mean",
+    "spacy_VERB_mean_without_be_and_have",
+    "spacy_VB_mean",
+    "spacy_VB_mean_without_be_and_have",
+    "spacy_JJ_mean",
+    "spacy_JJRs_mean",
+    "spacy_JJSs_mean",
+    "spacy_mean_of_is_big2c_agen_from_big2",
+    "spacy_mean_of_is_big2a_agen_from_big2",
+    "spacy_mean_of_is_big2a_comm_from_big2",
+    "spacy_mean_of_is_big2b_agen_from_big2",
+    "spacy_mean_of_is_big2b_comm_from_big2",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico",
+    "spacy_mean_of_is_nico_seed_status_negat_from_nico",
+    "spacy_mean_of_is_nico_seed_status_posit_from_nico",
+    "spacy_mean_of_is_liwc_00001_Function_from_liwc",
+    "spacy_mean_of_is_liwc_00002_Pronoun_from_liwc",
+    "spacy_mean_of_is_liwc_00003_Ppron_from_liwc",
+    "spacy_mean_of_is_liwc_00004_I_from_liwc",
+    "spacy_mean_of_is_liwc_00005_We_from_liwc",
+    "spacy_mean_of_is_liwc_00006_You_from_liwc",
+    "spacy_mean_of_is_liwc_00007_SheHe_from_liwc",
+    "spacy_mean_of_is_liwc_00008_They_from_liwc",
+    "spacy_mean_of_is_liwc_00009_Ipron_from_liwc",
+    "spacy_mean_of_is_liwc_00010_Article_from_liwc",
+    "spacy_mean_of_is_liwc_00011_Prep_from_liwc",
+    "spacy_mean_of_is_liwc_00012_Auxverb_from_liwc",
+    "spacy_mean_of_is_liwc_00013_Adverb_from_liwc",
+    "spacy_mean_of_is_liwc_00014_Conj_from_liwc",
+    "spacy_mean_of_is_liwc_00015_Negate_from_liwc",
+    "spacy_mean_of_is_liwc_00020_Verb_from_liwc",
+    "spacy_mean_of_is_liwc_00021_Adj_from_liwc",
+    "spacy_mean_of_is_liwc_00022_Compare_from_liwc",
+    "spacy_mean_of_is_liwc_00023_Interrog_from_liwc",
+    "spacy_mean_of_is_liwc_00024_Number_from_liwc",
+    "spacy_mean_of_is_liwc_00025_Quant_from_liwc",
+    "spacy_mean_of_is_liwc_00030_Affect_from_liwc",
+    "spacy_mean_of_is_liwc_00031_Posemo_from_liwc",
+    "spacy_mean_of_is_liwc_00032_Negemo_from_liwc",
+    "spacy_mean_of_is_liwc_00033_Anx_from_liwc",
+    "spacy_mean_of_is_liwc_00034_Anger_from_liwc",
+    "spacy_mean_of_is_liwc_00035_Sad_from_liwc",
+    "spacy_mean_of_is_liwc_00040_Social_from_liwc",
+    "spacy_mean_of_is_liwc_00041_Family_from_liwc",
+    "spacy_mean_of_is_liwc_00042_Friend_from_liwc",
+    "spacy_mean_of_is_liwc_00043_Female_from_liwc",
+    "spacy_mean_of_is_liwc_00044_Male_from_liwc",
+    "spacy_mean_of_is_liwc_00050_CogProc_from_liwc",
+    "spacy_mean_of_is_liwc_00051_Insight_from_liwc",
+    "spacy_mean_of_is_liwc_00052_Cause_from_liwc",
+    "spacy_mean_of_is_liwc_00053_Discrep_from_liwc",
+    "spacy_mean_of_is_liwc_00054_Tentat_from_liwc",
+    "spacy_mean_of_is_liwc_00055_Certain_from_liwc",
+    "spacy_mean_of_is_liwc_00056_Differ_from_liwc",
+    "spacy_mean_of_is_liwc_00060_Percept_from_liwc",
+    "spacy_mean_of_is_liwc_00061_See_from_liwc",
+    "spacy_mean_of_is_liwc_00062_Hear_from_liwc",
+    "spacy_mean_of_is_liwc_00063_Feel_from_liwc",
+    "spacy_mean_of_is_liwc_00070_Bio_from_liwc",
+    "spacy_mean_of_is_liwc_00071_Body_from_liwc",
+    "spacy_mean_of_is_liwc_00072_Health_from_liwc",
+    "spacy_mean_of_is_liwc_00073_Sexual_from_liwc",
+    "spacy_mean_of_is_liwc_00074_Ingest_from_liwc",
+    "spacy_mean_of_is_liwc_00080_Drives_from_liwc",
+    "spacy_mean_of_is_liwc_00081_Affiliation_from_liwc",
+    "spacy_mean_of_is_liwc_00082_Achieve_from_liwc",
+    "spacy_mean_of_is_liwc_00083_Power_from_liwc",
+    "spacy_mean_of_is_liwc_00084_Reward_from_liwc",
+    "spacy_mean_of_is_liwc_00085_Risk_from_liwc",
+    "spacy_mean_of_is_liwc_00090_FocusPast_from_liwc",
+    "spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc",
+    "spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc",
+    "spacy_mean_of_is_liwc_00100_Relativ_from_liwc",
+    "spacy_mean_of_is_liwc_00101_Motion_from_liwc",
+    "spacy_mean_of_is_liwc_00102_Space_from_liwc",
+    "spacy_mean_of_is_liwc_00103_Time_from_liwc",
+    "spacy_mean_of_is_liwc_00110_Work_from_liwc",
+    "spacy_mean_of_is_liwc_00111_Leisure_from_liwc",
+    "spacy_mean_of_is_liwc_00112_Home_from_liwc",
+    "spacy_mean_of_is_liwc_00113_Money_from_liwc",
+    "spacy_mean_of_is_liwc_00114_Relig_from_liwc",
+    "spacy_mean_of_is_liwc_00115_Death_from_liwc",
+    "spacy_mean_of_is_liwc_00120_Informal_from_liwc",
+    "spacy_mean_of_is_liwc_00121_Swear_from_liwc",
+    "spacy_mean_of_is_liwc_00122_Netspeak_from_liwc",
+    "spacy_mean_of_is_liwc_00123_Assent_from_liwc",
+    "spacy_mean_of_is_liwc_00124_Nonflu_from_liwc",
+    "spacy_mean_of_is_liwc_00125_Filler_from_liwc",
+    "sents",
+    "ba4",
+    "sents_count",
+    "baTot_sum",
+    "baPos_sum",
+    "baNeg_sum",
+    "baAbs_sum",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+#+end_example
+
+** Select
+#+begin_src jupyter-python :async yes
+cols2 = [
+    "text",
+    # "target",
+    # "label",
+    # "spacy_index0",
+    # "spacy_sents",
+    "spacy_WORD_count",
+    # "spacy_word_mean",
+    # "spacy_NOUN_mean",
+    # "spacy_ADJ_mean",
+    # "spacy_VERB_mean",
+    # "spacy_VERB_mean_without_be_and_have",
+    # "spacy_VB_mean",
+    # "spacy_VB_mean_without_be_and_have",
+    # "spacy_JJ_mean",
+    # "spacy_JJRs_mean",
+    # "spacy_JJSs_mean",
+    "spacy_mean_of_is_big2c_agen_from_big2",
+    "spacy_mean_of_is_big2a_agen_from_big2",
+    # "spacy_mean_of_is_big2a_comm_from_big2",
+    "spacy_mean_of_is_big2b_agen_from_big2",
+    # "spacy_mean_of_is_big2b_comm_from_big2",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico",
+    # "spacy_mean_of_is_nico_seed_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico",
+    # "spacy_mean_of_is_nico_seed_agency_posit_from_nico",
+    # "spacy_mean_of_is_nico_seed_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico",
+    # "spacy_mean_of_is_nico_seed_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico",
+    # "spacy_mean_of_is_nico_seed_status_negat_from_nico",
+    # "spacy_mean_of_is_nico_seed_status_posit_from_nico",
+    "spacy_mean_of_is_liwc_00001_Function_from_liwc",
+    "spacy_mean_of_is_liwc_00002_Pronoun_from_liwc",
+    "spacy_mean_of_is_liwc_00003_Ppron_from_liwc",
+    "spacy_mean_of_is_liwc_00004_I_from_liwc",
+    "spacy_mean_of_is_liwc_00005_We_from_liwc",
+    "spacy_mean_of_is_liwc_00006_You_from_liwc",
+    "spacy_mean_of_is_liwc_00007_SheHe_from_liwc",
+    "spacy_mean_of_is_liwc_00008_They_from_liwc",
+    "spacy_mean_of_is_liwc_00009_Ipron_from_liwc",
+    "spacy_mean_of_is_liwc_00010_Article_from_liwc",
+    "spacy_mean_of_is_liwc_00011_Prep_from_liwc",
+    "spacy_mean_of_is_liwc_00012_Auxverb_from_liwc",
+    "spacy_mean_of_is_liwc_00013_Adverb_from_liwc",
+    "spacy_mean_of_is_liwc_00014_Conj_from_liwc",
+    "spacy_mean_of_is_liwc_00015_Negate_from_liwc",
+    "spacy_mean_of_is_liwc_00020_Verb_from_liwc",
+    "spacy_mean_of_is_liwc_00021_Adj_from_liwc",
+    "spacy_mean_of_is_liwc_00022_Compare_from_liwc",
+    "spacy_mean_of_is_liwc_00023_Interrog_from_liwc",
+    "spacy_mean_of_is_liwc_00024_Number_from_liwc",
+    "spacy_mean_of_is_liwc_00025_Quant_from_liwc",
+    "spacy_mean_of_is_liwc_00030_Affect_from_liwc",
+    "spacy_mean_of_is_liwc_00031_Posemo_from_liwc",
+    "spacy_mean_of_is_liwc_00032_Negemo_from_liwc",
+    "spacy_mean_of_is_liwc_00033_Anx_from_liwc",
+    "spacy_mean_of_is_liwc_00034_Anger_from_liwc",
+    "spacy_mean_of_is_liwc_00035_Sad_from_liwc",
+    "spacy_mean_of_is_liwc_00040_Social_from_liwc",
+    "spacy_mean_of_is_liwc_00041_Family_from_liwc",
+    "spacy_mean_of_is_liwc_00042_Friend_from_liwc",
+    "spacy_mean_of_is_liwc_00043_Female_from_liwc",
+    "spacy_mean_of_is_liwc_00044_Male_from_liwc",
+    "spacy_mean_of_is_liwc_00050_CogProc_from_liwc",
+    "spacy_mean_of_is_liwc_00051_Insight_from_liwc",
+    "spacy_mean_of_is_liwc_00052_Cause_from_liwc",
+    "spacy_mean_of_is_liwc_00053_Discrep_from_liwc",
+    "spacy_mean_of_is_liwc_00054_Tentat_from_liwc",
+    "spacy_mean_of_is_liwc_00055_Certain_from_liwc",
+    "spacy_mean_of_is_liwc_00056_Differ_from_liwc",
+    "spacy_mean_of_is_liwc_00060_Percept_from_liwc",
+    "spacy_mean_of_is_liwc_00061_See_from_liwc",
+    "spacy_mean_of_is_liwc_00062_Hear_from_liwc",
+    "spacy_mean_of_is_liwc_00063_Feel_from_liwc",
+    "spacy_mean_of_is_liwc_00070_Bio_from_liwc",
+    "spacy_mean_of_is_liwc_00071_Body_from_liwc",
+    "spacy_mean_of_is_liwc_00072_Health_from_liwc",
+    "spacy_mean_of_is_liwc_00073_Sexual_from_liwc",
+    "spacy_mean_of_is_liwc_00074_Ingest_from_liwc",
+    "spacy_mean_of_is_liwc_00080_Drives_from_liwc",
+    "spacy_mean_of_is_liwc_00081_Affiliation_from_liwc",
+    "spacy_mean_of_is_liwc_00082_Achieve_from_liwc",
+    "spacy_mean_of_is_liwc_00083_Power_from_liwc",
+    "spacy_mean_of_is_liwc_00084_Reward_from_liwc",
+    "spacy_mean_of_is_liwc_00085_Risk_from_liwc",
+    "spacy_mean_of_is_liwc_00090_FocusPast_from_liwc",
+    "spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc",
+    "spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc",
+    "spacy_mean_of_is_liwc_00100_Relativ_from_liwc",
+    "spacy_mean_of_is_liwc_00101_Motion_from_liwc",
+    "spacy_mean_of_is_liwc_00102_Space_from_liwc",
+    "spacy_mean_of_is_liwc_00103_Time_from_liwc",
+    "spacy_mean_of_is_liwc_00110_Work_from_liwc",
+    "spacy_mean_of_is_liwc_00111_Leisure_from_liwc",
+    "spacy_mean_of_is_liwc_00112_Home_from_liwc",
+    "spacy_mean_of_is_liwc_00113_Money_from_liwc",
+    "spacy_mean_of_is_liwc_00114_Relig_from_liwc",
+    "spacy_mean_of_is_liwc_00115_Death_from_liwc",
+    "spacy_mean_of_is_liwc_00120_Informal_from_liwc",
+    "spacy_mean_of_is_liwc_00121_Swear_from_liwc",
+    "spacy_mean_of_is_liwc_00122_Netspeak_from_liwc",
+    "spacy_mean_of_is_liwc_00123_Assent_from_liwc",
+    "spacy_mean_of_is_liwc_00124_Nonflu_from_liwc",
+    "spacy_mean_of_is_liwc_00125_Filler_from_liwc",
+    # "sents",
+    # "ba4",
+    # "sents_count",
+    # "baTot_sum",
+    # "baPos_sum",
+    # "baNeg_sum",
+    # "baAbs_sum",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+]
+df2 = df0[cols2]
+
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=8).sort_index(), width=7777)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df2.shape = (7850, 88)
+#+begin_example
+                                             text  spacy_WORD_count  spacy_mean_of_is_big2c_agen_from_big2  spacy_mean_of_is_big2a_agen_from_big2  spacy_mean_of_is_big2b_agen_from_big2  spacy_mean_of_is_nico_full_ability_posit_from_nico  spacy_mean_of_is_nico_full_status_negat_from_nico  spacy_mean_of_is_nico_full_agency_posit_from_nico  spacy_mean_of_is_nico_full_ability_negat_from_nico  spacy_mean_of_is_nico_full_agency_negat_from_nico  spacy_mean_of_is_nico_full_status_posit_from_nico  spacy_mean_of_is_liwc_00001_Function_from_liwc  spacy_mean_of_is_liwc_00002_Pronoun_from_liwc  spacy_mean_of_is_liwc_00003_Ppron_from_liwc  spacy_mean_of_is_liwc_00004_I_from_liwc  spacy_mean_of_is_liwc_00005_We_from_liwc  spacy_mean_of_is_liwc_00006_You_from_liwc  spacy_mean_of_is_liwc_00007_SheHe_from_liwc  spacy_mean_of_is_liwc_00008_They_from_liwc  spacy_mean_of_is_liwc_00009_Ipron_from_liwc  spacy_mean_of_is_liwc_00010_Article_from_liwc  spacy_mean_of_is_liwc_00011_Prep_from_liwc  spacy_mean_of_is_liwc_00012_Auxverb_from_liwc  spacy_mean_of_is_liwc_00013_Adverb_from_liwc  spacy_mean_of_is_liwc_00014_Conj_from_liwc  spacy_mean_of_is_liwc_00015_Negate_from_liwc  spacy_mean_of_is_liwc_00020_Verb_from_liwc  spacy_mean_of_is_liwc_00021_Adj_from_liwc  spacy_mean_of_is_liwc_00022_Compare_from_liwc  spacy_mean_of_is_liwc_00023_Interrog_from_liwc  spacy_mean_of_is_liwc_00024_Number_from_liwc  spacy_mean_of_is_liwc_00025_Quant_from_liwc  spacy_mean_of_is_liwc_00030_Affect_from_liwc  spacy_mean_of_is_liwc_00031_Posemo_from_liwc  spacy_mean_of_is_liwc_00032_Negemo_from_liwc  spacy_mean_of_is_liwc_00033_Anx_from_liwc  spacy_mean_of_is_liwc_00034_Anger_from_liwc  spacy_mean_of_is_liwc_00035_Sad_from_liwc  spacy_mean_of_is_liwc_00040_Social_from_liwc  spacy_mean_of_is_liwc_00041_Family_from_liwc  spacy_mean_of_is_liwc_00042_Friend_from_liwc  spacy_mean_of_is_liwc_00043_Female_from_liwc  spacy_mean_of_is_liwc_00044_Male_from_liwc  spacy_mean_of_is_liwc_00050_CogProc_from_liwc  spacy_mean_of_is_liwc_00051_Insight_from_liwc  spacy_mean_of_is_liwc_00052_Cause_from_liwc  spacy_mean_of_is_liwc_00053_Discrep_from_liwc  spacy_mean_of_is_liwc_00054_Tentat_from_liwc  spacy_mean_of_is_liwc_00055_Certain_from_liwc  spacy_mean_of_is_liwc_00056_Differ_from_liwc  spacy_mean_of_is_liwc_00060_Percept_from_liwc  spacy_mean_of_is_liwc_00061_See_from_liwc  spacy_mean_of_is_liwc_00062_Hear_from_liwc  spacy_mean_of_is_liwc_00063_Feel_from_liwc  spacy_mean_of_is_liwc_00070_Bio_from_liwc  spacy_mean_of_is_liwc_00071_Body_from_liwc  spacy_mean_of_is_liwc_00072_Health_from_liwc  spacy_mean_of_is_liwc_00073_Sexual_from_liwc  spacy_mean_of_is_liwc_00074_Ingest_from_liwc  spacy_mean_of_is_liwc_00080_Drives_from_liwc  spacy_mean_of_is_liwc_00081_Affiliation_from_liwc  spacy_mean_of_is_liwc_00082_Achieve_from_liwc  spacy_mean_of_is_liwc_00083_Power_from_liwc  spacy_mean_of_is_liwc_00084_Reward_from_liwc  spacy_mean_of_is_liwc_00085_Risk_from_liwc  spacy_mean_of_is_liwc_00090_FocusPast_from_liwc  spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc  spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc  spacy_mean_of_is_liwc_00100_Relativ_from_liwc  spacy_mean_of_is_liwc_00101_Motion_from_liwc  spacy_mean_of_is_liwc_00102_Space_from_liwc  spacy_mean_of_is_liwc_00103_Time_from_liwc  spacy_mean_of_is_liwc_00110_Work_from_liwc  spacy_mean_of_is_liwc_00111_Leisure_from_liwc  spacy_mean_of_is_liwc_00112_Home_from_liwc  spacy_mean_of_is_liwc_00113_Money_from_liwc  spacy_mean_of_is_liwc_00114_Relig_from_liwc  spacy_mean_of_is_liwc_00115_Death_from_liwc  spacy_mean_of_is_liwc_00120_Informal_from_liwc  spacy_mean_of_is_liwc_00121_Swear_from_liwc  spacy_mean_of_is_liwc_00122_Netspeak_from_liwc  spacy_mean_of_is_liwc_00123_Assent_from_liwc  spacy_mean_of_is_liwc_00124_Nonflu_from_liwc  spacy_mean_of_is_liwc_00125_Filler_from_liwc     BAPos     BANeg     BATot     BAAbs
+2812  I have the April 15, 1993 issue of the S...               132                               0.068182                               0.083333                               0.007576                                     0.068182                                            0.000000                                           0.022727                                           0.007576                                            0.000000                                           0.000000                                           0.560606                                        0.136364                                       0.060606                                 0.030303                                  0.000000                                   0.015152                                     0.000000                                    0.015152                                     0.075758                                     0.113636                                      0.098485                                     0.106061                                       0.037879                                     0.060606                                     0.022727                                     0.159091                                   0.053030                                     0.045455                                       0.022727                                        0.007576                                      0.030303                                     0.045455                                      0.037879                                      0.007576                                    0.000000                                     0.007576                                   0.000000                                     0.053030                                           0.0                                      0.000000                                      0.000000                                     0.000000                                     0.128788                                       0.015152                                       0.030303                                     0.000000                                       0.000000                                      0.015152                                       0.068182                                      0.022727                                     0.015152                                    0.007576                                    0.000000                                   0.022727                                    0.000000                                     0.015152                                      0.007576                                      0.000000                                      0.015152                                      0.000000                                           0.007576                                       0.015152                                     0.000000                                     0.000000                                     0.007576                                         0.159091                                            0.000000                                           0.113636                                       0.015152                                      0.053030                                    0.045455                                    0.060606                                     0.007576                                      0.000000                                     0.030303                                     0.000000                                     0.000000                                     0.007576                                        0.007576                                     0.000000                                        0.000000                                      0.000000                                           0.0   0.075583  0.041150  0.034433  0.116734
+4485  Article in this morning's Houston Post.....               217                               0.027650                               0.032258                               0.023041                                     0.018433                                            0.009217                                           0.036866                                           0.000000                                            0.000000                                           0.027650                                           0.571429                                        0.115207                                       0.046083                                 0.009217                                  0.009217                                   0.004608                                     0.000000                                    0.023041                                     0.069124                                     0.105991                                      0.161290                                     0.092166                                       0.027650                                     0.069124                                     0.032258                                     0.170507                                   0.041475                                     0.036866                                       0.018433                                        0.009217                                      0.032258                                     0.050691                                      0.018433                                      0.032258                                    0.000000                                     0.013825                                   0.000000                                     0.119816                                           0.0                                      0.000000                                      0.000000                                     0.000000                                     0.170507                                       0.036866                                       0.036866                                     0.041475                                       0.032258                                      0.004608                                       0.055300                                      0.009217                                     0.004608                                    0.004608                                    0.000000                                   0.009217                                    0.004608                                     0.000000                                      0.000000                                      0.004608                                      0.133641                                      0.018433                                           0.027650                                       0.082949                                     0.000000                                     0.018433                                     0.018433                                         0.147465                                            0.009217                                           0.087558                                       0.013825                                      0.046083                                    0.018433                                    0.018433                                     0.000000                                      0.000000                                     0.004608                                     0.000000                                     0.004608                                     0.004608                                        0.004608                                     0.000000                                        0.000000                                      0.000000                                           0.0   0.086453  0.009397  0.077056  0.095849
+4750  (reference line trimmed) [...] Yes. Well...               139                               0.064748                               0.071942                               0.014388                                     0.035971                                            0.000000                                           0.043165                                           0.000000                                            0.000000                                           0.014388                                           0.546763                                        0.129496                                       0.057554                                 0.014388                                  0.035971                                   0.007194                                     0.000000                                    0.000000                                     0.071942                                     0.100719                                      0.100719                                     0.115108                                       0.035971                                     0.050360                                     0.021583                                     0.136691                                   0.043165                                     0.007194                                       0.021583                                        0.000000                                      0.028777                                     0.071942                                      0.057554                                      0.014388                                    0.000000                                     0.014388                                   0.000000                                     0.043165                                           0.0                                      0.000000                                      0.000000                                     0.000000                                     0.187050                                       0.043165                                       0.035971                                     0.021583                                       0.028777                                      0.057554                                       0.028777                                      0.021583                                     0.021583                                    0.000000                                    0.000000                                   0.007194                                    0.000000                                     0.007194                                      0.000000                                      0.000000                                      0.079137                                      0.035971                                           0.021583                                       0.007194                                     0.021583                                     0.000000                                     0.000000                                         0.129496                                            0.007194                                           0.043165                                       0.000000                                      0.014388                                    0.028777                                    0.007194                                     0.000000                                      0.000000                                     0.000000                                     0.043165                                     0.007194                                     0.028777                                        0.000000                                     0.000000                                        0.007194                                      0.021583                                           0.0   0.121277  0.000000  0.121277  0.121277
+5996  Yep. And the Ks don't have to denote a s...                62                               0.032258                               0.032258                               0.032258                                     0.016129                                            0.016129                                           0.016129                                           0.016129                                            0.000000                                           0.032258                                           0.532258                                        0.064516                                       0.032258                                 0.016129                                  0.000000                                   0.000000                                     0.016129                                    0.000000                                     0.032258                                     0.145161                                      0.129032                                     0.080645                                       0.048387                                     0.048387                                     0.032258                                     0.129032                                   0.032258                                     0.016129                                       0.000000                                        0.016129                                      0.016129                                     0.000000                                      0.000000                                      0.000000                                    0.000000                                     0.000000                                   0.000000                                     0.064516                                           0.0                                      0.000000                                      0.000000                                     0.016129                                     0.129032                                       0.032258                                       0.016129                                     0.000000                                       0.016129                                      0.000000                                       0.064516                                      0.000000                                     0.000000                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                     0.000000                                      0.000000                                      0.000000                                      0.096774                                      0.048387                                           0.032258                                       0.032258                                     0.000000                                     0.000000                                     0.048387                                         0.129032                                            0.000000                                           0.177419                                       0.064516                                      0.048387                                    0.080645                                    0.016129                                     0.048387                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.032258                                        0.000000                                     0.032258                                        0.032258                                      0.000000                                           0.0   0.096851  0.056143  0.040708  0.152994
+6477  And I think we ought to hold Christ acco...                53                               0.018868                               0.018868                               0.000000                                     0.037736                                            0.018868                                           0.000000                                           0.000000                                            0.000000                                           0.018868                                           0.509434                                        0.188679                                       0.132075                                 0.075472                                  0.018868                                   0.000000                                     0.018868                                    0.018868                                     0.056604                                     0.056604                                      0.150943                                     0.037736                                       0.037736                                     0.056604                                     0.000000                                     0.132075                                   0.018868                                     0.018868                                       0.018868                                        0.000000                                      0.056604                                     0.018868                                      0.000000                                      0.018868                                    0.000000                                     0.000000                                   0.000000                                     0.113208                                           0.0                                      0.018868                                      0.000000                                     0.018868                                     0.113208                                       0.037736                                       0.000000                                     0.018868                                       0.018868                                      0.037736                                       0.000000                                      0.037736                                     0.018868                                    0.000000                                    0.018868                                   0.018868                                    0.018868                                     0.000000                                      0.000000                                      0.000000                                      0.075472                                      0.018868                                           0.000000                                       0.037736                                     0.000000                                     0.018868                                     0.037736                                         0.132075                                            0.000000                                           0.075472                                       0.018868                                      0.037736                                    0.018868                                    0.000000                                     0.000000                                      0.000000                                     0.000000                                     0.037736                                     0.018868                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0   0.070622  0.021783  0.048839  0.092404
+6718  -jeremy Are you talking about a single B...                64                               0.031250                               0.093750                               0.000000                                     0.015625                                            0.015625                                           0.062500                                           0.015625                                            0.000000                                           0.000000                                           0.500000                                        0.125000                                       0.093750                                 0.000000                                  0.000000                                   0.062500                                     0.000000                                    0.031250                                     0.031250                                     0.078125                                      0.093750                                     0.078125                                       0.062500                                     0.078125                                     0.000000                                     0.125000                                   0.093750                                     0.062500                                       0.000000                                        0.046875                                      0.062500                                     0.031250                                      0.031250                                      0.000000                                    0.000000                                     0.000000                                   0.000000                                     0.109375                                           0.0                                      0.000000                                      0.000000                                     0.000000                                     0.156250                                       0.031250                                       0.015625                                     0.046875                                       0.046875                                      0.000000                                       0.046875                                      0.000000                                     0.000000                                    0.000000                                    0.000000                                   0.000000                                    0.000000                                     0.000000                                      0.000000                                      0.000000                                      0.046875                                      0.000000                                           0.031250                                       0.000000                                     0.046875                                     0.000000                                     0.000000                                         0.078125                                            0.015625                                           0.156250                                       0.062500                                      0.062500                                    0.062500                                    0.000000                                     0.000000                                      0.000000                                     0.000000                                     0.000000                                     0.000000                                     0.031250                                        0.000000                                     0.000000                                        0.000000                                      0.031250                                           0.0   0.156307  0.017883  0.138423  0.174190
+7454  : Frank Crary posted: : : Sure, but the ...               247                               0.024291                               0.024291                               0.016194                                     0.028340                                            0.004049                                           0.028340                                           0.000000                                            0.000000                                           0.028340                                           0.461538                                        0.089069                                       0.044534                                 0.028340                                  0.000000                                   0.000000                                     0.012146                                    0.004049                                     0.044534                                     0.048583                                      0.161943                                     0.076923                                       0.040486                                     0.048583                                     0.024291                                     0.117409                                   0.048583                                     0.036437                                       0.008097                                        0.004049                                      0.032389                                     0.052632                                      0.028340                                      0.024291                                    0.000000                                     0.012146                                   0.000000                                     0.072874                                           0.0                                      0.008097                                      0.004049                                     0.008097                                     0.161943                                       0.016194                                       0.040486                                     0.020243                                       0.036437                                      0.016194                                       0.052632                                      0.004049                                     0.004049                                    0.000000                                    0.000000                                   0.008097                                    0.000000                                     0.004049                                      0.000000                                      0.004049                                      0.052632                                      0.004049                                           0.000000                                       0.028340                                     0.012146                                     0.008097                                     0.048583                                         0.097166                                            0.004049                                           0.105263                                       0.004049                                      0.076923                                    0.024291                                    0.024291                                     0.012146                                      0.004049                                     0.004049                                     0.000000                                     0.004049                                     0.004049                                        0.000000                                     0.000000                                        0.004049                                      0.000000                                           0.0   0.090325  0.025023  0.065303  0.115348
+7571  I made a few phone calls today, and foun...               134                               0.037313                               0.052239                               0.000000                                     0.029851                                            0.007463                                           0.044776                                           0.000000                                            0.007463                                           0.014925                                           0.432836                                        0.156716                                       0.097015                                 0.059701                                  0.007463                                   0.014925                                     0.007463                                    0.007463                                     0.059701                                     0.052239                                      0.082090                                     0.067164                                       0.037313                                     0.059701                                     0.000000                                     0.141791                                   0.029851                                     0.000000                                       0.007463                                        0.022388                                      0.014925                                     0.052239                                      0.037313                                      0.014925                                    0.007463                                     0.000000                                   0.007463                                     0.119403                                           0.0                                      0.000000                                      0.014925                                     0.000000                                     0.074627                                       0.022388                                       0.007463                                     0.014925                                       0.022388                                      0.000000                                       0.022388                                      0.014925                                     0.000000                                    0.014925                                    0.000000                                   0.000000                                    0.000000                                     0.000000                                      0.000000                                      0.000000                                      0.044776                                      0.007463                                           0.000000                                       0.037313                                     0.000000                                     0.000000                                     0.067164                                         0.149254                                            0.014925                                           0.111940                                       0.007463                                      0.044776                                    0.037313                                    0.000000                                     0.000000                                      0.022388                                     0.059701                                     0.000000                                     0.000000                                     0.000000                                        0.000000                                     0.000000                                        0.000000                                      0.000000                                           0.0   0.082943  0.033126  0.049817  0.116069
+#+end_example
+:END:
+
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df2.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "text",
+    "spacy_WORD_count",
+    "spacy_mean_of_is_big2c_agen_from_big2",
+    "spacy_mean_of_is_big2a_agen_from_big2",
+    "spacy_mean_of_is_big2b_agen_from_big2",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico",
+    "spacy_mean_of_is_liwc_00001_Function_from_liwc",
+    "spacy_mean_of_is_liwc_00002_Pronoun_from_liwc",
+    "spacy_mean_of_is_liwc_00003_Ppron_from_liwc",
+    "spacy_mean_of_is_liwc_00004_I_from_liwc",
+    "spacy_mean_of_is_liwc_00005_We_from_liwc",
+    "spacy_mean_of_is_liwc_00006_You_from_liwc",
+    "spacy_mean_of_is_liwc_00007_SheHe_from_liwc",
+    "spacy_mean_of_is_liwc_00008_They_from_liwc",
+    "spacy_mean_of_is_liwc_00009_Ipron_from_liwc",
+    "spacy_mean_of_is_liwc_00010_Article_from_liwc",
+    "spacy_mean_of_is_liwc_00011_Prep_from_liwc",
+    "spacy_mean_of_is_liwc_00012_Auxverb_from_liwc",
+    "spacy_mean_of_is_liwc_00013_Adverb_from_liwc",
+    "spacy_mean_of_is_liwc_00014_Conj_from_liwc",
+    "spacy_mean_of_is_liwc_00015_Negate_from_liwc",
+    "spacy_mean_of_is_liwc_00020_Verb_from_liwc",
+    "spacy_mean_of_is_liwc_00021_Adj_from_liwc",
+    "spacy_mean_of_is_liwc_00022_Compare_from_liwc",
+    "spacy_mean_of_is_liwc_00023_Interrog_from_liwc",
+    "spacy_mean_of_is_liwc_00024_Number_from_liwc",
+    "spacy_mean_of_is_liwc_00025_Quant_from_liwc",
+    "spacy_mean_of_is_liwc_00030_Affect_from_liwc",
+    "spacy_mean_of_is_liwc_00031_Posemo_from_liwc",
+    "spacy_mean_of_is_liwc_00032_Negemo_from_liwc",
+    "spacy_mean_of_is_liwc_00033_Anx_from_liwc",
+    "spacy_mean_of_is_liwc_00034_Anger_from_liwc",
+    "spacy_mean_of_is_liwc_00035_Sad_from_liwc",
+    "spacy_mean_of_is_liwc_00040_Social_from_liwc",
+    "spacy_mean_of_is_liwc_00041_Family_from_liwc",
+    "spacy_mean_of_is_liwc_00042_Friend_from_liwc",
+    "spacy_mean_of_is_liwc_00043_Female_from_liwc",
+    "spacy_mean_of_is_liwc_00044_Male_from_liwc",
+    "spacy_mean_of_is_liwc_00050_CogProc_from_liwc",
+    "spacy_mean_of_is_liwc_00051_Insight_from_liwc",
+    "spacy_mean_of_is_liwc_00052_Cause_from_liwc",
+    "spacy_mean_of_is_liwc_00053_Discrep_from_liwc",
+    "spacy_mean_of_is_liwc_00054_Tentat_from_liwc",
+    "spacy_mean_of_is_liwc_00055_Certain_from_liwc",
+    "spacy_mean_of_is_liwc_00056_Differ_from_liwc",
+    "spacy_mean_of_is_liwc_00060_Percept_from_liwc",
+    "spacy_mean_of_is_liwc_00061_See_from_liwc",
+    "spacy_mean_of_is_liwc_00062_Hear_from_liwc",
+    "spacy_mean_of_is_liwc_00063_Feel_from_liwc",
+    "spacy_mean_of_is_liwc_00070_Bio_from_liwc",
+    "spacy_mean_of_is_liwc_00071_Body_from_liwc",
+    "spacy_mean_of_is_liwc_00072_Health_from_liwc",
+    "spacy_mean_of_is_liwc_00073_Sexual_from_liwc",
+    "spacy_mean_of_is_liwc_00074_Ingest_from_liwc",
+    "spacy_mean_of_is_liwc_00080_Drives_from_liwc",
+    "spacy_mean_of_is_liwc_00081_Affiliation_from_liwc",
+    "spacy_mean_of_is_liwc_00082_Achieve_from_liwc",
+    "spacy_mean_of_is_liwc_00083_Power_from_liwc",
+    "spacy_mean_of_is_liwc_00084_Reward_from_liwc",
+    "spacy_mean_of_is_liwc_00085_Risk_from_liwc",
+    "spacy_mean_of_is_liwc_00090_FocusPast_from_liwc",
+    "spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc",
+    "spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc",
+    "spacy_mean_of_is_liwc_00100_Relativ_from_liwc",
+    "spacy_mean_of_is_liwc_00101_Motion_from_liwc",
+    "spacy_mean_of_is_liwc_00102_Space_from_liwc",
+    "spacy_mean_of_is_liwc_00103_Time_from_liwc",
+    "spacy_mean_of_is_liwc_00110_Work_from_liwc",
+    "spacy_mean_of_is_liwc_00111_Leisure_from_liwc",
+    "spacy_mean_of_is_liwc_00112_Home_from_liwc",
+    "spacy_mean_of_is_liwc_00113_Money_from_liwc",
+    "spacy_mean_of_is_liwc_00114_Relig_from_liwc",
+    "spacy_mean_of_is_liwc_00115_Death_from_liwc",
+    "spacy_mean_of_is_liwc_00120_Informal_from_liwc",
+    "spacy_mean_of_is_liwc_00121_Swear_from_liwc",
+    "spacy_mean_of_is_liwc_00122_Netspeak_from_liwc",
+    "spacy_mean_of_is_liwc_00123_Assent_from_liwc",
+    "spacy_mean_of_is_liwc_00124_Nonflu_from_liwc",
+    "spacy_mean_of_is_liwc_00125_Filler_from_liwc",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+#+end_example
+
+** Rename
+#+begin_src jupyter-python :async yes
+cols4 = {
+    "text": "text",
+    "spacy_WORD_count": "WC",
+    "spacy_mean_of_is_big2a_agen_from_big2": "PietA",
+    "spacy_mean_of_is_big2b_agen_from_big2": "PietB",
+    "spacy_mean_of_is_big2c_agen_from_big2": "PietC",
+    "spacy_mean_of_is_nico_full_agency_posit_from_nico": "NicoPos",
+    "spacy_mean_of_is_nico_full_agency_negat_from_nico": "NicoNeg",
+    "spacy_mean_of_is_nico_full_ability_posit_from_nico": "NicoAbilityPos",
+    "spacy_mean_of_is_nico_full_ability_negat_from_nico": "NicoAbilityNeg",
+    "spacy_mean_of_is_nico_full_status_posit_from_nico": "NicoStatusPos",
+    "spacy_mean_of_is_nico_full_status_negat_from_nico": "NicoStatusNeg",
+    "spacy_mean_of_is_liwc_00001_Function_from_liwc":     "Function",
+    "spacy_mean_of_is_liwc_00002_Pronoun_from_liwc":      "Pronoun",
+    "spacy_mean_of_is_liwc_00003_Ppron_from_liwc":        "Ppron",
+    "spacy_mean_of_is_liwc_00004_I_from_liwc":            "I",
+    "spacy_mean_of_is_liwc_00005_We_from_liwc":           "We",
+    "spacy_mean_of_is_liwc_00006_You_from_liwc":          "You",
+    "spacy_mean_of_is_liwc_00007_SheHe_from_liwc":        "SheHe",
+    "spacy_mean_of_is_liwc_00008_They_from_liwc":         "They",
+    "spacy_mean_of_is_liwc_00009_Ipron_from_liwc":        "Ipron",
+    "spacy_mean_of_is_liwc_00010_Article_from_liwc":      "Article",
+    "spacy_mean_of_is_liwc_00011_Prep_from_liwc":         "Prep",
+    "spacy_mean_of_is_liwc_00012_Auxverb_from_liwc":      "AuxVerb",
+    "spacy_mean_of_is_liwc_00013_Adverb_from_liwc":       "Adverb",
+    "spacy_mean_of_is_liwc_00014_Conj_from_liwc":         "Conj",
+    "spacy_mean_of_is_liwc_00015_Negate_from_liwc":       "Negate",
+    "spacy_mean_of_is_liwc_00020_Verb_from_liwc":         "Verb",
+    "spacy_mean_of_is_liwc_00021_Adj_from_liwc":          "Adjective",
+    "spacy_mean_of_is_liwc_00022_Compare_from_liwc":      "Compare",
+    "spacy_mean_of_is_liwc_00023_Interrog_from_liwc":     "Interrog",
+    "spacy_mean_of_is_liwc_00024_Number_from_liwc":       "Number",
+    "spacy_mean_of_is_liwc_00025_Quant_from_liwc":        "Quant",
+    "spacy_mean_of_is_liwc_00030_Affect_from_liwc":       "Affect",
+    "spacy_mean_of_is_liwc_00031_Posemo_from_liwc":       "Posemo",
+    "spacy_mean_of_is_liwc_00032_Negemo_from_liwc":       "Negemo",
+    "spacy_mean_of_is_liwc_00033_Anx_from_liwc":          "Anxiety",
+    "spacy_mean_of_is_liwc_00034_Anger_from_liwc":        "Anger",
+    "spacy_mean_of_is_liwc_00035_Sad_from_liwc":          "Sad",
+    "spacy_mean_of_is_liwc_00040_Social_from_liwc":       "Social",
+    "spacy_mean_of_is_liwc_00041_Family_from_liwc":       "Family",
+    "spacy_mean_of_is_liwc_00042_Friend_from_liwc":       "Friend",
+    "spacy_mean_of_is_liwc_00043_Female_from_liwc":       "Female",
+    "spacy_mean_of_is_liwc_00044_Male_from_liwc":         "Male",
+    "spacy_mean_of_is_liwc_00050_CogProc_from_liwc":      "CogProc",
+    "spacy_mean_of_is_liwc_00051_Insight_from_liwc":      "Insight",
+    "spacy_mean_of_is_liwc_00052_Cause_from_liwc":        "Cause",
+    "spacy_mean_of_is_liwc_00053_Discrep_from_liwc":      "Discrep",
+    "spacy_mean_of_is_liwc_00054_Tentat_from_liwc":       "Tentat",
+    "spacy_mean_of_is_liwc_00055_Certain_from_liwc":      "Certain",
+    "spacy_mean_of_is_liwc_00056_Differ_from_liwc":       "Differ",
+    "spacy_mean_of_is_liwc_00060_Percept_from_liwc":      "Percept",
+    "spacy_mean_of_is_liwc_00061_See_from_liwc":          "See",
+    "spacy_mean_of_is_liwc_00062_Hear_from_liwc":         "Hear",
+    "spacy_mean_of_is_liwc_00063_Feel_from_liwc":         "Feel",
+    "spacy_mean_of_is_liwc_00070_Bio_from_liwc":          "Bio",
+    "spacy_mean_of_is_liwc_00071_Body_from_liwc":         "Body",
+    "spacy_mean_of_is_liwc_00072_Health_from_liwc":       "Health",
+    "spacy_mean_of_is_liwc_00073_Sexual_from_liwc":       "Sexual",
+    "spacy_mean_of_is_liwc_00074_Ingest_from_liwc":       "Ingest",
+    "spacy_mean_of_is_liwc_00080_Drives_from_liwc":       "Drives",
+    "spacy_mean_of_is_liwc_00081_Affiliation_from_liwc":  "Affiliation",
+    "spacy_mean_of_is_liwc_00082_Achieve_from_liwc":      "Achieve",
+    "spacy_mean_of_is_liwc_00083_Power_from_liwc":        "Power",
+    "spacy_mean_of_is_liwc_00084_Reward_from_liwc":       "Reward",
+    "spacy_mean_of_is_liwc_00085_Risk_from_liwc":         "Risk",
+    "spacy_mean_of_is_liwc_00090_FocusPast_from_liwc":    "FocusPast",
+    "spacy_mean_of_is_liwc_00091_FocusPresent_from_liwc": "FocusPresent",
+    "spacy_mean_of_is_liwc_00092_FocusFuture_from_liwc":  "FocusFuture",
+    "spacy_mean_of_is_liwc_00100_Relativ_from_liwc":      "Relativity",
+    "spacy_mean_of_is_liwc_00101_Motion_from_liwc":       "Motion",
+    "spacy_mean_of_is_liwc_00102_Space_from_liwc":        "Space",
+    "spacy_mean_of_is_liwc_00103_Time_from_liwc":         "Time",
+    "spacy_mean_of_is_liwc_00110_Work_from_liwc":         "Work",
+    "spacy_mean_of_is_liwc_00111_Leisure_from_liwc":      "Leisure",
+    "spacy_mean_of_is_liwc_00112_Home_from_liwc":         "Home",
+    "spacy_mean_of_is_liwc_00113_Money_from_liwc":        "Money",
+    "spacy_mean_of_is_liwc_00114_Relig_from_liwc":        "Religion",
+    "spacy_mean_of_is_liwc_00115_Death_from_liwc":        "Death",
+    "spacy_mean_of_is_liwc_00120_Informal_from_liwc":     "Informal",
+    "spacy_mean_of_is_liwc_00121_Swear_from_liwc":        "Swear",
+    "spacy_mean_of_is_liwc_00122_Netspeak_from_liwc":     "Netspeak",
+    "spacy_mean_of_is_liwc_00123_Assent_from_liwc":       "Assent",
+    "spacy_mean_of_is_liwc_00124_Nonflu_from_liwc":       "Nonflu",
+    "spacy_mean_of_is_liwc_00125_Filler_from_liwc":       "Filler",
+    "BAPos": "BAPos",
+    "BANeg": "BANeg",
+    "BATot": "BATot",
+    "BAAbs": "BAAbs",
+}
+df4 = df2[cols4.keys()]
+df4.rename(columns=cols4, inplace=True)
+df4.insert(7, "NicoCom", df4.NicoPos-df4.NicoNeg)
+log0.info(f"{df4.shape = }")
+disp_df(df4.sample(n=8).sort_index(), width=7777)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df4.shape = (7850, 89)
+#+begin_example
+                                             text    WC     PietA     PietB     PietC   NicoPos   NicoNeg   NicoCom  NicoAbilityPos  NicoAbilityNeg  NicoStatusPos  NicoStatusNeg  Function   Pronoun     Ppron         I        We       You     SheHe      They     Ipron   Article      Prep   AuxVerb    Adverb      Conj    Negate      Verb  Adjective   Compare  Interrog    Number     Quant    Affect    Posemo    Negemo   Anxiety     Anger       Sad    Social    Family    Friend    Female      Male   CogProc   Insight     Cause   Discrep    Tentat   Certain    Differ   Percept       See      Hear      Feel       Bio      Body    Health    Sexual    Ingest    Drives  Affiliation   Achieve     Power    Reward      Risk  FocusPast  FocusPresent  FocusFuture  Relativity    Motion     Space      Time      Work   Leisure      Home     Money  Religion     Death  Informal     Swear  Netspeak    Assent    Nonflu    Filler     BAPos     BANeg     BATot     BAAbs
+130   You're sitting in your home reading a go...   188  0.111702  0.000000  0.021277  0.005319  0.010638 -0.005319        0.026596        0.000000       0.005319       0.000000  0.569149  0.175532  0.138298  0.005319  0.000000  0.090426  0.000000  0.042553  0.037234  0.074468  0.148936  0.069149  0.031915  0.053191  0.026596  0.148936   0.037234  0.021277  0.010638  0.000000  0.042553  0.042553  0.015957  0.026596  0.000000  0.021277  0.000000  0.207447  0.005319  0.015957  0.000000  0.010638  0.122340  0.010638  0.010638  0.005319  0.063830  0.015957  0.031915  0.021277  0.005319  0.010638  0.005319  0.005319  0.005319  0.000000  0.000000  0.000000  0.069149     0.015957  0.010638  0.026596  0.010638  0.015957   0.021277      0.132979     0.021277    0.132979  0.015957  0.090426  0.026596  0.021277  0.015957  0.031915  0.015957  0.000000  0.000000  0.021277  0.005319  0.005319  0.005319  0.010638  0.005319  0.073792  0.041361  0.032431  0.115153
+484   Seems like a lot of trouble to go to. It...   138  0.057971  0.007246  0.043478  0.028986  0.000000  0.028986        0.028986        0.000000       0.021739       0.014493  0.601449  0.123188  0.086957  0.028986  0.007246  0.014493  0.000000  0.036232  0.036232  0.079710  0.144928  0.108696  0.086957  0.057971  0.021739  0.195652   0.065217  0.057971  0.000000  0.000000  0.028986  0.028986  0.021739  0.007246  0.000000  0.000000  0.000000  0.086957  0.000000  0.000000  0.000000  0.000000  0.224638  0.036232  0.050725  0.021739  0.086957  0.007246  0.036232  0.021739  0.014493  0.007246  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.057971     0.021739  0.014493  0.014493  0.014493  0.007246   0.021739      0.152174     0.028986    0.152174  0.028986  0.050725  0.072464  0.014493  0.000000  0.000000  0.036232  0.000000  0.000000  0.021739  0.000000  0.000000  0.007246  0.014493  0.000000  0.091514  0.084098  0.007416  0.175611
+665   Wow! You got me thinking now! This is an...   438  0.034247  0.027397  0.031963  0.077626  0.006849  0.070776        0.036530        0.002283       0.045662       0.013699  0.543379  0.125571  0.061644  0.029680  0.025114  0.002283  0.000000  0.004566  0.063927  0.066210  0.136986  0.100457  0.059361  0.052511  0.025114  0.162100   0.047945  0.022831  0.015982  0.006849  0.018265  0.050228  0.025114  0.020548  0.006849  0.004566  0.000000  0.109589  0.000000  0.000000  0.000000  0.000000  0.166667  0.041096  0.041096  0.022831  0.036530  0.018265  0.029680  0.015982  0.006849  0.009132  0.000000  0.004566  0.000000  0.004566  0.000000  0.000000  0.107306     0.041096  0.011416  0.047945  0.006849  0.002283   0.025114      0.162100     0.004566    0.162100  0.018265  0.077626  0.066210  0.022831  0.000000  0.000000  0.002283  0.002283  0.000000  0.004566  0.000000  0.000000  0.004566  0.000000  0.000000  0.146567  0.010133  0.136434  0.156699
+2392  I guess I'm delving into a religious lan...   129  0.093023  0.015504  0.085271  0.015504  0.000000  0.015504        0.077519        0.000000       0.015504       0.007752  0.612403  0.170543  0.077519  0.046512  0.023256  0.007752  0.000000  0.000000  0.093023  0.046512  0.124031  0.139535  0.023256  0.116279  0.031008  0.201550   0.031008  0.023256  0.054264  0.000000  0.000000  0.031008  0.007752  0.015504  0.000000  0.000000  0.000000  0.069767  0.000000  0.000000  0.000000  0.000000  0.217054  0.031008  0.054264  0.023256  0.069767  0.015504  0.077519  0.007752  0.007752  0.000000  0.000000  0.015504  0.000000  0.000000  0.000000  0.015504  0.038760     0.023256  0.007752  0.015504  0.000000  0.000000   0.007752      0.178295     0.023256    0.131783  0.023256  0.085271  0.023256  0.046512  0.000000  0.000000  0.015504  0.054264  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.118994  0.044622  0.074372  0.163616
+4514  The last time we discussed homosexuality...   332  0.051205  0.012048  0.045181  0.012048  0.000000  0.012048        0.063253        0.003012       0.012048       0.006024  0.557229  0.150602  0.078313  0.042169  0.009036  0.006024  0.015060  0.006024  0.072289  0.057229  0.117470  0.123494  0.045181  0.060241  0.039157  0.177711   0.042169  0.033133  0.033133  0.015060  0.036145  0.030120  0.009036  0.021084  0.000000  0.003012  0.000000  0.132530  0.030120  0.000000  0.012048  0.021084  0.225904  0.060241  0.039157  0.009036  0.066265  0.009036  0.069277  0.009036  0.003012  0.006024  0.000000  0.033133  0.006024  0.000000  0.024096  0.003012  0.063253     0.036145  0.006024  0.012048  0.006024  0.006024   0.018072      0.159639     0.009036    0.078313  0.009036  0.042169  0.027108  0.009036  0.003012  0.000000  0.000000  0.039157  0.003012  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.067064  0.037638  0.029426  0.104703
+6410  THE WHITE HOUSE Office of the Press Secr...  3410  0.073900  0.016129  0.059824  0.033724  0.000000  0.033724        0.063343        0.000587       0.016129       0.013196  0.572434  0.147801  0.073900  0.021114  0.022581  0.014076  0.000000  0.017302  0.073900  0.080938  0.149560  0.092082  0.039003  0.071554  0.011730  0.158358   0.049853  0.021994  0.021408  0.009384  0.038416  0.046334  0.039296  0.006452  0.000587  0.000587  0.001466  0.113490  0.000587  0.002053  0.000000  0.000000  0.121994  0.015836  0.019648  0.019355  0.024927  0.022287  0.037243  0.016422  0.003812  0.007918  0.002053  0.006452  0.001173  0.004106  0.000293  0.000587  0.114076     0.032551  0.046041  0.028446  0.018182  0.004106   0.023754      0.160411     0.019648    0.135484  0.014956  0.068328  0.052493  0.089150  0.003519  0.002639  0.012903  0.000293  0.000000  0.002933  0.000000  0.000000  0.000880  0.002053  0.000000  0.222839  0.021197  0.201642  0.244037
+6597  Of course B.M. is not incorrect. He is d...    68  0.058824  0.014706  0.029412  0.014706  0.000000  0.014706        0.014706        0.000000       0.000000       0.029412  0.529412  0.161765  0.132353  0.000000  0.000000  0.029412  0.058824  0.044118  0.029412  0.044118  0.029412  0.132353  0.073529  0.117647  0.044118  0.191176   0.044118  0.029412  0.044118  0.014706  0.014706  0.117647  0.014706  0.102941  0.000000  0.058824  0.014706  0.176471  0.000000  0.000000  0.000000  0.058824  0.205882  0.000000  0.044118  0.014706  0.044118  0.058824  0.044118  0.029412  0.000000  0.029412  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.073529     0.000000  0.000000  0.014706  0.029412  0.029412   0.014706      0.191176     0.014706    0.117647  0.000000  0.000000  0.117647  0.014706  0.000000  0.000000  0.000000  0.058824  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.185681  0.079153  0.106527  0.264834
+6887  Hmmm. The last time I got stung by a bee...   237  0.046414  0.012658  0.042194  0.016878  0.004219  0.012658        0.033755        0.000000       0.008439       0.004219  0.586498  0.177215  0.084388  0.059072  0.004219  0.004219  0.004219  0.012658  0.092827  0.050633  0.101266  0.122363  0.050633  0.067511  0.033755  0.198312   0.046414  0.033755  0.004219  0.004219  0.025316  0.021097  0.008439  0.012658  0.004219  0.000000  0.000000  0.054852  0.004219  0.000000  0.000000  0.008439  0.223629  0.012658  0.050633  0.025316  0.046414  0.021097  0.080169  0.029536  0.016878  0.004219  0.004219  0.059072  0.008439  0.050633  0.000000  0.016878  0.059072     0.012658  0.012658  0.008439  0.021097  0.008439   0.054852      0.198312     0.004219    0.113924  0.016878  0.012658  0.084388  0.016878  0.000000  0.000000  0.000000  0.000000  0.000000  0.008439  0.000000  0.008439  0.000000  0.004219  0.000000  0.059333  0.028535  0.030797  0.087868
+#+end_example
+:END:
+
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df4.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "text",
+    "WC",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "NicoAbilityPos",
+    "NicoAbilityNeg",
+    "NicoStatusPos",
+    "NicoStatusNeg",
+    "Function",
+    "Pronoun",
+    "Ppron",
+    "I",
+    "We",
+    "You",
+    "SheHe",
+    "They",
+    "Ipron",
+    "Article",
+    "Prep",
+    "AuxVerb",
+    "Adverb",
+    "Conj",
+    "Negate",
+    "Verb",
+    "Adjective",
+    "Compare",
+    "Interrog",
+    "Number",
+    "Quant",
+    "Affect",
+    "Posemo",
+    "Negemo",
+    "Anxiety",
+    "Anger",
+    "Sad",
+    "Social",
+    "Family",
+    "Friend",
+    "Female",
+    "Male",
+    "CogProc",
+    "Insight",
+    "Cause",
+    "Discrep",
+    "Tentat",
+    "Certain",
+    "Differ",
+    "Percept",
+    "See",
+    "Hear",
+    "Feel",
+    "Bio",
+    "Body",
+    "Health",
+    "Sexual",
+    "Ingest",
+    "Drives",
+    "Affiliation",
+    "Achieve",
+    "Power",
+    "Reward",
+    "Risk",
+    "FocusPast",
+    "FocusPresent",
+    "FocusFuture",
+    "Relativity",
+    "Motion",
+    "Space",
+    "Time",
+    "Work",
+    "Leisure",
+    "Home",
+    "Money",
+    "Religion",
+    "Death",
+    "Informal",
+    "Swear",
+    "Netspeak",
+    "Assent",
+    "Nonflu",
+    "Filler",
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+#+end_example
+
+** Correlation cols
+#+begin_src jupyter-python :async yes
+ColsV = [
+    # "text",
+    # "WC",
+    "PietA",
+    "PietB",
+    "PietC",
+    "NicoPos",
+    "NicoNeg",
+    "NicoCom",
+    "NicoAbilityPos",
+    "NicoAbilityNeg",
+    "NicoStatusPos",
+    "NicoStatusNeg",
+
+    "Function",
+    "Pronoun",
+    "Ppron",
+
+    "I",
+    "We",
+    "You",
+    "SheHe",
+    "They",
+    "Ipron",
+    "Article",
+    "Prep",
+    "AuxVerb",
+    "Adverb",
+    "Conj",
+    "Negate",
+    "Verb",
+
+    "Adjective",
+    "Compare",
+    "Interrog",
+    "Number",
+    "Quant",
+    "Affect",
+    "Posemo",
+    "Negemo",
+    "Anxiety",
+    "Anger",
+    "Sad",
+    "Social",
+    "Family",
+    "Friend",
+    "Female",
+    "Male",
+    "CogProc",
+    "Insight",
+    "Cause",
+    "Discrep",
+    "Tentat",
+    "Certain",
+    "Differ",
+    "Percept",
+    "See",
+    "Hear",
+    "Feel",
+    "Bio",
+    "Body",
+    "Health",
+    "Sexual",
+    "Ingest",
+    "Drives",
+    "Affiliation",
+    "Achieve",
+    "Power",
+    "Reward",
+    "Risk",
+    "FocusPast",
+    "FocusPresent",
+    "FocusFuture",
+    "Relativity",
+    "Motion",
+    "Space",
+    "Time",
+    "Work",
+    "Leisure",
+    "Home",
+    "Money",
+    "Religion",
+    "Death",
+    "Informal",
+    "Swear",
+    "Netspeak",
+    "Assent",
+    "Nonflu",
+    "Filler",
+]
+ColsH = [
+    "BAPos",
+    "BANeg",
+    "BATot",
+    "BAAbs",
+]
+df4_corr0 = df4[list(set(ColsV+ColsH))].corr().loc[ColsV, ColsH]
+
+log0.info(f"{df4_corr0.shape = }")
+disp_df(df4_corr0.sample(n=8).sort_index(), width=333)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df4_corr0.shape = (83, 4)
+#+begin_example
+              BAPos     BANeg     BATot     BAAbs
+Certain    0.022818 -0.008785  0.020627  0.016808
+Feel      -0.030953  0.019603 -0.031771 -0.017472
+FocusPast -0.031043  0.038227 -0.041022 -0.004653
+Interrog   0.004220 -0.015138  0.010480 -0.006258
+Male       0.018886  0.055228 -0.013756  0.057234
+Religion   0.031891 -0.056540  0.050661 -0.007191
+Space      0.029673 -0.034064  0.037990  0.006163
+They      -0.007828  0.069658 -0.039949  0.040430
+#+end_example
+:END:
+** Figure
+#+begin_src jupyter-python :async yes
+corr_colors0=[
+    [1.0000000000000000, "rgb(165,0,38)"],
+    [0.8888888888888888, "rgb(215,48,39)"],
+    [0.7777777777777778, "rgb(244,109,67)"],
+    [0.6666666666666666, "rgb(253,174,97)"],
+    [0.5555555555555556, "rgb(254,224,144)"],
+    [0.4444444444444444, "rgb(224,243,248)"],
+    [0.3333333333333333, "rgb(171,217,233)"],
+    [0.2222222222222222, "rgb(116,173,209)"],
+    [0.1111111111111111, "rgb(69,117,180)"],
+    [0.0000000000000000, "rgb(49,54,149)"],
+]
+
+df4_text0 = df4_corr0.copy()
+df4_text0 = df4_text0.round(2)
+for col0 in df4_text0.columns:
+    df4_text0[col0] = df4_text0[col0].apply(lambda x: "{:.2f}".format(x))
+fig = go.Figure(data=go.Heatmap(
+        z=df4_corr0,
+        x=df4_corr0.columns,
+        y=df4_corr0.index,
+        colorscale=corr_colors0,
+        text=df4_text0.to_numpy(),
+        texttemplate="%{text}",
+        textfont={"size":14},
+        zmin=-1,
+        zmid=0,
+        zmax=1,
+))
+fig['layout']['yaxis']['autorange'] = "reversed"
+fig["layout"]["xaxis"].update(side="top")
+# fig.add_hline(y=19.5, opacity=1, line_width=2, line_dash='dash', line_color='Red')
+# fig.add_vline(x=19.5, opacity=1, line_width=2, line_dash='dash', line_color='Red')
+fig.write_html("df4_corr0.html")
+#+end_src
+
+#+RESULTS:
+
+** Split
+#+begin_src jupyter-python :async yes
+corr_cols = dict(
+    posit = [
+        "BAPos", "BATot", "BAAbs",
+        "PietA",
+        "PietB",
+        "PietC",
+        "NicoPos",
+        "NicoCom",
+        "NicoAbilityPos",
+        "NicoStatusPos",
+        # "NicoNeg",
+        # "NicoAbilityNeg",
+        # "NicoStatusNeg",
+        "Drives",
+        # "Affiliation",
+        "Achieve",
+        "Power",
+        "Work",
+        "Reward",
+        "FocusFuture",
+        # "Cause",
+        # "Certain",
+        # "Insight",
+],
+    zero = [
+        "BAPos", "BANeg", "BATot", "BAAbs",
+        "Adjective",
+        "Body",
+        "Death",
+        "Family",
+        "Friend",
+        "Feel",
+        "Filler",
+        # "Hear",
+        # "See",
+        "Home",
+        "Leisure",
+        "Number",
+        "Relativity",
+        "Religion",
+        "Sexual",
+        "Space",
+        "Time",
+    ],
+    negat =[
+        "BANeg",
+        # "PietA",
+        # "PietB",
+        # "PietC",
+        # "NicoPos",
+        # "NicoCom",
+        # "NicoAbilityPos",
+        # "NicoStatusPos",
+        "NicoNeg",
+        "NicoAbilityNeg",
+        "NicoStatusNeg",
+        "Sad",
+        "Negemo",
+        "Anxiety",
+        "Anger",
+    ],
+)
+
+#+end_src
+
+#+RESULTS:
+
+** Selected Corrs
+#+begin_src jupyter-python :async yes
+for key, val in corr_cols.items():
+    ColsA = ["BAPos", "BANeg", "BATot", "BAAbs"]
+    ColsH = [col for col in val if col in ColsA]
+    ColsV = [col for col in val if col not in ColsA]
+    log0.info(f"{ColsA = }")
+    log0.info(f"{ColsH = }")
+    log0.info(f"{ColsV = }")
+    df4_corr0 = df4[list(set(ColsA+ColsV+ColsH))].corr().loc[ColsV, ColsH]
+
+    df4_text0 = df4_corr0.copy()
+    df4_text0 = df4_text0.round(2)
+    for col0 in df4_text0.columns:
+        df4_text0[col0] = df4_text0[col0].apply(lambda x: "{:.2f}".format(x))
+    fig = go.Figure(data=go.Heatmap(
+            z=df4_corr0,
+            x=df4_corr0.columns,
+            y=df4_corr0.index,
+            colorscale=corr_colors0,
+            text=df4_text0.to_numpy(),
+            texttemplate="%{text}",
+            textfont={"size":14},
+            zmin=-1,
+            zmid=0,
+            zmax=1,
+    ))
+    fig['layout']['yaxis']['autorange'] = "reversed"
+    fig["layout"]["xaxis"].update(side="top")
+    # fig.add_hline(y=19.5, opacity=1, line_width=2, line_dash='dash', line_color='Red')
+    # fig.add_vline(x=19.5, opacity=1, line_width=2, line_dash='dash', line_color='Red')
+    fig.write_html(f"df4_corr0_{key}.html")
+    ofn0 = f"../../data/v0004_20newsgroups/data_d1001_20newsgroups_corr_{key}.csv"
+    df4[list(ColsH+ColsV)].to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: ColsA = ['BAPos', 'BANeg', 'BATot', 'BAAbs']
+I: ColsH = ['BAPos', 'BATot', 'BAAbs']
+I: ColsV = ['PietA', 'PietB', 'PietC', 'NicoPos', 'NicoCom', 'NicoAbilityPos', 'NicoStatusPos', 'Drives', 'Achieve', 'Power', 'Work', 'Reward', 'FocusFuture']
+I: ColsA = ['BAPos', 'BANeg', 'BATot', 'BAAbs']
+I: ColsH = ['BAPos', 'BANeg', 'BATot', 'BAAbs']
+I: ColsV = ['Adjective', 'Body', 'Death', 'Family', 'Friend', 'Feel', 'Filler', 'Home', 'Leisure', 'Number', 'Relativity', 'Religion', 'Sexual', 'Space', 'Time']
+I: ColsA = ['BAPos', 'BANeg', 'BATot', 'BAAbs']
+I: ColsH = ['BANeg']
+I: ColsV = ['NicoNeg', 'NicoAbilityNeg', 'NicoStatusNeg', 'Sad', 'Negemo', 'Anxiety', 'Anger']
+#+end_example
+
+** Info
+- > 0.10 small,
+- > 0.20 medium
+- > 0.30 large
