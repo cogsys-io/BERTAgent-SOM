@@ -1,0 +1,452 @@
+#+title: S7101_compare_models
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+#+LATEX_CMD:   xelatex
+#+LATEX_CLASS: article
+
+#+LATEX_CLASS_OPTIONS: [a4paper,10pt,onecolumn,oneside,openright]
+
+#+JIKO-CONFIG: use-minted
+#+JIKO-CONFIG: use-biblatex-apa7
+#+JIKO-CONFIG: use-hyperref-setup
+#+JIKO-CONFIG: use-threeparttable
+
+#+LATEX_HEADER_EXTRA: \IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+#+LATEX_HEADER_EXTRA: \IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+
+#+OPTIONS: author:nil
+#+OPTIONS: email:nil
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: ^:{}
+
+* Boilerplate
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_devel-stage-07/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_devel-stage-07/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/d0088_trained_models/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+glob0 = dir0.glob("*/metadata.yaml")
+glob0 = sorted(list(glob0))
+log0.info(f"{len(glob0)}")
+
+data0 = []
+for item0 in glob0:
+    data0.append(srsly.read_yaml(item0))
+
+log0.info(f"{len(data0)}")
+
+df0 = pd.DataFrame.from_records(data0)
+
+drop_cols = [
+    "data_dir",
+    "goldstd",
+    "extn",
+    "status",
+    "testing",
+    "init_metrics",
+]
+df0.drop(columns=drop_cols, inplace=True, errors="ignore")
+df0["out_dir"] = df0.out_dir.apply(lambda x: x.split("/")[-1])
+
+log0.info(f"{df0.shape = }")
+disp_df(df0)
+#+end_src
+
+** Check dictionary in columns
+#+begin_src jupyter-python :async yes
+col0 = "train_metrics"
+col2 = "test_metrics"
+
+keys0 = df0[col0][0].keys()
+keys2 = df0[col2][0].keys()
+
+keys0 = [item for item in keys0]
+keys2 = ["_".join(item.split("_")[1:]) for item in keys2]
+
+
+print(keys0)
+print(keys2)
+print(srsly.json_dumps(df0[col0][0], indent=2))
+print(srsly.json_dumps(df0[col2][0], indent=2))
+#+end_src
+** Check Series
+#+begin_src jupyter-python :async yes
+log0.info(f"{df0.shape = }")
+
+col0 = "gold_metrics"
+disp_df(df0[col0].apply(pd.Series).add_prefix("GOLD_"))
+#+end_src
+
+** Check columns
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+** Data wrangle
+#+begin_src jupyter-python :async yes
+dict_cols = [
+    "train_metrics",
+    "eval_metrics",
+    "test_metrics",
+    "gold_metrics",
+]
+df2 = df0.copy()
+for col0 in dict_cols:
+    prefix = col0.split("_")[0] + "_"
+    log0.info(f"{prefix}")
+    se0 = df2[col0].apply(pd.Series).copy()
+    se0 = se0.add_prefix(prefix.upper())
+    df2 = pd.concat([df2, se0], axis=1).copy()
+    df2.columns = df2.columns.str.replace(prefix.upper()+"test_", prefix.upper())
+    df2.columns = df2.columns.str.replace(prefix.upper()+"eval_", prefix.upper())
+    df2.drop(columns=[col0], inplace=True, errors="ignore")
+
+df2 = df2.dropna(how="all", axis=1)
+
+df2 = df2.loc[:, ~df2.columns.str.endswith("_runtime")]
+df2 = df2.loc[:, ~df2.columns.str.endswith("_samples_per_second")]
+df2 = df2.loc[:, ~df2.columns.str.endswith("_steps_per_second")]
+
+df2.sort_values(by=["dataset", "out_dir"], inplace=True)
+
+log0.info(f"{df2.shape = }")
+disp_df(df2)
+#+end_src
+** New columns
+#+begin_src jupyter-python :async yes
+for col0 in df2.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "num_epochs",
+    "batch_size",
+    "random_state",
+    "seed",
+    "max_length",
+    "dataset",
+    "model_name",
+    "date",
+    "out_dir",
+    "full_len",
+    "train_len",
+    "eval_len",
+    "test_len",
+    "gold_len",
+    "finished",
+    "TRAIN_loss",
+    "TRAIN_rmse",
+    "TRAIN_mse",
+    "TRAIN_mae",
+    "TRAIN_r2",
+    "TRAIN_max_err",
+    "TRAIN_exp_var",
+    "TRAIN_epoch",
+    "EVAL_loss",
+    "EVAL_rmse",
+    "EVAL_mse",
+    "EVAL_mae",
+    "EVAL_r2",
+    "EVAL_max_err",
+    "EVAL_exp_var",
+    "EVAL_epoch",
+    "TEST_loss",
+    "TEST_rmse",
+    "TEST_mse",
+    "TEST_mae",
+    "TEST_r2",
+    "TEST_max_err",
+    "TEST_exp_var",
+    "GOLD_loss",
+    "GOLD_rmse",
+    "GOLD_mse",
+    "GOLD_mae",
+    "GOLD_r2",
+    "GOLD_max_err",
+    "GOLD_exp_var",
+#+end_example
+
+
+** DF4
+#+begin_src jupyter-python :async yes
+cols4 = [
+    "seed",
+    "dataset",
+    "model_name",
+    "date",
+    "num_epochs",
+    "batch_size",
+    "out_dir",
+    "random_state",
+    # "full_len",
+    # "train_len",
+    # "eval_len",
+    "test_len",
+    "gold_len",
+    # "finished",
+    # "TRAIN_epoch",
+    # "EVAL_epoch",
+    # "TRAIN_loss",
+    # "EVAL_loss",
+    "TEST_loss",
+    "GOLD_loss",
+    # "TRAIN_rmse",
+    # "EVAL_rmse",
+    "TEST_rmse",
+    "GOLD_rmse",
+    # "TRAIN_mse",
+    # "EVAL_mse",
+    "TEST_mse",
+    "GOLD_mse",
+    # "TRAIN_mae",
+    # "EVAL_mae",
+    "TEST_mae",
+    "GOLD_mae",
+    # "TRAIN_r2",
+    # "EVAL_r2",
+    "TEST_r2",
+    "GOLD_r2",
+    # "TRAIN_max_err",
+    # "EVAL_max_err",
+    "TEST_max_err",
+    "GOLD_max_err",
+    # "TRAIN_exp_var",
+    # "EVAL_exp_var",
+    "TEST_exp_var",
+    "GOLD_exp_var",
+]
+df4 = df2[cols4].copy()
+log0.info(f"{df4.shape = }")
+disp_df(df4)
+#+end_src
+
+** Check models for removal
+#+begin_src jupyter-python :async yes
+df_keep = df4[df4.batch_size==64]
+log0.info(f"{df_keep.shape = }")
+disp_df(df_keep.sort_values(by=["date"]))
+#+end_src
+
+** Check seed values
+#+begin_src jupyter-python :async yes
+disp_df(df4[df4.batch_size>=64].seed.value_counts())
+# disp_df(df4[df4.batch_size>=64].testing.value_counts())
+#+end_src
+** Filter
+#+begin_src jupyter-python :async yes
+cols8 = dict(
+    # finished="finished",
+    # out_dir="out_dir",
+    random_state="random_state",
+    seed="seed",
+    date="date",
+    model_name="Base model",
+    dataset="Fine-tuning dataset",
+    num_epochs="Number of epochs",
+    batch_size="Batch size",
+    # full_len="Full fine-tuning",
+    train_len="Traininig data",
+    eval_len="Evaluation data",
+    test_len="Test data",
+    gold_len="Gold standard",
+    # TRAIN_epoch="TRAIN_epoch",
+    # EVAL_epoch="EVAL_epoch",
+    # TRAIN_loss="TRAIN_loss",
+    # EVAL_loss="EVAL_loss",
+    # TEST_loss="TEST_loss",
+    # GOLD_loss="GOLD_loss",
+    TRAIN_rmse="RMSE train",
+    EVAL_rmse="RMSE eval",
+    TEST_rmse="RMSE test",
+    GOLD_rmse="RMSE gold",
+    # TRAIN_mse="TRAIN_mse",
+    # EVAL_mse="EVAL_mse",
+    # TEST_mse="TEST_mse",
+    # GOLD_mse="GOLD_mse",
+    # TRAIN_mae="TRAIN_mae",
+    # EVAL_mae="EVAL_mae",
+    # TEST_mae="TEST_mae",
+    # GOLD_mae="GOLD_mae",
+    # TRAIN_r2="TRAIN_r2",
+    # EVAL_r2="EVAL_r2",
+    # TEST_r2="TEST_r2",
+    # GOLD_r2="GOLD_r2",
+    # TRAIN_max_err="TRAIN_max_err",
+    # EVAL_max_err="EVAL_max_err",
+    # TEST_max_err="TEST_max_err",
+    # GOLD_max_err="GOLD_max_err",
+    # TRAIN_exp_var="TRAIN_exp_var",
+    # EVAL_exp_var="EVAL_exp_var",
+    # TEST_exp_var="TEST_exp_var",
+    # GOLD_exp_var="GOLD_exp_var",
+)
+
+df8 = df2[cols8.keys()].copy()
+
+
+# filter by fine-tuning data
+datasets = ["ft0x", "ft1x", "ft2x", "ft3x", "ft4x"]
+datasets = ["ft0x", "ft1x", "ft2x", "ft3x"]
+df8 = df8[df8.dataset.isin(datasets)]
+
+
+# filter by batch size
+batch_sizes = [64]
+df8 = df8[df8.batch_size.isin(batch_sizes)]
+
+
+# sort rows
+by=["TEST_rmse"]
+by=[ "model_name", "dataset","date"]
+by=["GOLD_rmse"]
+ascending = True
+df8 = df8.sort_values(by=by, ascending=ascending)
+
+df8["dataset"] = df8.dataset.map({"ft0x": "FT0", "ft1x": "FT1", "ft2x": "FT2", "ft3x": "FT3", "ft4x": "FT4"})
+
+df8.rename(
+columns = cols8,
+    inplace=True,
+)
+
+df8.round(4).to_excel("s7101_compare_models.xlsx")
+
+log0.info(f"{df8.shape = }")
+disp_df(df8)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+random_state
+42    8
+Name: count, dtype: int64I: df8.shape = (8, 15)
+#+end_example
+#+begin_example
+    random_state  seed             date         Base model Fine-tuning dataset  Number of epochs  Batch size  Traininig data  Evaluation data  Test data  Gold standard  RMSE train  RMSE eval  RMSE test  RMSE gold
+47            42    42  20230523T145242       roberta-base                 FT3                12          64           47842            11961        300            300    0.043505   0.052042   0.317223   0.317223
+45            42    42  20230523T134342       roberta-base                 FT2                12          64           28640             7161        300            300    0.076130   0.153539   0.328255   0.328255
+46            42    42  20230523T140848  bert-base-uncased                 FT3                12          64           47842            11961        300            300    0.030205   0.041089   0.331124   0.331124
+43            42    42  20230523T125926       roberta-base                 FT1                12          64           22100             5525        300            300    0.074254   0.175054   0.331175   0.331175
+42            42    42  20230523T124016  bert-base-uncased                 FT1                12          64           22100             5525        300            300    0.053864   0.169940   0.346672   0.346672
+44            42    42  20230523T131837  bert-base-uncased                 FT2                12          64           28640             7161        300            300    0.051673   0.147735   0.347492   0.347492
+41            42    42  20230523T123140       roberta-base                 FT0                12          64           10249             2563        300            300    0.176717   0.217370   0.372018   0.372018
+40            42    42  20230523T122304  bert-base-uncased                 FT0                12          64           10249             2563        300            300    0.097756   0.216782   0.374942   0.374942
+#+end_example
+:END:

@@ -1,0 +1,1073 @@
+#+title: Training Data Merge
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+#+LATEX_CMD:   xelatex
+#+LATEX_CLASS: article
+
+#+LATEX_CLASS_OPTIONS: [a4paper,10pt,onecolumn,oneside,openright]
+
+#+JIKO-CONFIG: use-minted
+#+JIKO-CONFIG: use-biblatex-apa7
+#+JIKO-CONFIG: use-hyperref-setup
+#+JIKO-CONFIG: use-threeparttable
+
+#+LATEX_HEADER_EXTRA: \IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+#+LATEX_HEADER_EXTRA: \IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+
+#+OPTIONS: author:nil
+#+OPTIONS: email:nil
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: ^:{}
+
+
+* Boilerplate
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+* Process
+** Load synsets data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/d0007_synsets-selected/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"sysnsets-data-0002-wn-text-with-antonyms"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+df0.insert(0, "TYPE", "src0")
+df0["antonym_count_orig"] = df0.antonym_ids.apply(lambda x: len(x))
+df0["antonym_count_uniq"] = df0.antonym_ids.apply(lambda x: len(set(x)))
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/d0007_synsets-selected/sysnsets-data-0002-wn-text-with-antonyms.pkl...
+I: loading: ../../data/d0007_synsets-selected/sysnsets-data-0002-wn-text-with-antonyms.pkl... DONE
+I: df0.shape = (6914, 11)
+#+end_example
+#+begin_example
+      TYPE              id0                                       lemmas                                   definition                                     examples        antonym_ids                               antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq
+1247  src0  oewn-01048256-s                    [everyday, casual, daily]  appropriate for ordinary or routine occa...           [casual clothes, everyday clothes]                 []                                           []                                           []                                           []                   0                   0
+2627  src0  oewn-02402779-v  [elevate, advance, raise, upgrade, promo...  give a promotion to or assign to a highe...  [John was kicked upstairs when a replace...  [oewn-02404473-v]  [[bump, break, relegate, demote, kick do...  [assign to a lower position; reduce in r...  [[She was demoted because she always spe...                   1                   1
+4688  src0  oewn-02881464-n  [freighter, merchantman, merchant ship, ...                                 a cargo ship  [they did much of their overseas trade i...                 []                                           []                                           []                                           []                   0                   0
+5109  src0  oewn-00942956-n           [approach, attack, plan of attack]  ideas or actions intended to deal with a...  [his approach to every problem is to dra...                 []                                           []                                           []                                           []                   0                   0
+5983  src0  oewn-00825528-s                                   [honorary]  given as an honor without the normal duties                         [an honorary degree]                 []                                           []                                           []                                           []                   0                   0
+6425  src0  oewn-00972247-v  [vulgarize, vulgarise, popularize, popul...  cater to popular taste to make popular a...  [They popularized coffee in Washington S...                 []                                           []                                           []                                           []                   0                   0
+6617  src0  oewn-00205951-r                                 [accurately]                            with few mistakes                   [he works very accurately]  [oewn-00206071-r]                             [[inaccurately]]                    [in an inaccurate manner]  [[this student works rather inaccurately...                   1                   1
+6723  src0  oewn-14544431-n                            [depression, low]  an air mass of lower pressure; often bri...  [a low moved in over night bringing slee...                 []                                           []                                           []                                           []                   0                   0
+#+end_example
+:END:
+** prod: Check antonym counts ORIG
+#+begin_src jupyter-python :async yes
+df0.antonym_count_orig.value_counts()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+antonym_count_orig
+0    6056
+1     844
+2      14
+Name: count, dtype: int64
+#+end_example
+
+** prod: Check antonym counts UNIQ
+#+begin_src jupyter-python :async yes
+df0.antonym_count_uniq.value_counts()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+antonym_count_uniq
+0    6056
+1     844
+2      14
+Name: count, dtype: int64
+#+end_example
+
+** Columns DF0
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "TYPE",
+    "id0",
+    "lemmas",
+    "definition",
+    "examples",
+    "antonym_ids",
+    "antonym_lemmas",
+    "antonym_defs",
+    "antonym_examples",
+    "antonym_count_orig",
+    "antonym_count_uniq",
+#+end_example
+** prod: Explode antonyms
+#+begin_src jupyter-python :async yes
+explode_cols = [
+    "antonym_ids",
+    "antonym_lemmas",
+    "antonym_defs",
+    "antonym_examples",
+]
+df2 = df0.explode(column=explode_cols)
+df2.rename(columns={"antonym_ids": "antonym_id0"}, inplace=True)
+
+log0.info(f"{df0.shape = }")
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df0.shape = (6914, 11)
+I: df2.shape = (6928, 11)
+#+end_example
+#+begin_example
+      TYPE              id0                                       lemmas                                   definition                                     examples      antonym_id0 antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq
+132   src0  oewn-00844451-v                    [pick, blame, find fault]               harass with constant criticism   [Don't always pick on your little brother]              NaN            NaN                                          NaN                                          NaN                   0                   0
+676   src0  oewn-02565025-v                                       [undo]                cause the ruin or downfall of  [A single mistake undid the President an...              NaN            NaN                                          NaN                                          NaN                   0                   0
+2370  src0  oewn-02465750-s                                    [careful]                     full of cares or anxiety  [;Thou art careful and troubled about ma...              NaN            NaN                                          NaN                                          NaN                   0                   0
+2634  src0  oewn-00625102-n                        [trouble, difficulty]               an effort that is inconvenient  [I went to a lot of trouble, he won with...              NaN            NaN                                          NaN                                          NaN                   0                   0
+3719  src0  oewn-00757628-a                                   [diligent]  characterized by care and perseverance i...  [a diligent detective investigates all c...  oewn-00758394-a    [negligent]  characterized by neglect and undue lack ...  [negligent parents, negligent of detail,...                   1                   1
+4230  src0  oewn-00037570-a                                     [active]  tending to become more severe or wider i...                        [active tuberculosis]              NaN            NaN                                          NaN                                          NaN                   0                   0
+6368  src0  oewn-00543200-v                                       [come]  reach or enter a state, relation, condit...  [The water came to a boil, We came to un...              NaN            NaN                                          NaN                                          NaN                   0                   0
+6628  src0  oewn-07211342-n  [question, interrogation, interrogative ...  a sentence of inquiry that asks for a reply  [he asked a direct question, he had trou...              NaN            NaN                                          NaN                                          NaN                   0                   0
+#+end_example
+:END:
+** Collapse after explosion
+#+begin_src jupyter-python :async yes
+log0.info(f"{df0.shape = }")
+log0.info(f"{df2.shape = }")
+log0.info(f"{df2.id0.unique().shape[0] = }")
+df2 = df2.drop_duplicates(subset=["id0", "antonym_id0"], ignore_index=True)
+
+log0.info(f"{df2.shape = }")
+disp_df(df2.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df0.shape = (6914, 11)
+I: df2.shape = (6928, 11)
+I: df2.id0.unique().shape[0] = 6914
+I: df2.shape = (6928, 11)
+#+end_example
+#+begin_example
+      TYPE              id0                                      lemmas                                   definition                                     examples antonym_id0 antonym_lemmas antonym_defs antonym_examples  antonym_count_orig  antonym_count_uniq
+1205  src0  oewn-02711906-v      [vacillate, hover, vibrate, oscillate]  be undecided about something; waver betw...  [He oscillates between accepting the new...         NaN            NaN          NaN              NaN                   0                   0
+2370  src0  oewn-02474747-s        [true, reliable, dependable, honest]                  worthy of being depended on  [a dependable worker, an honest working ...         NaN            NaN          NaN              NaN                   0                   0
+2936  src0  oewn-13518338-n               [increment, increase, growth]  a process of becoming larger or longer o...  [the increase in unemployment, the growt...         NaN            NaN          NaN              NaN                   0                   0
+3371  src0  oewn-03389381-n                                      [form]                  a mold for setting concrete  [they built elaborate forms for pouring ...         NaN            NaN          NaN              NaN                   0                   0
+4686  src0  oewn-02245872-s  [aerodynamic, sleek, streamlined, flowing]  designed or arranged to offer the least ...                  [a streamlined convertible]         NaN            NaN          NaN              NaN                   0                   0
+5438  src0  oewn-02054955-v                                [make, work]                         proceed along a path  [work one's way through the crowd, make ...         NaN            NaN          NaN              NaN                   0                   0
+6030  src0  oewn-00294242-s    [drudging, toiling, laboring, labouring]             doing arduous or unpleasant work  [drudging peasants, the bent backs of la...         NaN            NaN          NaN              NaN                   0                   0
+6925  src0  oewn-01916886-v                                      [walk]                 traverse or cover by walking  [Walk the tightrope, Paul walked the str...         NaN            NaN          NaN              NaN                   0                   0
+#+end_example
+:END:
+** Check before explosion
+#+begin_src jupyter-python :async yes
+disp_df(df0[df0.id0=="oewn-00215173-r"])
+#+end_src
+
+#+RESULTS:
+#+begin_example
+      TYPE              id0                                  lemmas           definition                                     examples antonym_ids antonym_lemmas antonym_defs antonym_examples  antonym_count_orig  antonym_count_uniq
+1732  src0  oewn-00215173-r  [fruitfully, profitably, productively]  in a productive way  [they worked together productively for t...          []             []           []               []                   0                   0
+#+end_example
+
+** Check explosion
+#+begin_src jupyter-python :async yes
+log0.info(f"{df2[df2.antonym_count_orig>0].shape = }")
+log0.info(f"{df2.shape = }")
+disp_df(df2[df2.antonym_count_orig>0].head(n=22).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df2[df2.antonym_count_orig>0].shape = (872, 11)
+I: df2.shape = (6928, 11)
+#+end_example
+#+begin_example
+     TYPE              id0                                       lemmas                                   definition                                     examples      antonym_id0                               antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq
+7    src0  oewn-01525056-v                    [twine, wrap, roll, wind]                       arrange or coil around  [roll your hair around your finger, Twin...  oewn-01526442-v                   [wind off, unwind, unroll]           reverse the winding or twisting of                      [unwind a ball of yarn]                   1                   1
+17   src0  oewn-00117793-v                         [rest, stay, remain]     stay the same; remain in a certain state  [The dress remained wet after repeated a...  oewn-00109468-v                                     [change]  undergo a change; become different in es...  [She changed completely as she grew olde...                   1                   1
+34   src0  oewn-00088791-r                                [temporarily]     for a limited time only; not permanently  [he will work here temporarily, he was b...  oewn-00088404-r                      [for good, permanently]     for a long time without essential change                 [he is permanently disabled]                   1                   1
+41   src0  oewn-02639795-v                                    [exclude]                      lack or fail to include  [The cost for the trip excludes food and...  oewn-02639021-v                                    [include]            have as a part, be made up out of  [The list includes the names of many fam...                   1                   1
+47   src0  oewn-00752852-a                                       [easy]  posing no difficulty; requiring little e...  [an easy job, an easy problem, an easy v...  oewn-00748528-a                            [difficult, hard]  not easy; requiring great physical or me...  [a difficult task, nesting places on the...                   1                   1
+55   src0  oewn-00018622-a                               [unacceptable]                  not acceptable; not welcome  [a word unacceptable in polite society, ...  oewn-00017820-a                                 [acceptable]         worthy of acceptance or satisfactory  [acceptable levels of radiation, perform...                   1                   1
+56   src0  oewn-00153083-v                                   [increase]                          make bigger or more  [The boss finally increased her salary, ...  oewn-00442400-v                   [decrease, lessen, minify]                          make become smaller                     [He decreased his staff]                   1                   1
+60   src0  oewn-01244630-a                                    [running]             of advancing the ball by running  [the team's running plays worked better ...  oewn-01244800-a                              [pass, passing]         of advancing the ball by throwing it  [a team with a good passing attack, a pa...                   1                   1
+68   src0  oewn-00244122-r                                [consciously]                               with awareness  [she consciously played with the idea of...  oewn-00244269-r                              [unconsciously]                            without awareness  [she jumped up unconsciously when he ent...                   1                   1
+74   src0  oewn-00688760-a                                 [indecisive]            not definitely settling something                  [a long and indecisive war]  oewn-00687757-a                                   [decisive]  determining or having the power to deter...  [cast the decisive vote, two factors had...                   1                   1
+76   src0  oewn-00074467-r                             [back, backward]               in or to or toward a past time  [set the clocks back an hour, never look...  oewn-00075708-r                             [forward, ahead]           toward the future; forward in time  [I like to look ahead in imagination to ...                   1                   1
+94   src0  oewn-01101986-a                                     [funded]                         furnished with funds                       [well-funded research]  oewn-01102083-a                                   [unfunded]                     not furnished with funds                        [an unfunded project]                   1                   1
+106  src0  oewn-00905999-v  [discharge, clear, acquit, assoil, excul...     pronounce not guilty of criminal charges  [The suspect was cleared of the murder c...  oewn-00908320-v                                    [convict]                       find or declare guilty  [The man was convicted of fraud and sent...                   1                   1
+110  src0  oewn-01408930-a                        [biological, natural]  (of a parent or child) related by blood;...           [biological child, natural parent]  oewn-01409235-a                                   [adoptive]  of parents and children; related by adop...                           [adoptive parents]                   1                   1
+112  src0  oewn-00096162-r                                       [down]  away from a more central or a more north...  [was sent down to work at the regional o...  oewn-00097310-r                                         [up]  to a more central or a more northerly place  [was transferred up to headquarters, up ...                   1                   1
+130  src0  oewn-01084999-v                         [enter, participate]         become a participant; be involved in  [enter a race, enter an agreement, enter...  oewn-01085437-v  [quit, give up, drop by the wayside, dro...  give up in the face of defeat of lacking...  [In the second round, the challenger gav...                   1                   1
+139  src0  oewn-02211988-v                              [buy, purchase]  obtain by purchase; acquire by means of ...  [The family purchased a new car, The con...  oewn-02247246-v                                       [sell]  exchange or deliver for money or its equ...  [He sold his house in January, She sells...                   1                   1
+149  src0  oewn-00687584-v                                     [reject]        not accept something given or offered  [I reject the idea of starting a war, Th...  oewn-00688348-v                                     [accept]                     consider or hold as true  [I cannot accept the dogma of this churc...                   1                   1
+152  src0  oewn-02091950-a                                 [scientific]  conforming with the principles or method...                      [a scientific approach]  oewn-02092278-a                               [unscientific]  not consistent with the methods or princ...        [an unscientific lack of objectivity]                   1                   1
+155  src0  oewn-00227509-r                                        [big]                             on a grand scale                                  [think big]  oewn-00227588-r                                      [small]                             on a small scale                                [think small]                   1                   1
+157  src0  oewn-01933854-a                     [intellectual, cerebral]  involving intelligence rather than emoti...  [a cerebral approach to the problem, cer...  oewn-01933678-a                                  [emotional]  determined or actuated by emotion rather...               [it was an emotional judgment]                   1                   1
+160  src0  oewn-02337347-a                                [subordinate]  subject or submissive to authority or th...                      [a subordinate kingdom]  oewn-02338328-a                              [insubordinate]                  not submissive to authority  [a history of insubordinate behavior, in...                   1                   1
+#+end_example
+:END:
+** prod: Load Evaluation data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/d0008_synsets-evaluated/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"synsets-eval-004-summary-clean-all"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df9 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df9.shape = }")
+disp_df(df9.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/d0008_synsets-evaluated/synsets-eval-004-summary-clean-all.pkl...
+I: loading: ../../data/d0008_synsets-evaluated/synsets-eval-004-summary-clean-all.pkl... DONE
+I: df9.shape = (6914, 4)
+#+end_example
+#+begin_example
+                 OEWN  CNT      MEAN       STD
+567   oewn-00188186-n    8  1.750000  1.035098
+1761  oewn-00715729-n    7  0.571429  1.272418
+2009  oewn-00807941-s    8  0.875000  1.125992
+4589  oewn-02373016-a    8 -0.625000  1.767767
+5536  oewn-04939014-n    7  0.000000  0.000000
+5723  oewn-05691808-n    8 -1.125000  0.834523
+5980  oewn-06649049-n    8  0.125000  0.353553
+6860  oewn-14550556-n    9  0.666667  1.414214
+#+end_example
+:END:
+** Merge SOURCE synsets with evaluations
+#+begin_src jupyter-python :async yes
+df3 = pd.merge(
+    df2,
+    df9,
+    how="left",
+    left_on="id0",
+    right_on="OEWN",
+    sort=False,
+    suffixes=("_df2", "_df9"),
+    copy=True,
+    validate="m:1",
+).copy()
+
+df3.insert(2, "OEWN", df3.pop("OEWN"))
+df3.insert(3, "MEAN", df3.pop("MEAN"))
+df3.insert(4, "STD", df3.pop("STD"))
+df3.insert(5, "CNT", df3.pop("CNT"))
+
+assert df3["id0"].equals(df3["OEWN"])
+df3.drop(columns=["OEWN"], inplace=True)
+
+log0.info(f"{df3.shape = }")
+disp_df(df3.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df3.shape = (6928, 14)
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT                         lemmas                                   definition                                     examples      antonym_id0                 antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq
+800   src0  oewn-02288414-s  0.888889  0.927961    9             [whipping, snappy]                        smart and fashionable  [snappy conversation, some sharp and whi...              NaN                            NaN                                          NaN                                          NaN                   0                   0
+1895  src0  oewn-07438160-n  0.444444  1.013794    9                  [development]  a recent event that has some relevance f...  [recent developments in Iraq, what a rev...              NaN                            NaN                                          NaN                                          NaN                   0                   0
+2580  src0  oewn-02275064-a  0.000000  0.000000    9                         [some]  (quantifier) used with either mass nouns...  [have some milk, some roses were still b...  oewn-02277044-a                          [all]  (quantifier) used with either mass or co...  [we sat up all night, ate all the food, ...                   2                   2
+2629  src0  oewn-00005041-v  0.857143  1.214986    7  [inspire, inhale, breathe in]                                draw in (air)  [Inhale deeply, inhale the fresh mountai...  oewn-00004227-v  [expire, breathe out, exhale]                                    expel air            [Exhale when you lift the weight]                   1                   1
+3232  src0  oewn-00308592-s -2.125000  0.834523    8                       [unable]  (usually followed by `to') lacking neces...  [dyslexics are unable to learn to read a...              NaN                            NaN                                          NaN                                          NaN                   0                   0
+3914  src0  oewn-06811608-n  0.000000  0.000000    8                  [print, mark]       a visible indication made on a surface  [some previous reader had covered the pa...              NaN                            NaN                                          NaN                                          NaN                   0                   0
+5082  src0  oewn-04888818-n  1.375000  1.302470    8                   [discipline]              the trait of being well behaved  [he insisted on discipline among the tro...              NaN                            NaN                                          NaN                                          NaN                   0                   0
+6292  src0  oewn-01144162-n -0.250000  0.886405    8                    [allowance]                          the act of allowing  [He objected to the allowance of smoking...              NaN                            NaN                                          NaN                                          NaN                   0                   0
+#+end_example
+:END:
+
+** Merge ANTONYM synsets with evaluations
+#+begin_src jupyter-python :async yes
+df4 = pd.merge(
+    df3,
+    df9,
+    how="left",
+    left_on="antonym_id0",
+    right_on="OEWN",
+    sort=False,
+    suffixes=("", "_antonym"),
+    copy=True,
+    validate="m:1",
+).copy()
+
+# df4.insert(2, "OEWN", df4.pop("OEWN"))
+# df4.insert(3, "MEAN", df4.pop("MEAN"))
+# df4.insert(4, "MEAN", df4.pop("MEAN"))
+# df4.insert(5, "STD", df4.pop("STD"))
+# df4.insert(6, "CNT", df4.pop("CNT"))
+
+# assert df4["antonym_id0"].equals(df4["OEWN"])
+# df4.drop(columns=["OEWN"], inplace=True)
+
+log0.info(f"{df4.shape = }")
+disp_df(df4.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df4.shape = (6928, 18)
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT                            lemmas                                   definition                                     examples      antonym_id0 antonym_lemmas                antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq             OEWN  CNT_antonym  MEAN_antonym  STD_antonym
+1136  src0  oewn-04925387-n  1.600000  0.843274   10        [directness, straightness]             trueness of course toward a goal       [rivaling a hawk in directness of aim]              NaN            NaN                         NaN                                          NaN                   0                   0              NaN          NaN           NaN          NaN
+2095  src0  oewn-00723813-v  0.000000  0.000000    8                           [price]              ascertain or learn the price of  [Have you priced personal computers late...              NaN            NaN                         NaN                                          NaN                   0                   0              NaN          NaN           NaN          NaN
+3023  src0  oewn-15170131-n  0.000000  0.000000    6                        [age, eld]  a time of life (usually defined in years...  [she was now of school age, tall for his...              NaN            NaN                         NaN                                          NaN                   0                   0              NaN          NaN           NaN          NaN
+3341  src0  oewn-01379820-a -0.333333  1.000000    9                         [unknown]                                    not known  [an unknown amount, an unknown island, a...  oewn-01378100-a        [known]  apprehended with certainty  [a known quantity, the limits of the kno...                   1                   1  oewn-01378100-a          7.0           0.0          0.0
+3849  src0  oewn-00067913-r  1.333333  1.000000    9   [in the lead, out front, ahead]            leading or ahead in a competition  [the horse was three lengths ahead going...              NaN            NaN                         NaN                                          NaN                   0                   0              NaN          NaN           NaN          NaN
+4446  src0  oewn-02588127-v  1.000000  1.195229    8  [process, action, sue, litigate]  institute legal proceedings against; fil...  [He was warned that the district attorne...              NaN            NaN                         NaN                                          NaN                   0                   0              NaN          NaN           NaN          NaN
+4533  src0  oewn-02903285-a  0.000000  0.000000    9                          [rental]                       of or relating to rent           [rental agreement, rental charges]              NaN            NaN                         NaN                                          NaN                   0                   0              NaN          NaN           NaN          NaN
+4968  src0  oewn-00156320-r -0.428571  0.786796    7                   [uncomfortably]                       in physical discomfort  [she lay on the couch, her body uncomfor...  oewn-00156153-r  [comfortably]         in physical comfort  [she could have been lying comfortably i...                   1                   1              NaN          NaN           NaN          NaN
+#+end_example
+:END:
+** DF5
+#+begin_src jupyter-python :async yes
+df5 = df4[df4.antonym_count_uniq>0].copy()
+
+log0.info(f"{df5.shape = }")
+log0.info(f"{df5.MEAN_antonym.isna().sum() = } BAD COUNT")  # WARN: This count may contain duplicates
+log0.info(f"{(~df5.MEAN_antonym.isna()).sum() = } BAD COUNT")  # WARN: This count may contain duplicates
+disp_df(df5.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df5.shape = (872, 18)
+I: df5.MEAN_antonym.isna().sum() = 440 BAD COUNT
+I: (~df5.MEAN_antonym.isna()).sum() = 432 BAD COUNT
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT                                       lemmas                                   definition                                     examples      antonym_id0                               antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq             OEWN  CNT_antonym  MEAN_antonym  STD_antonym
+112   src0  oewn-00096162-r -0.500000  1.309307    8                                       [down]  away from a more central or a more north...  [was sent down to work at the regional o...  oewn-00097310-r                                         [up]  to a more central or a more northerly place  [was transferred up to headquarters, up ...                   1                   1  oewn-00097310-r          8.0      0.250000     0.707107
+1216  src0  oewn-01026905-a -0.875000  0.834523    8                                 [inflexible]                      resistant to being bent  [an inflexible iron bar, an inflexible k...  oewn-01025680-a                          [flexible, flexile]            able to flex; able to bend easily                      [slim flexible birches]                   1                   1              NaN          NaN           NaN          NaN
+1361  src0  oewn-01974362-v  1.181818  1.078720   11              [come up, rise, ascend, uprise]                 come up, of celestial bodies  [The sun also rises, The sun uprising se...  oewn-01974660-v                     [set, go down, go under]                 disappear beyond the horizon              [the sun sets early these days]                   1                   1  oewn-01974660-v         10.0     -0.200000     0.421637
+2185  src0  oewn-02034163-a  0.285714  0.487950    7                                       [rich]  high in mineral content; having a high p...  [a rich vein of copper, a rich gas mixture]  oewn-02034381-a                                       [lean]  lacking in mineral content or combustibl...                        [lean ore, lean fuel]                   1                   1              NaN          NaN           NaN          NaN
+5422  src0  oewn-01768652-v -0.714286  1.603567    7  [quieten, calm, lull, calm down, still, ...                           make calm or still        [quiet the dragons of worry and fear]  oewn-01766380-v  [agitate, turn on, charge, commove, rous...     cause to be agitated, excited, or roused  [The speaker charged up the crowd with h...                   1                   1  oewn-01766380-v          9.0      1.888889     0.781736
+5558  src0  oewn-02528530-v  2.250000  0.707107    8  [manage, pull off, carry off, negociate,...                be successful; achieve a goal  [I managed to carry the box upstairs, Sh...  oewn-02605525-v                                       [fail]                                    be unable          [I fail to understand your motives]                   1                   1  oewn-02605525-v          8.0     -1.500000     1.603567
+6037  src0  oewn-02332106-a -1.500000  1.195229    8                                       [weak]                 wanting in physical strength                              [a weak pillar]  oewn-02328781-a                                     [strong]  having strength or power greater than av...  [a strong radio signal, strong medicine,...                   1                   1  oewn-02328781-a          8.0      1.875000     0.834523
+6052  src0  oewn-01859592-v  1.125000  0.991031    8                                       [move]  change residence, affiliation, or place ...  [We moved from Idaho to Nebraska, The ba...  oewn-01861378-v        [stick, stay, stick around, stay put]                stay put (in a certain place)  [We are staying in Detroit; we are not m...                   1                   1  oewn-01861378-v          9.0      0.666667     1.414214
+#+end_example
+:END:
+** Check SOURCE and ANTONYM correlations of EVALUATIONS
+#+begin_src jupyter-python :async yes
+df5[["MEAN", "MEAN_antonym"]].corr()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+                  MEAN  MEAN_antonym
+MEAN          1.000000     -0.800623
+MEAN_antonym -0.800623      1.000000
+#+end_example
+** Check the actual number of unique antonyms
+#+begin_src jupyter-python :async yes
+temp0 = df5.drop_duplicates(subset="antonym_id0", keep="first").copy()
+log0.info(f"{df5.shape = }")
+log0.info(f"{temp0.shape = }")
+log0.info(f"{temp0.MEAN_antonym.isna().sum() = } GOOD COUNT")  # This count should contain NO duplicates
+log0.info(f"{(~temp0.MEAN_antonym.isna()).sum() = } GOOD COUNT")  # This count should contain NO duplicates
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df5.shape = (872, 18)
+I: temp0.shape = (867, 18)
+I: temp0.MEAN_antonym.isna().sum() = 436 GOOD COUNT
+I: (~temp0.MEAN_antonym.isna()).sum() = 431 GOOD COUNT
+#+end_example
+
+** Reminder
+#+begin_src jupyter-python :async yes
+log0.info(f"{df5.shape = }")
+disp_df(df5.head(n=22))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df5.shape = (872, 18)
+#+begin_example
+     TYPE              id0      MEAN       STD  CNT                                       lemmas                                   definition                                     examples      antonym_id0                               antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq             OEWN  CNT_antonym  MEAN_antonym  STD_antonym
+7    src0  oewn-01525056-v  0.400000  0.699206   10                    [twine, wrap, roll, wind]                       arrange or coil around  [roll your hair around your finger, Twin...  oewn-01526442-v                   [wind off, unwind, unroll]           reverse the winding or twisting of                      [unwind a ball of yarn]                   1                   1              NaN          NaN           NaN          NaN
+17   src0  oewn-00117793-v -1.375000  1.302470    8                         [rest, stay, remain]     stay the same; remain in a certain state  [The dress remained wet after repeated a...  oewn-00109468-v                                     [change]  undergo a change; become different in es...  [She changed completely as she grew olde...                   1                   1  oewn-00109468-v         11.0      0.727273     1.190874
+34   src0  oewn-00088791-r -0.727273  1.009050   11                                [temporarily]     for a limited time only; not permanently  [he will work here temporarily, he was b...  oewn-00088404-r                      [for good, permanently]     for a long time without essential change                 [he is permanently disabled]                   1                   1              NaN          NaN           NaN          NaN
+41   src0  oewn-02639795-v -1.500000  1.080123   10                                    [exclude]                      lack or fail to include  [The cost for the trip excludes food and...  oewn-02639021-v                                    [include]            have as a part, be made up out of  [The list includes the names of many fam...                   1                   1              NaN          NaN           NaN          NaN
+47   src0  oewn-00752852-a -0.333333  1.556998   12                                       [easy]  posing no difficulty; requiring little e...  [an easy job, an easy problem, an easy v...  oewn-00748528-a                            [difficult, hard]  not easy; requiring great physical or me...  [a difficult task, nesting places on the...                   1                   1  oewn-00748528-a          8.0     -0.375000     0.744024
+55   src0  oewn-00018622-a -1.200000  1.316561   10                               [unacceptable]                  not acceptable; not welcome  [a word unacceptable in polite society, ...  oewn-00017820-a                                 [acceptable]         worthy of acceptance or satisfactory  [acceptable levels of radiation, perform...                   1                   1  oewn-00017820-a          8.0      0.500000     1.069045
+56   src0  oewn-00153083-v  1.222222  0.971825    9                                   [increase]                          make bigger or more  [The boss finally increased her salary, ...  oewn-00442400-v                   [decrease, lessen, minify]                          make become smaller                     [He decreased his staff]                   1                   1              NaN          NaN           NaN          NaN
+60   src0  oewn-01244630-a  0.428571  1.133893    7                                    [running]             of advancing the ball by running  [the team's running plays worked better ...  oewn-01244800-a                              [pass, passing]         of advancing the ball by throwing it  [a team with a good passing attack, a pa...                   1                   1  oewn-01244800-a          8.0      0.250000     0.462910
+68   src0  oewn-00244122-r  0.700000  0.948683   10                                [consciously]                               with awareness  [she consciously played with the idea of...  oewn-00244269-r                              [unconsciously]                            without awareness  [she jumped up unconsciously when he ent...                   1                   1              NaN          NaN           NaN          NaN
+74   src0  oewn-00688760-a -2.000000  0.707107    9                                 [indecisive]            not definitely settling something                  [a long and indecisive war]  oewn-00687757-a                                   [decisive]  determining or having the power to deter...  [cast the decisive vote, two factors had...                   1                   1  oewn-00687757-a          8.0      2.375000     0.916125
+76   src0  oewn-00074467-r -0.400000  0.699206   10                             [back, backward]               in or to or toward a past time  [set the clocks back an hour, never look...  oewn-00075708-r                             [forward, ahead]           toward the future; forward in time  [I like to look ahead in imagination to ...                   1                   1  oewn-00075708-r          9.0      1.000000     0.707107
+94   src0  oewn-01101986-a  0.222222  0.440959    9                                     [funded]                         furnished with funds                       [well-funded research]  oewn-01102083-a                                   [unfunded]                     not furnished with funds                        [an unfunded project]                   1                   1              NaN          NaN           NaN          NaN
+106  src0  oewn-00905999-v  0.222222  0.440959    9  [discharge, clear, acquit, assoil, excul...     pronounce not guilty of criminal charges  [The suspect was cleared of the murder c...  oewn-00908320-v                                    [convict]                       find or declare guilty  [The man was convicted of fraud and sent...                   1                   1              NaN          NaN           NaN          NaN
+110  src0  oewn-01408930-a  0.000000  0.000000    8                        [biological, natural]  (of a parent or child) related by blood;...           [biological child, natural parent]  oewn-01409235-a                                   [adoptive]  of parents and children; related by adop...                           [adoptive parents]                   1                   1              NaN          NaN           NaN          NaN
+112  src0  oewn-00096162-r -0.500000  1.309307    8                                       [down]  away from a more central or a more north...  [was sent down to work at the regional o...  oewn-00097310-r                                         [up]  to a more central or a more northerly place  [was transferred up to headquarters, up ...                   1                   1  oewn-00097310-r          8.0      0.250000     0.707107
+130  src0  oewn-01084999-v  1.272727  1.103713   11                         [enter, participate]         become a participant; be involved in  [enter a race, enter an agreement, enter...  oewn-01085437-v  [quit, give up, drop by the wayside, dro...  give up in the face of defeat of lacking...  [In the second round, the challenger gav...                   1                   1              NaN          NaN           NaN          NaN
+139  src0  oewn-02211988-v  0.909091  1.136182   11                              [buy, purchase]  obtain by purchase; acquire by means of ...  [The family purchased a new car, The con...  oewn-02247246-v                                       [sell]  exchange or deliver for money or its equ...  [He sold his house in January, She sells...                   1                   1  oewn-02247246-v          9.0      0.888889     1.269296
+149  src0  oewn-00687584-v -1.222222  1.481366    9                                     [reject]        not accept something given or offered  [I reject the idea of starting a war, Th...  oewn-00688348-v                                     [accept]                     consider or hold as true  [I cannot accept the dogma of this churc...                   1                   1  oewn-00688348-v          7.0      0.142857     0.377964
+152  src0  oewn-02091950-a  0.444444  0.881917    9                                 [scientific]  conforming with the principles or method...                      [a scientific approach]  oewn-02092278-a                               [unscientific]  not consistent with the methods or princ...        [an unscientific lack of objectivity]                   1                   1              NaN          NaN           NaN          NaN
+155  src0  oewn-00227509-r  1.111111  1.054093    9                                        [big]                             on a grand scale                                  [think big]  oewn-00227588-r                                      [small]                             on a small scale                                [think small]                   1                   1  oewn-00227588-r          7.0     -0.428571     0.786796
+157  src0  oewn-01933854-a  1.000000  1.154701    7                     [intellectual, cerebral]  involving intelligence rather than emoti...  [a cerebral approach to the problem, cer...  oewn-01933678-a                                  [emotional]  determined or actuated by emotion rather...               [it was an emotional judgment]                   1                   1              NaN          NaN           NaN          NaN
+160  src0  oewn-02337347-a -1.666667  1.118034    9                                [subordinate]  subject or submissive to authority or th...                      [a subordinate kingdom]  oewn-02338328-a                              [insubordinate]                  not submissive to authority  [a history of insubordinate behavior, in...                   1                   1              NaN          NaN           NaN          NaN
+#+end_example
+:END:
+
+** Augument antonym evaluations when missing
+#+begin_src jupyter-python :async yes
+import math
+df6 = df5.copy()
+df6["antonym_TYPE"] = df6.apply(lambda row: "ant2" if math.isnan(row["MEAN_antonym"]) else "ant0", axis=1)
+df6["MEAN_antonym"] = df6.apply(lambda row: -row["MEAN"] if math.isnan(row["MEAN_antonym"]) else row["MEAN_antonym"], axis=1)
+cols5 = [
+    "TYPE",
+    "id0",
+    "MEAN",
+    "lemmas",
+    "antonym_id0",
+    "antonym_lemmas",
+    "MEAN_antonym",
+    "antonym_TYPE",
+]
+disp_df(df6[cols5].head(n=22))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+     TYPE              id0      MEAN                                       lemmas      antonym_id0                               antonym_lemmas  MEAN_antonym antonym_TYPE
+7    src0  oewn-01525056-v  0.400000                    [twine, wrap, roll, wind]  oewn-01526442-v                   [wind off, unwind, unroll]     -0.400000         ant2
+17   src0  oewn-00117793-v -1.375000                         [rest, stay, remain]  oewn-00109468-v                                     [change]      0.727273         ant0
+34   src0  oewn-00088791-r -0.727273                                [temporarily]  oewn-00088404-r                      [for good, permanently]      0.727273         ant2
+41   src0  oewn-02639795-v -1.500000                                    [exclude]  oewn-02639021-v                                    [include]      1.500000         ant2
+47   src0  oewn-00752852-a -0.333333                                       [easy]  oewn-00748528-a                            [difficult, hard]     -0.375000         ant0
+55   src0  oewn-00018622-a -1.200000                               [unacceptable]  oewn-00017820-a                                 [acceptable]      0.500000         ant0
+56   src0  oewn-00153083-v  1.222222                                   [increase]  oewn-00442400-v                   [decrease, lessen, minify]     -1.222222         ant2
+60   src0  oewn-01244630-a  0.428571                                    [running]  oewn-01244800-a                              [pass, passing]      0.250000         ant0
+68   src0  oewn-00244122-r  0.700000                                [consciously]  oewn-00244269-r                              [unconsciously]     -0.700000         ant2
+74   src0  oewn-00688760-a -2.000000                                 [indecisive]  oewn-00687757-a                                   [decisive]      2.375000         ant0
+76   src0  oewn-00074467-r -0.400000                             [back, backward]  oewn-00075708-r                             [forward, ahead]      1.000000         ant0
+94   src0  oewn-01101986-a  0.222222                                     [funded]  oewn-01102083-a                                   [unfunded]     -0.222222         ant2
+106  src0  oewn-00905999-v  0.222222  [discharge, clear, acquit, assoil, excul...  oewn-00908320-v                                    [convict]     -0.222222         ant2
+110  src0  oewn-01408930-a  0.000000                        [biological, natural]  oewn-01409235-a                                   [adoptive]     -0.000000         ant2
+112  src0  oewn-00096162-r -0.500000                                       [down]  oewn-00097310-r                                         [up]      0.250000         ant0
+130  src0  oewn-01084999-v  1.272727                         [enter, participate]  oewn-01085437-v  [quit, give up, drop by the wayside, dro...     -1.272727         ant2
+139  src0  oewn-02211988-v  0.909091                              [buy, purchase]  oewn-02247246-v                                       [sell]      0.888889         ant0
+149  src0  oewn-00687584-v -1.222222                                     [reject]  oewn-00688348-v                                     [accept]      0.142857         ant0
+152  src0  oewn-02091950-a  0.444444                                 [scientific]  oewn-02092278-a                               [unscientific]     -0.444444         ant2
+155  src0  oewn-00227509-r  1.111111                                        [big]  oewn-00227588-r                                      [small]     -0.428571         ant0
+157  src0  oewn-01933854-a  1.000000                     [intellectual, cerebral]  oewn-01933678-a                                  [emotional]     -1.000000         ant2
+160  src0  oewn-02337347-a -1.666667                                [subordinate]  oewn-02338328-a                              [insubordinate]      1.666667         ant2
+#+end_example
+** DF5 Cols
+#+begin_src jupyter-python :async yes
+for col0 in df6.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "TYPE",
+    "id0",
+    "MEAN",
+    "STD",
+    "CNT",
+    "lemmas",
+    "definition",
+    "examples",
+    "antonym_id0",
+    "antonym_lemmas",
+    "antonym_defs",
+    "antonym_examples",
+    "antonym_count_orig",
+    "antonym_count_uniq",
+    "OEWN",
+    "CNT_antonym",
+    "MEAN_antonym",
+    "STD_antonym",
+    "antonym_TYPE",
+#+end_example
+
+** Extract unique augumented and unaugumented antonyms
+#+begin_src jupyter-python :async yes
+cols7 = {
+    "antonym_TYPE": "TYPE",
+    "antonym_id0": "id0",
+    "MEAN_antonym": "MEAN",
+    "STD_antonym": "STD",
+    "CNT_antonym": "CNT",
+    "antonym_lemmas": "lemmas",
+    "antonym_defs": "definition",
+    "antonym_examples": "examples",
+}
+df7 = df6[cols7.keys()].copy()
+df7.rename(columns=cols7, inplace=True)
+df7 = df7[df7.TYPE=="ant2"]
+df7.drop_duplicates(subset="id0", inplace=True)
+
+log0.info(f"{df7.shape = }")
+disp_df(df7.head(n=22))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df7.shape = (436, 8)
+#+begin_example
+     TYPE              id0      MEAN  STD  CNT                                       lemmas                                   definition                                     examples
+7    ant2  oewn-01526442-v -0.400000  NaN  NaN                   [wind off, unwind, unroll]           reverse the winding or twisting of                      [unwind a ball of yarn]
+34   ant2  oewn-00088404-r  0.727273  NaN  NaN                      [for good, permanently]     for a long time without essential change                 [he is permanently disabled]
+41   ant2  oewn-02639021-v  1.500000  NaN  NaN                                    [include]            have as a part, be made up out of  [The list includes the names of many fam...
+56   ant2  oewn-00442400-v -1.222222  NaN  NaN                   [decrease, lessen, minify]                          make become smaller                     [He decreased his staff]
+68   ant2  oewn-00244269-r -0.700000  NaN  NaN                              [unconsciously]                            without awareness  [she jumped up unconsciously when he ent...
+94   ant2  oewn-01102083-a -0.222222  NaN  NaN                                   [unfunded]                     not furnished with funds                        [an unfunded project]
+106  ant2  oewn-00908320-v -0.222222  NaN  NaN                                    [convict]                       find or declare guilty  [The man was convicted of fraud and sent...
+110  ant2  oewn-01409235-a -0.000000  NaN  NaN                                   [adoptive]  of parents and children; related by adop...                           [adoptive parents]
+130  ant2  oewn-01085437-v -1.272727  NaN  NaN  [quit, give up, drop by the wayside, dro...  give up in the face of defeat of lacking...  [In the second round, the challenger gav...
+152  ant2  oewn-02092278-a -0.444444  NaN  NaN                               [unscientific]  not consistent with the methods or princ...        [an unscientific lack of objectivity]
+157  ant2  oewn-01933678-a -1.000000  NaN  NaN                                  [emotional]  determined or actuated by emotion rather...               [it was an emotional judgment]
+160  ant2  oewn-02338328-a  1.666667  NaN  NaN                              [insubordinate]                  not submissive to authority  [a history of insubordinate behavior, in...
+174  ant2  oewn-00233660-a -0.375000  NaN  NaN                            [worsened, worse]   changed for the worse in health or fitness      [I feel worse today, her cold is worse]
+195  ant2  oewn-00115368-r -0.636364  NaN  NaN                               [unofficially]                  not in an official capacity   [unofficially, he serves as the treasurer]
+199  ant2  oewn-01574863-a  0.100000  NaN  NaN                                  [unnatural]  not in accordance with or determined by ...  [an unnatural death, the child's unnatur...
+203  ant2  oewn-02291437-a -0.000000  NaN  NaN                                     [spoken]  uttered through the medium of speech or ...  [a spoken message, the spoken language, ...
+208  ant2  oewn-14053917-n  0.250000  NaN  NaN         [drowsiness, sleepiness, somnolence]                          a very sleepy state   [sleepiness causes many driving accidents]
+213  ant2  oewn-01618017-a -0.000000  NaN  NaN                                [disobedient]  not obeying or complying with commands o...                       [disobedient children]
+218  ant2  oewn-01475771-a  0.888889  NaN  NaN                                      [major]     of greater importance or stature or rank  [a major artist, a major role, major hig...
+266  ant2  oewn-00494722-a  0.083333  NaN  NaN                                     [common]  belonging to or participated in by a com...  [for the common good, common lands are s...
+269  ant2  oewn-01109313-a -0.300000  NaN  NaN                                [nonspecific]  not caused by a specific agent; used als...                      [nonspecific enteritis]
+300  ant2  oewn-01096835-a -0.363636  NaN  NaN                                    [organic]  involving or affecting physiology or bod...                         [an organic disease]
+#+end_example
+:END:
+** Augument with lemma negations
+#+begin_src jupyter-python :async yes
+df8 = df6.copy()
+
+df8.insert(6, "lemmas_orig", df8.lemmas)
+df8.insert(7, "lemmas_neg", df8.antonym_lemmas)
+
+df8.insert(12, "antonym_lemmas_orig", df8.antonym_lemmas)
+df8.insert(13, "antonym_lemmas_neg", df8.lemmas)
+
+df8["lemmas_neg"] = df8.lemmas_neg.apply(lambda x: [f"not {lemma}" for lemma in x])
+df8["antonym_lemmas_neg"] = df8.antonym_lemmas_neg.apply(lambda x: [f"not {lemma}" for lemma in x])
+
+df8["lemmas"] = df8.lemmas_neg
+df8["antonym_lemmas"] = df8.antonym_lemmas_neg
+
+df8.drop(columns=["lemmas_neg", "antonym_lemmas_neg"], inplace=True)
+df8.drop(columns=["lemmas_orig", "antonym_lemmas_orig"], inplace=True)
+
+df8["TYPE"] = df8.TYPE + "_negLem"
+df8["antonym_TYPE"] = df8.antonym_TYPE + "_negLem"
+
+
+log0.info(f"{df8.shape = }")
+disp_df(df8.head(n=22))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df8.shape = (872, 19)
+#+begin_example
+            TYPE              id0      MEAN       STD  CNT                                       lemmas                                   definition                                     examples      antonym_id0                               antonym_lemmas                                 antonym_defs                             antonym_examples  antonym_count_orig  antonym_count_uniq             OEWN  CNT_antonym  MEAN_antonym  STD_antonym antonym_TYPE
+7    src0_negLem  oewn-01525056-v  0.400000  0.699206   10       [not wind off, not unwind, not unroll]                       arrange or coil around  [roll your hair around your finger, Twin...  oewn-01526442-v    [not twine, not wrap, not roll, not wind]           reverse the winding or twisting of                      [unwind a ball of yarn]                   1                   1              NaN          NaN     -0.400000          NaN  ant2_negLem
+17   src0_negLem  oewn-00117793-v -1.375000  1.302470    8                                 [not change]     stay the same; remain in a certain state  [The dress remained wet after repeated a...  oewn-00109468-v             [not rest, not stay, not remain]  undergo a change; become different in es...  [She changed completely as she grew olde...                   1                   1  oewn-00109468-v         11.0      0.727273     1.190874  ant0_negLem
+34   src0_negLem  oewn-00088791-r -0.727273  1.009050   11              [not for good, not permanently]     for a limited time only; not permanently  [he will work here temporarily, he was b...  oewn-00088404-r                            [not temporarily]     for a long time without essential change                 [he is permanently disabled]                   1                   1              NaN          NaN      0.727273          NaN  ant2_negLem
+41   src0_negLem  oewn-02639795-v -1.500000  1.080123   10                                [not include]                      lack or fail to include  [The cost for the trip excludes food and...  oewn-02639021-v                                [not exclude]            have as a part, be made up out of  [The list includes the names of many fam...                   1                   1              NaN          NaN      1.500000          NaN  ant2_negLem
+47   src0_negLem  oewn-00752852-a -0.333333  1.556998   12                    [not difficult, not hard]  posing no difficulty; requiring little e...  [an easy job, an easy problem, an easy v...  oewn-00748528-a                                   [not easy]  not easy; requiring great physical or me...  [a difficult task, nesting places on the...                   1                   1  oewn-00748528-a          8.0     -0.375000     0.744024  ant0_negLem
+55   src0_negLem  oewn-00018622-a -1.200000  1.316561   10                             [not acceptable]                  not acceptable; not welcome  [a word unacceptable in polite society, ...  oewn-00017820-a                           [not unacceptable]         worthy of acceptance or satisfactory  [acceptable levels of radiation, perform...                   1                   1  oewn-00017820-a          8.0      0.500000     1.069045  ant0_negLem
+56   src0_negLem  oewn-00153083-v  1.222222  0.971825    9       [not decrease, not lessen, not minify]                          make bigger or more  [The boss finally increased her salary, ...  oewn-00442400-v                               [not increase]                          make become smaller                     [He decreased his staff]                   1                   1              NaN          NaN     -1.222222          NaN  ant2_negLem
+60   src0_negLem  oewn-01244630-a  0.428571  1.133893    7                      [not pass, not passing]             of advancing the ball by running  [the team's running plays worked better ...  oewn-01244800-a                                [not running]         of advancing the ball by throwing it  [a team with a good passing attack, a pa...                   1                   1  oewn-01244800-a          8.0      0.250000     0.462910  ant0_negLem
+68   src0_negLem  oewn-00244122-r  0.700000  0.948683   10                          [not unconsciously]                               with awareness  [she consciously played with the idea of...  oewn-00244269-r                            [not consciously]                            without awareness  [she jumped up unconsciously when he ent...                   1                   1              NaN          NaN     -0.700000          NaN  ant2_negLem
+74   src0_negLem  oewn-00688760-a -2.000000  0.707107    9                               [not decisive]            not definitely settling something                  [a long and indecisive war]  oewn-00687757-a                             [not indecisive]  determining or having the power to deter...  [cast the decisive vote, two factors had...                   1                   1  oewn-00687757-a          8.0      2.375000     0.916125  ant0_negLem
+76   src0_negLem  oewn-00074467-r -0.400000  0.699206   10                     [not forward, not ahead]               in or to or toward a past time  [set the clocks back an hour, never look...  oewn-00075708-r                     [not back, not backward]           toward the future; forward in time  [I like to look ahead in imagination to ...                   1                   1  oewn-00075708-r          9.0      1.000000     0.707107  ant0_negLem
+94   src0_negLem  oewn-01101986-a  0.222222  0.440959    9                               [not unfunded]                         furnished with funds                       [well-funded research]  oewn-01102083-a                                 [not funded]                     not furnished with funds                        [an unfunded project]                   1                   1              NaN          NaN     -0.222222          NaN  ant2_negLem
+106  src0_negLem  oewn-00905999-v  0.222222  0.440959    9                                [not convict]     pronounce not guilty of criminal charges  [The suspect was cleared of the murder c...  oewn-00908320-v  [not discharge, not clear, not acquit, n...                       find or declare guilty  [The man was convicted of fraud and sent...                   1                   1              NaN          NaN     -0.222222          NaN  ant2_negLem
+110  src0_negLem  oewn-01408930-a  0.000000  0.000000    8                               [not adoptive]  (of a parent or child) related by blood;...           [biological child, natural parent]  oewn-01409235-a                [not biological, not natural]  of parents and children; related by adop...                           [adoptive parents]                   1                   1              NaN          NaN     -0.000000          NaN  ant2_negLem
+112  src0_negLem  oewn-00096162-r -0.500000  1.309307    8                                     [not up]  away from a more central or a more north...  [was sent down to work at the regional o...  oewn-00097310-r                                   [not down]  to a more central or a more northerly place  [was transferred up to headquarters, up ...                   1                   1  oewn-00097310-r          8.0      0.250000     0.707107  ant0_negLem
+130  src0_negLem  oewn-01084999-v  1.272727  1.103713   11  [not quit, not give up, not drop by the ...         become a participant; be involved in  [enter a race, enter an agreement, enter...  oewn-01085437-v                 [not enter, not participate]  give up in the face of defeat of lacking...  [In the second round, the challenger gav...                   1                   1              NaN          NaN     -1.272727          NaN  ant2_negLem
+139  src0_negLem  oewn-02211988-v  0.909091  1.136182   11                                   [not sell]  obtain by purchase; acquire by means of ...  [The family purchased a new car, The con...  oewn-02247246-v                      [not buy, not purchase]  exchange or deliver for money or its equ...  [He sold his house in January, She sells...                   1                   1  oewn-02247246-v          9.0      0.888889     1.269296  ant0_negLem
+149  src0_negLem  oewn-00687584-v -1.222222  1.481366    9                                 [not accept]        not accept something given or offered  [I reject the idea of starting a war, Th...  oewn-00688348-v                                 [not reject]                     consider or hold as true  [I cannot accept the dogma of this churc...                   1                   1  oewn-00688348-v          7.0      0.142857     0.377964  ant0_negLem
+152  src0_negLem  oewn-02091950-a  0.444444  0.881917    9                           [not unscientific]  conforming with the principles or method...                      [a scientific approach]  oewn-02092278-a                             [not scientific]  not consistent with the methods or princ...        [an unscientific lack of objectivity]                   1                   1              NaN          NaN     -0.444444          NaN  ant2_negLem
+155  src0_negLem  oewn-00227509-r  1.111111  1.054093    9                                  [not small]                             on a grand scale                                  [think big]  oewn-00227588-r                                    [not big]                             on a small scale                                [think small]                   1                   1  oewn-00227588-r          7.0     -0.428571     0.786796  ant0_negLem
+157  src0_negLem  oewn-01933854-a  1.000000  1.154701    7                              [not emotional]  involving intelligence rather than emoti...  [a cerebral approach to the problem, cer...  oewn-01933678-a             [not intellectual, not cerebral]  determined or actuated by emotion rather...               [it was an emotional judgment]                   1                   1              NaN          NaN     -1.000000          NaN  ant2_negLem
+160  src0_negLem  oewn-02337347-a -1.666667  1.118034    9                          [not insubordinate]  subject or submissive to authority or th...                      [a subordinate kingdom]  oewn-02338328-a                            [not subordinate]                  not submissive to authority  [a history of insubordinate behavior, in...                   1                   1              NaN          NaN      1.666667          NaN  ant2_negLem
+#+end_example
+:END:
+
+** Extract negated originals
+#+begin_src jupyter-python :async yes
+cols8a = [
+    "TYPE",
+    "id0",
+    "MEAN",
+    "STD",
+    "CNT",
+    "lemmas",
+    "definition",
+    "examples",
+    # "antonym_id0",
+]
+df8a = df8[cols8a].copy()
+# WARN no drop here (one orig synset may get two different sets of lemmas from its antonyms)
+# df8a.drop_duplicates(subset=["TYPE", "id0"], keep="first", inplace=True)
+
+log0.info(f"{df8.shape = }")
+log0.info(f"{df8a.shape = }")
+disp_df(df8a.head(n=22))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df8.shape = (872, 19)
+I: df8a.shape = (872, 8)
+#+end_example
+#+begin_example
+            TYPE              id0      MEAN       STD  CNT                                       lemmas                                   definition                                     examples
+7    src0_negLem  oewn-01525056-v  0.400000  0.699206   10       [not wind off, not unwind, not unroll]                       arrange or coil around  [roll your hair around your finger, Twin...
+17   src0_negLem  oewn-00117793-v -1.375000  1.302470    8                                 [not change]     stay the same; remain in a certain state  [The dress remained wet after repeated a...
+34   src0_negLem  oewn-00088791-r -0.727273  1.009050   11              [not for good, not permanently]     for a limited time only; not permanently  [he will work here temporarily, he was b...
+41   src0_negLem  oewn-02639795-v -1.500000  1.080123   10                                [not include]                      lack or fail to include  [The cost for the trip excludes food and...
+47   src0_negLem  oewn-00752852-a -0.333333  1.556998   12                    [not difficult, not hard]  posing no difficulty; requiring little e...  [an easy job, an easy problem, an easy v...
+55   src0_negLem  oewn-00018622-a -1.200000  1.316561   10                             [not acceptable]                  not acceptable; not welcome  [a word unacceptable in polite society, ...
+56   src0_negLem  oewn-00153083-v  1.222222  0.971825    9       [not decrease, not lessen, not minify]                          make bigger or more  [The boss finally increased her salary, ...
+60   src0_negLem  oewn-01244630-a  0.428571  1.133893    7                      [not pass, not passing]             of advancing the ball by running  [the team's running plays worked better ...
+68   src0_negLem  oewn-00244122-r  0.700000  0.948683   10                          [not unconsciously]                               with awareness  [she consciously played with the idea of...
+74   src0_negLem  oewn-00688760-a -2.000000  0.707107    9                               [not decisive]            not definitely settling something                  [a long and indecisive war]
+76   src0_negLem  oewn-00074467-r -0.400000  0.699206   10                     [not forward, not ahead]               in or to or toward a past time  [set the clocks back an hour, never look...
+94   src0_negLem  oewn-01101986-a  0.222222  0.440959    9                               [not unfunded]                         furnished with funds                       [well-funded research]
+106  src0_negLem  oewn-00905999-v  0.222222  0.440959    9                                [not convict]     pronounce not guilty of criminal charges  [The suspect was cleared of the murder c...
+110  src0_negLem  oewn-01408930-a  0.000000  0.000000    8                               [not adoptive]  (of a parent or child) related by blood;...           [biological child, natural parent]
+112  src0_negLem  oewn-00096162-r -0.500000  1.309307    8                                     [not up]  away from a more central or a more north...  [was sent down to work at the regional o...
+130  src0_negLem  oewn-01084999-v  1.272727  1.103713   11  [not quit, not give up, not drop by the ...         become a participant; be involved in  [enter a race, enter an agreement, enter...
+139  src0_negLem  oewn-02211988-v  0.909091  1.136182   11                                   [not sell]  obtain by purchase; acquire by means of ...  [The family purchased a new car, The con...
+149  src0_negLem  oewn-00687584-v -1.222222  1.481366    9                                 [not accept]        not accept something given or offered  [I reject the idea of starting a war, Th...
+152  src0_negLem  oewn-02091950-a  0.444444  0.881917    9                           [not unscientific]  conforming with the principles or method...                      [a scientific approach]
+155  src0_negLem  oewn-00227509-r  1.111111  1.054093    9                                  [not small]                             on a grand scale                                  [think big]
+157  src0_negLem  oewn-01933854-a  1.000000  1.154701    7                              [not emotional]  involving intelligence rather than emoti...  [a cerebral approach to the problem, cer...
+160  src0_negLem  oewn-02337347-a -1.666667  1.118034    9                          [not insubordinate]  subject or submissive to authority or th...                      [a subordinate kingdom]
+#+end_example
+:END:
+** Extract unique augumented and unaugumented antonyms
+#+begin_src jupyter-python :async yes
+cols8b = {
+    "antonym_TYPE": "TYPE",
+    "antonym_id0": "id0",
+    "MEAN_antonym": "MEAN",
+    "STD_antonym": "STD",
+    "CNT_antonym": "CNT",
+    "antonym_lemmas": "lemmas",
+    "antonym_defs": "definition",
+    "antonym_examples": "examples",
+}
+df8b = df8[cols8b.keys()].copy()
+df8b.rename(columns=cols8b, inplace=True)
+# df8b = df8b[df8b.TYPE=="ant2"]
+df8b.drop_duplicates(subset="id0", inplace=True)
+
+log0.info(f"{df8b.shape = }")
+disp_df(df8b.head(n=22))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df8b.shape = (867, 8)
+#+begin_example
+            TYPE              id0      MEAN       STD   CNT                                       lemmas                                   definition                                     examples
+7    ant2_negLem  oewn-01526442-v -0.400000       NaN   NaN    [not twine, not wrap, not roll, not wind]           reverse the winding or twisting of                      [unwind a ball of yarn]
+17   ant0_negLem  oewn-00109468-v  0.727273  1.190874  11.0             [not rest, not stay, not remain]  undergo a change; become different in es...  [She changed completely as she grew olde...
+34   ant2_negLem  oewn-00088404-r  0.727273       NaN   NaN                            [not temporarily]     for a long time without essential change                 [he is permanently disabled]
+41   ant2_negLem  oewn-02639021-v  1.500000       NaN   NaN                                [not exclude]            have as a part, be made up out of  [The list includes the names of many fam...
+47   ant0_negLem  oewn-00748528-a -0.375000  0.744024   8.0                                   [not easy]  not easy; requiring great physical or me...  [a difficult task, nesting places on the...
+55   ant0_negLem  oewn-00017820-a  0.500000  1.069045   8.0                           [not unacceptable]         worthy of acceptance or satisfactory  [acceptable levels of radiation, perform...
+56   ant2_negLem  oewn-00442400-v -1.222222       NaN   NaN                               [not increase]                          make become smaller                     [He decreased his staff]
+60   ant0_negLem  oewn-01244800-a  0.250000  0.462910   8.0                                [not running]         of advancing the ball by throwing it  [a team with a good passing attack, a pa...
+68   ant2_negLem  oewn-00244269-r -0.700000       NaN   NaN                            [not consciously]                            without awareness  [she jumped up unconsciously when he ent...
+74   ant0_negLem  oewn-00687757-a  2.375000  0.916125   8.0                             [not indecisive]  determining or having the power to deter...  [cast the decisive vote, two factors had...
+76   ant0_negLem  oewn-00075708-r  1.000000  0.707107   9.0                     [not back, not backward]           toward the future; forward in time  [I like to look ahead in imagination to ...
+94   ant2_negLem  oewn-01102083-a -0.222222       NaN   NaN                                 [not funded]                     not furnished with funds                        [an unfunded project]
+106  ant2_negLem  oewn-00908320-v -0.222222       NaN   NaN  [not discharge, not clear, not acquit, n...                       find or declare guilty  [The man was convicted of fraud and sent...
+110  ant2_negLem  oewn-01409235-a -0.000000       NaN   NaN                [not biological, not natural]  of parents and children; related by adop...                           [adoptive parents]
+112  ant0_negLem  oewn-00097310-r  0.250000  0.707107   8.0                                   [not down]  to a more central or a more northerly place  [was transferred up to headquarters, up ...
+130  ant2_negLem  oewn-01085437-v -1.272727       NaN   NaN                 [not enter, not participate]  give up in the face of defeat of lacking...  [In the second round, the challenger gav...
+139  ant0_negLem  oewn-02247246-v  0.888889  1.269296   9.0                      [not buy, not purchase]  exchange or deliver for money or its equ...  [He sold his house in January, She sells...
+149  ant0_negLem  oewn-00688348-v  0.142857  0.377964   7.0                                 [not reject]                     consider or hold as true  [I cannot accept the dogma of this churc...
+152  ant2_negLem  oewn-02092278-a -0.444444       NaN   NaN                             [not scientific]  not consistent with the methods or princ...        [an unscientific lack of objectivity]
+155  ant0_negLem  oewn-00227588-r -0.428571  0.786796   7.0                                    [not big]                             on a small scale                                [think small]
+157  ant2_negLem  oewn-01933678-a -1.000000       NaN   NaN             [not intellectual, not cerebral]  determined or actuated by emotion rather...               [it was an emotional judgment]
+160  ant2_negLem  oewn-02338328-a  1.666667       NaN   NaN                            [not subordinate]                  not submissive to authority  [a history of insubordinate behavior, in...
+#+end_example
+:END:
+
+** Checkup before Concatenate
+#+begin_src jupyter-python :async yes
+cols3a = [
+    "TYPE",
+    "id0",
+    "MEAN",
+    "STD",
+    "CNT",
+    "lemmas",
+    "definition",
+    "examples",
+    # "antonym_id0",
+]
+df3a = df3[cols3a].copy()
+df3a.drop_duplicates(subset=["TYPE", "id0"], inplace=True)
+log0.info(f"{df3.shape = }")
+log0.info(f"{df3a.shape = }")
+disp_df(df3a.sample(n=4))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df3.shape = (6928, 14)
+I: df3a.shape = (6914, 8)
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT              lemmas                             definition                                     examples
+1636  src0  oewn-04210932-n  0.714286  0.755929    7          [shopping]  the commodities purchased from stores  [she loaded her shopping into the car, w...
+3132  src0  oewn-01709116-v  0.333333  0.866025    9   [reference, cite]                               refer to         [he referenced his colleagues' work]
+6408  src0  oewn-02748357-v -0.375000  0.744024    8              [mean]  have a specified degree of importance  [My ex-husband means nothing to me, Happ...
+2825  src0  oewn-02274768-a  1.222222  1.201850    9  [resolved, solved]                  explained or answered  [mysteries solved and unsolved; problems...
+#+end_example
+:END:
+** Checkup before Concatenate
+#+begin_src jupyter-python :async yes
+log0.info(f"{df7.shape = }")
+disp_df(df7.sample(n=4))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df7.shape = (436, 8)
+#+begin_example
+      TYPE              id0      MEAN  STD  CNT          lemmas                                   definition                                     examples
+6891  ant2  oewn-00773049-a -0.571429  NaN  NaN       [inverse]  opposite in nature or effect or relation...  [a term is in inverse proportion to anot...
+6630  ant2  oewn-00206071-r -1.555556  NaN  NaN  [inaccurately]                      in an inaccurate manner  [this student works rather inaccurately ...
+3346  ant2  oewn-02463135-a -0.125000  NaN  NaN     [trackless]                             having no tracks  [a trackless trolley, the trackless snow...
+3113  ant2  oewn-02619707-v -0.750000  NaN  NaN          [miss]          fail to attend an event or activity  [I missed the concert, He missed school ...
+#+end_example
+:END:
+
+** Checkup before Concatenate
+#+begin_src jupyter-python :async yes
+log0.info(f"{df8a.shape = }")
+disp_df(df8a.sample(n=4))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df8a.shape = (872, 8)
+#+begin_example
+             TYPE              id0      MEAN       STD  CNT                                       lemmas                                   definition                                     examples
+2108  src0_negLem  oewn-00066395-n  0.875000  0.834523    8                     [not failing, not flunk]  success in satisfying a test or requirement  [his future depended on his passing that...
+1140  src0_negLem  oewn-01381145-a  0.800000  0.788811   10                           [not ununderstood]  fully apprehended as to purport or meani...  [the understood conditions of troop with...
+5485  src0_negLem  oewn-00429900-a  0.625000  0.744024    8                                [not unclear]                 readily apparent to the mind  [a clear and present danger, a clear exp...
+2837  src0_negLem  oewn-02404473-v -1.444444  1.013794    9  [not elevate, not advance, not raise, no...   assign to a lower position; reduce in rank  [She was demoted because she always spea...
+#+end_example
+:END:
+
+** Checkup before Concatenate
+#+begin_src jupyter-python :async yes
+log0.info(f"{df8b.shape = }")
+disp_df(df8b.sample(n=4))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: df8b.shape = (867, 8)
+#+begin_example
+             TYPE              id0      MEAN       STD  CNT                                       lemmas                                   definition                                     examples
+668   ant0_negLem  oewn-01871147-a  2.000000  0.816497  7.0                           [not unproductive]  producing or capable of producing (espec...  [productive farmland, his productive yea...
+5822  ant0_negLem  oewn-05104798-n  0.500000  0.534522  8.0                                    [not low]          a lofty level or position or degree  [summer temperatures reached an all-time...
+597   ant2_negLem  oewn-01473917-a  0.500000       NaN  NaN                                  [not minor]          greater in number or size or amount  [a major portion (a majority) of the pop...
+2296  ant2_negLem  oewn-13983750-n -0.285714       NaN  NaN  [not truth, not trueness, not verity, no...           the state of being false or untrue  [argument could not determine its truth ...
+#+end_example
+:END:
+
+** Final Checkup
+#+begin_src jupyter-python :async yes
+log0.info(f"{df3a.shape = }")
+log0.info(f"{df7.shape = }")
+log0.info(f"{df8a.shape = }")
+log0.info(f"{df8b.shape = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df3a.shape = (6914, 8)
+I: df7.shape = (436, 8)
+I: df8a.shape = (872, 8)
+I: df8b.shape = (867, 8)
+#+end_example
+
+** Merge
+#+begin_src jupyter-python :async yes
+DF0 = pd.concat([df3a, df7, df8a, df8b], axis=0).reset_index(drop=True)
+log0.info(f"{DF0.shape = }")
+disp_df(DF0.sample(n=33).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: I: DF0.shape = (9089, 8)
+#+begin_example
+             TYPE              id0      MEAN       STD   CNT                                       lemmas                                   definition                                     examples
+152          src0  oewn-02091950-a  0.444444  0.881917   9.0                                 [scientific]  conforming with the principles or method...                      [a scientific approach]
+364          src0  oewn-05925922-n  0.625000  1.597990   8.0                                   [reaction]            an idea evoked by some experience  [his reaction to the news was to start p...
+379          src0  oewn-01118003-v -2.375000  1.060660   8.0                         [give up, surrender]  give up or agree to forgo to the power o...  [The last Taleban fighters finally surre...
+415          src0  oewn-14508362-n -0.272727  1.009050  11.0                          [hearing, audience]  an opportunity to state your case and be...  [they condemned him without a hearing, h...
+960          src0  oewn-02722442-v  0.500000  0.755929   8.0                                     [attend]  to accompany as a circumstance or follow...  [Menuhin's playing was attended by a 15-...
+1351         src0  oewn-00200274-r -1.100000  1.969207  10.0  [obstinately, mulishly, obdurately, stub...            in a stubborn unregenerate manner  [she remained stubbornly in the same pos...
+1391         src0  oewn-02367606-s  0.333333  0.866025   9.0                                   [startled]  excited by sudden surprise or alarm and ...  [students startled by the teacher's quie...
+1397         src0  oewn-02488856-v  0.666667  1.500000   9.0                      [execute, put to death]  kill as a means of socially sanctioned p...     [In some states, criminals are executed]
+2003         src0  oewn-01553629-s  0.000000  1.732051   7.0  [fast, degraded, debauched, dissolute, r...       unrestrained by convention or morality  [Congreve draws a debauched aristocratic...
+2094         src0  oewn-01285124-a  2.000000  0.577350   7.0                                 [impressive]          making a strong or vivid impression                     [an impressive ceremony]
+2146         src0  oewn-01784999-v -1.000000  2.000000   7.0                                 [intimidate]                        make timid or fearful                   [Her boss intimidates her]
+2190         src0  oewn-02182456-a -0.333333  0.516398   6.0                                     [simple]  having few parts; not complex or complic...  [a simple problem, simple mechanisms, a ...
+2213         src0  oewn-00809380-s  1.625000  0.916125   8.0  [scintillating, effervescent, frothy, sp...         marked by high spirits or excitement  [his fertile effervescent mind, scintill...
+2224         src0  oewn-01089130-s  0.444444  1.013794   9.0                  [instinct, replete, imbued]  (followed by `with') deeply filled or pe...  [imbued with the spirit of the Reformati...
+2267         src0  oewn-05723230-n  0.000000  0.000000   9.0  [taste, gustatory perception, gustatory ...  the sensation that results when taste bu...  [the candy left him with a bad taste, th...
+2702         src0  oewn-01157556-v  1.000000  1.290994   7.0             [catch, overtake, catch up with]          catch up with and possibly overtake  [The Rolls Royce caught us near the exit...
+3105         src0  oewn-02605633-v  2.125000  1.125992   8.0                                       [take]                                    carry out    [take action, take steps, take vengeance]
+3283         src0  oewn-01850926-s  1.666667  1.000000   9.0                                         [up]  (usually followed by `on' or `for') in r...  [he was up on his homework, had to be up...
+3309         src0  oewn-01115009-v  0.750000  1.035098   8.0                                       [test]  achieve a certain score or rating on a test  [She tested high on the LSAT and was adm...
+4737         src0  oewn-01674975-s  0.428571  0.534522   7.0                    [incorporated, corporate]  organized and maintained as a legal corp...  [a special agency set up in corporate fo...
+5448         src0  oewn-01340439-a  0.500000  0.925820   8.0                                   [intended]              resulting from one's intentions  [your intended trip abroad, an intended ...
+5658         src0  oewn-00988799-a  0.750000  0.886405   8.0                       [exacting, fastidious]  having complicated nutritional requireme...  [fastidious microorganisms, certain high...
+5721         src0  oewn-14322572-n  0.500000  1.069045   8.0                        [twist, wrench, pull]       a sharp strain on muscles or ligaments  [the wrench to his knee occurred as he f...
+5889         src0  oewn-05662964-n  0.250000  0.462910   8.0  [touch, cutaneous senses, skin senses, s...  the faculty by which external objects or...  [only sight and touch enable us to locat...
+6439         src0  oewn-01650408-v  0.500000  1.414214   8.0        [kick up, evoke, provoke, call forth]          evoke or provoke to appear or occur  [Her behavior provoked a quarrel between...
+6551         src0  oewn-15261656-n  0.000000  0.000000   8.0                               [fall, autumn]  the season when the leaves fall from the...                        [in the fall of 1973]
+6727         src0  oewn-00191991-n  0.111111  0.600925   9.0                                     [change]             the action of changing something  [the change of government had no impact ...
+6915         ant2  oewn-00088404-r  0.727273       NaN   NaN                      [for good, permanently]     for a long time without essential change                 [he is permanently disabled]
+6936         ant2  oewn-00356369-a -0.636364       NaN   NaN                                  [unchanged]                 not made or become different  [the causes that produced them have rema...
+7106         ant2  oewn-00370277-r -1.375000       NaN   NaN                     [imprecisely, inexactly]                       in an imprecise manner           [he expressed himself imprecisely]
+8221  src0_negLem  oewn-04756076-n  0.111111  0.333333   9.0                               [not sameness]    the quality of being unlike or dissimilar  [there are many differences between jazz...
+8309  ant0_negLem  oewn-00019801-r  0.333333  0.500000   9.0                       [not ne'er, not never]  at all times; all the time and on every ...  [I will always be there to help you, alw...
+8572  ant0_negLem  oewn-14498302-n -1.500000  1.309307   8.0                               [not strength]      the condition of being financially weak  [the weakness of the dollar against the ...
+#+end_example
+:END:
+
+** Save DF0
+#+begin_src jupyter-python :async yes
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/d0009_synsets-merged/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+now0 = [dt.datetime.now(tz0).strftime("%Y%m%dT%H%M%S")]
+now0 = []
+pfx0 = ["synsets-merged"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+DF0.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+DF0.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+xtn0 = ".xlsx"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+DF0.to_excel(ofn0)
+
+log0.info("DONE")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/d0009_synsets-merged/synsets-merged.pkl...
+I: saving: ../../data/d0009_synsets-merged/synsets-merged.csv...
+I: saving: ../../data/d0009_synsets-merged/synsets-merged.xlsx...
+I: DONE
+#+end_example
+
+* Checkup
+#+begin_src jupyter-python :async yes
+dir0 = pathlib.Path().home()/"cc/dev/c2023a/b0001_c0418_bertagen_with_prodigy_and_spacy/data/input-0/batch-045"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+name0 = f"temp_eval_checkup_20220420T024438_temp"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df0.shape = (132, 10)
+#+end_example
+#+begin_example
+                                            text                                         meta  _input_hash  _task_hash                                      options _view_id                      config accept  answer  _timestamp
+1    not energetic, deficient in alertness or...  {'id0': 'oewn-00879020-a', 'id4': 'oewn-...  -1209740586  -393438870  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [1]  accept  1650413595
+10                                    heavy work  {'id0': 'oewn-00840083-s', 'id4': 'oewn-...   -746017776 -1151611711  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [6]  accept  1650413674
+51   indecisively, lacking firmness or resolu...  {'id0': 'oewn-00300164-r', 'id4': 'oewn-...  -1826680929  -538248539  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [1]  accept  1650413952
+78    she fell into a rage and refused to answer  {'id0': 'oewn-14060217-n', 'id4': 'oewn-...   -771378214 -1564573988  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [5]  accept  1650414107
+94   prehensile employers stingy with raises ...  {'id0': 'oewn-00030046-s', 'id4': 'oewn-...   1093672181 -1333189192  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [5]  accept  1650414208
+108      unpersuasiveness, inability to persuade  {'id0': 'oewn-05212488-n', 'id4': 'oewn-...   1188775087  -770283562  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [1]  accept  1650414392
+116               she is useless in an emergency  {'id0': 'oewn-02506940-a', 'id4': 'oewn-...  -1515039575  1336312937  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [1]  accept  1650414438
+124              after some hesitation he agreed  {'id0': 'oewn-04653300-n', 'id4': 'oewn-...  -1179897309  1883875370  [{'id': '1', 'text': '1'}, {'id': '2', '...   choice  {'choice_style': 'single'}    [5]  accept  1650414479
+#+end_example
+:END:

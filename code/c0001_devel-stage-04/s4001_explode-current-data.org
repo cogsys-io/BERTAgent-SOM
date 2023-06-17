@@ -1,0 +1,698 @@
+#+title: Explode Synsets
+
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+#+LATEX_CMD:   xelatex
+#+LATEX_CLASS: article
+
+#+LATEX_CLASS_OPTIONS: [a4paper,10pt,onecolumn,oneside,openright]
+
+#+JIKO-CONFIG: use-minted
+#+JIKO-CONFIG: use-biblatex-apa7
+#+JIKO-CONFIG: use-hyperref-setup
+#+JIKO-CONFIG: use-threeparttable
+
+#+LATEX_HEADER_EXTRA: \IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+#+LATEX_HEADER_EXTRA: \IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+
+#+OPTIONS: author:nil
+#+OPTIONS: email:nil
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: ^:{}
+
+* Boilerplate
+** test: Logger and Location
+#+begin_src jupyter-python :async yes :tangle no
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0()
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** test: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+* Process
+** prod: Load data
+#+begin_src jupyter-python :async yes
+dir0 = "../../data/d0009_synsets-merged/"
+dir0 = pathlib.Path(dir0)
+# dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} not found!"
+
+name0 = f"synsets-merged"
+extn0 = ".pkl"
+
+if0 = (dir0/name0).with_suffix(extn0)
+log0.info(f"loading: {if0}...")
+df0 = pd.read_pickle(if0)
+log0.info(f"loading: {if0}... DONE")
+
+df0["lemmas"] = df0["lemmas"].apply(lambda list0: [str(item0) for item0 in list0])
+df0["target"] = df0.MEAN / 3
+log0.info(f"{df0.target.mean() = }")
+log0.info(f"{df0.target.min() = }")
+log0.info(f"{df0.target.max() = }")
+log0.info(f"{df0.target.std() = }")
+
+log0.info(f"{df0.shape = }")
+disp_df(df0.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: loading: ../../data/d0009_synsets-merged/synsets-merged.pkl...
+I: loading: ../../data/d0009_synsets-merged/synsets-merged.pkl... DONE
+I: df0.target.mean() = 0.05918228939188339
+I: df0.target.min() = -1.0
+I: df0.target.max() = 0.9583333333333334
+I: df0.target.std() = 0.3259159215888112
+I: df0.shape = (9089, 9)
+#+end_example
+#+begin_example
+             TYPE              id0      MEAN       STD   CNT                                       lemmas                                   definition                                     examples    target
+105          src0  oewn-07042734-n  0.100000  0.316228  10.0  [musical theme, theme, melodic theme, idea]  (music) melodic subject of a musical com...  [the theme is announced in the first mea...  0.033333
+913          src0  oewn-08680308-n  0.000000  0.447214  11.0                 [laboratory, testing ground]  a region resembling a laboratory inasmuc...  [the new nation is a testing ground for ...  0.000000
+1531         src0  oewn-00844276-s  0.000000  1.632993   7.0                                [streamlined]  made efficient by stripping off nonessen...  [short streamlined meetings, a streamlin...  0.000000
+2529         src0  oewn-02562363-v  0.375000  1.187735   8.0                                      [carry]  compensate for a weaker partner or membe...  [I resent having to carry her all the time]  0.125000
+3815         src0  oewn-00604693-v  2.125000  0.991031   8.0           [train, develop, prepare, educate]              create by training and teaching  [The old master is training world-class ...  0.708333
+4109         src0  oewn-00583425-n  0.125000  0.353553   8.0  [line, job, occupation, business, line o...  the principal activity in your life that...            [he's not in my line of business]  0.041667
+4826         src0  oewn-01668036-a  1.428571  0.975900   7.0                                 [optimistic]  expecting the best in this best of all p...  [in an optimistic mood, optimistic plans...  0.476190
+7982  src0_negLem  oewn-00128351-n  1.625000  1.060660   8.0                                  [not worst]              the supreme effort one can make                        [they did their best]  0.541667
+#+end_example
+:END:
+** Check lead
+#+begin_src jupyter-python :async yes
+disp_df(
+    df0[df0.lemmas.apply(lambda x: "lead" in x)],
+    max_colwidth=222,
+)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+      TYPE              id0      MEAN       STD   CNT                                                    lemmas                                                                                                                        definition                                                                                                                                                                                     examples    target
+162   src0  oewn-06664322-n  0.888889  0.927961   9.0  [tip, lead, wind, confidential information, steer, hint]                                                                                            an indication of potential opportunity                                                                                                                                    [he got a tip on the stock market, a good lead for a job]  0.296296
+773   src0  oewn-01259362-n  1.909091  0.943880  11.0                                                    [lead]  a position of being the initiator of something and an example that others will follow (especially in the phrase `take the lead')                                                                             [he takes the lead in any group, we were just waiting for someone to take the lead, they didn't follow our lead]  0.636364
+1185  src0  oewn-00773677-v  1.000000  1.414214  11.0                                                    [lead]                                                                                               cause to undertake a certain action                                                                                                                                                      [Her greed led her to forge the checks]  0.333333
+1416  src0  oewn-05164526-n  1.000000  0.755929   8.0                                                    [lead]                                                                                       an advantage held by a competitor in a race                                                                                                                                                          [he took the lead at the last turn]  0.333333
+1677  src0  oewn-05835238-n  1.125000  0.991031   8.0                                      [lead, trail, track]                                                                                          evidence pointing to a possible solution                                                                                                       [the police are following a promising lead, the trail led straight to the perpetrator]  0.375000
+1993  src0  oewn-02003455-v  1.285714  0.487950   7.0                                              [head, lead]                                                                                       travel in front of; go in advance of others                                                                                                                                                          [The procession was headed by John]  0.428571
+2046  src0  oewn-03610056-n  0.000000  0.000000   8.0          [lead, jumper cable, booster cable, jumper lead]                                                                                   a jumper that consists of a short piece of wire                                                                                                                                            [it was a tangle of jumper cables and clip leads]  0.000000
+2132  src0  oewn-02642040-v  0.666667  0.866025   9.0                                                    [lead]                                                                                                              tend to or result in                                                                                                                                      [This remark led to further arguments among the guests]  0.222222
+2317  src0  oewn-14667645-n  0.250000  0.707107   8.0                              [lead, Pb, atomic number 82]                   a soft heavy toxic malleable metallic element; bluish white when freshly cut but tarnishes readily to dull grey                                                                                                                                               [the children were playing with lead soldiers]  0.083333
+2755  src0  oewn-02445109-v  1.857143  1.069045   7.0                                              [head, lead]                                                                                                                   be in charge of                                                                                                                                                               [Who is heading this project?]  0.619048
+3722  src0  oewn-02691775-v  0.888889  0.927961   9.0                             [run, extend, pass, go, lead]                    stretch out over a distance, space, time, or scope; run or extend between two points or beyond a certain point  [Service runs all the way to Cranbury, His knowledge doesn't go very far, My memory extends back to my fourth year of life, The facts extend beyond a consideration of her personal assets]  0.296296
+3854  src0  oewn-02693227-v  2.250000  0.462910   8.0                                               [top, lead]                                                                                                  be ahead of others; be the first                                                                                                                                                            [she topped her class every year]  0.750000
+4420  src0  oewn-08609721-n  1.375000  1.187735   8.0                                                    [lead]                                              (baseball) the position taken by a base runner preparing to advance to the next base                                                                                                                                                              [he took a long lead off first]  0.458333
+4530  src0  oewn-02003830-v  1.125000  0.834523   8.0                      [take, guide, lead, conduct, direct]                                                                                                           take somebody somewhere                                                                                              [we led him to our chief, can you take me to the main entrance?, He conducted us to the palace]  0.375000
+5570  src0  oewn-02692313-v  0.625000  0.916125   8.0                                                [go, lead]                                                                                                    lead, extend, or afford access                                                                                                                                        [This door goes to the basement, The road runs South]  0.208333
+5907  src0  oewn-01736802-v  2.250000  0.707107   8.0                                   [lead, conduct, direct]                                                                                      lead, as in the performance of a composition                                                                                                                   [conduct an orchestra; Barenboim conducted the Chicago symphony for years]  0.750000
+6253  src0  oewn-06281532-n  0.500000  1.069045   8.0                                     [lead, lead-in, lede]                                                                                               the introductory section of a story                                                                                                                                         [it was an amusing lead-in to a very serious matter]  0.166667
+6559  src0  oewn-01258857-n  0.555556  0.726483   9.0                                                    [lead]                                                                                  the playing of a card to start a trick in bridge                                                                                                                                                                  [the lead was in the dummy]  0.185185
+6661  src0  oewn-02561616-v  1.285714  0.951190   7.0                               [lead, contribute, conduce]                                                                                                                   be conducive to                                                                                                                                [The use of computers in the classroom led to better writing]  0.428571
+#+end_example
+** Check fruitfully
+#+begin_src jupyter-python :async yes
+disp_df(
+    df0[df0.lemmas.apply(lambda x: "fruitfully" in x)],
+    max_colwidth=222,
+)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+      TYPE              id0  MEAN      STD  CNT                                  lemmas           definition                                           examples    target
+1732  src0  oewn-00215173-r   2.0  0.92582  8.0  [fruitfully, profitably, productively]  in a productive way  [they worked together productively for two years]  0.666667
+#+end_example
+
+** Check categories
+#+begin_src jupyter-python :async yes
+print(f"{df0.lemmas.apply(len).mean()}")
+print(f"{df0.lemmas.apply(len).std()}")
+print(f"{df0.examples.apply(len).mean()}")
+print(f"{df0.examples.apply(len).std()}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+2.03432720871383
+1.6447636819370604
+1.9046099680932995
+1.2817403665854505
+#+end_example
+
+** Check categories
+#+begin_src jupyter-python :async yes
+df0.TYPE.value_counts()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+TYPE
+src0           6914
+src0_negLem     872
+ant2            436
+ant2_negLem     436
+ant0_negLem     431
+Name: count, dtype: int64
+#+end_example
+
+** Check examples
+#+begin_src jupyter-python :async yes
+df0.examples.apply(lambda x: len(x)).value_counts().sort_index()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+examples
+1     4563
+2     2541
+3     1114
+4      443
+5      217
+6      120
+7       41
+8       20
+9       10
+10      12
+11       7
+13       1
+Name: count, dtype: int64
+#+end_example
+
+** Cols
+#+begin_src jupyter-python :async yes
+for col0 in df0.columns:
+    print(f"    \"{col0}\",")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    "TYPE",
+    "id0",
+    "MEAN",
+    "STD",
+    "CNT",
+    "lemmas",
+    "definition",
+    "examples",
+    "target",
+#+end_example
+
+** Copy source df
+#+begin_src jupyter-python :async yes
+df1 = df0[df0.TYPE=="src0"].copy()
+df1["definition"] = ""
+df1["lemmas"] = [[]]*len(df1)
+
+df2 = df0[df0.TYPE=="src0"].copy()
+df4 = df0.copy()
+df6 = df0.copy()
+log0.info(f"{df2.shape = }")
+log0.info(f"{df4.shape = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df2.shape = (6914, 9)
+I: df4.shape = (9089, 9)
+#+end_example
+
+** Explode examples in df1
+#+begin_src jupyter-python :async yes
+df1a = df1.copy()
+log0.info(f"raw: {df1a.shape = }")
+df1a = df1a.explode(column=["examples"])
+df1a["text"] = df1a["examples"]
+log0.info(f"exp: {df1a.shape = }")
+disp_df(df1a.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df1a.shape = (6914, 9)
+I: exp: df1a.shape = (12812, 10)
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD   CNT lemmas definition                                     examples    target                                         text
+556   src0  oewn-01531310-v  1.300000  0.948683  10.0     []             He finally could free the legs of the ea...  0.433333  He finally could free the legs of the ea...
+1629  src0  oewn-00755631-s  1.333333  1.118034   9.0     []                       she reigned in magisterial beauty  0.444444            she reigned in magisterial beauty
+1871  src0  oewn-02751207-v  0.000000  0.500000   9.0     []                                four and four make eight  0.000000                     four and four make eight
+2018  src0  oewn-00430156-r  2.250000  0.886405   8.0     []             the federal government replaced the powe...  0.750000  the federal government replaced the powe...
+2899  src0  oewn-00969657-v  0.777778  0.666667   9.0     []                         publish a magazine or newspaper  0.259259              publish a magazine or newspaper
+3840  src0  oewn-00558544-s -1.125000  0.834523   8.0     []                                  probationary employees -0.375000                       probationary employees
+4050  src0  oewn-00342215-v  1.428571  0.975900   7.0     []                              The inauguration went well  0.476190                   The inauguration went well
+4894  src0  oewn-00796324-s  0.625000  0.916125   8.0     []                         overcome by a superior opponent  0.208333              overcome by a superior opponent
+#+end_example
+:END:
+** Explode lemmas in df2
+#+begin_src jupyter-python :async yes
+df2a = df2.copy()
+log0.info(f"raw: {df2a.shape = }")
+df2a = df2a.explode(column=["lemmas"])
+df2a["text"] = df2a.lemmas + ", " + df2a.definition
+log0.info(f"exp: {df2a.shape = }")
+disp_df(df2a.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df2a.shape = (6914, 9)
+I: exp: df2a.shape = (14813, 10)
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD   CNT       lemmas                                   definition                                     examples    target                                         text
+663   src0  oewn-00582390-s -0.875000  1.246423   8.0       crying  conspicuously and outrageously bad or re...  [a crying shame, an egregious lie, flagr... -0.291667  crying, conspicuously and outrageously b...
+997   src0  oewn-01253673-v -1.000000  1.054093  10.0        worry                      touch or rub constantly              [The old man worried his beads] -0.333333               worry, touch or rub constantly
+2589  src0  oewn-00077383-n -1.000000  1.195229   8.0         trip    an unintentional but embarrassing blunder  [he recited the whole poem without a sin... -0.333333  trip, an unintentional but embarrassing ...
+2907  src0  oewn-00845580-s  1.750000  0.707107   8.0     emphatic                            sudden and strong                             [an emphatic no]  0.583333                  emphatic, sudden and strong
+3813  src0  oewn-01688793-s -1.625000  0.916125   8.0  disoriented  having lost your bearings; confused as t...  [I frequently find myself disoriented wh... -0.541667  disoriented, having lost your bearings; ...
+3992  src0  oewn-07224193-n  0.142857  1.214986   7.0    exception                grounds for adverse criticism          [his authority is beyond exception]  0.047619     exception, grounds for adverse criticism
+6336  src0  oewn-06660952-n  0.375000  0.744024   8.0    testimony            something that serves as evidence   [his effort was testimony to his devotion]  0.125000  testimony, something that serves as evid...
+6817  src0  oewn-00032610-s  1.714286  0.951190   7.0    gymnastic                            vigorously active  [an acrobatic dance, an athletic child, ...  0.571429                 gymnastic, vigorously active
+#+end_example
+:END:
+** Explode examples in df2
+#+begin_src jupyter-python :async yes
+df2b = df2.copy()
+log0.info(f"raw: {df2b.shape = }")
+df2b = df2b.explode(column=["examples"])
+df2b["text"] = df2b.examples
+log0.info(f"exp: {df2b.shape = }")
+disp_df(df2b.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df2b.shape = (6914, 9)
+I: exp: df2b.shape = (12812, 10)
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT                         lemmas                                   definition                                     examples    target                                         text
+472   src0  oewn-03977398-n  0.000000  0.000000  9.0                          [ply]  one of the strands twisted together to m...                               three-ply cord  0.000000                               three-ply cord
+1586  src0  oewn-01638779-s  0.375000  0.517549  8.0                     [official]                          verified officially        the election returns are now official  0.125000        the election returns are now official
+1800  src0  oewn-00440298-v  1.571429  0.975900  7.0  [speed, speed up, accelerate]                         cause to move faster                       He accelerated the car  0.523810                       He accelerated the car
+2960  src0  oewn-04707990-n  0.285714  0.755929  7.0   [coating, finishing, finish]  a decorative texture or appearance of a ...  when the finish is too thin it is diffic...  0.095238  when the finish is too thin it is diffic...
+2970  src0  oewn-01399805-a  0.000000  0.000000  7.0                       [leaded]                   treated or mixed with lead                              leaded gasoline  0.000000                              leaded gasoline
+4354  src0  oewn-01929647-v -1.500000  1.069045  8.0            [drift, err, stray]     wander from a direct course or at random              don't drift from the set course -0.500000              don't drift from the set course
+6403  src0  oewn-01653333-s -0.125000  0.353553  8.0                       [junior]   including or intended for youthful persons                              junior fashions -0.041667                              junior fashions
+6441  src0  oewn-05818587-n -0.555556  1.130388  9.0                 [life, living]  the experience of being alive; the cours...  he could no longer cope with the complex... -0.185185  he could no longer cope with the complex...
+#+end_example
+:END:
+** Explode lemmas in df4
+#+begin_src jupyter-python :async yes
+df4a = df4.copy()
+log0.info(f"raw: {df4a.shape = }")
+df4a = df4a.explode(column=["lemmas"])
+df4a["text"] = df4a.lemmas + ", " + df4a.definition
+log0.info(f"exp: {df4a.shape = }")
+disp_df(df4a.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df4a.shape = (9089, 9)
+I: exp: df4a.shape = (18490, 10)
+#+end_example
+#+begin_example
+             TYPE              id0      MEAN       STD  CNT          lemmas                                   definition                                     examples    target                                         text
+1459         src0  oewn-00430425-n -0.833333  1.329160  6.0        escapism  an inclination to retreat from unpleasan...  [romantic novels were her escape from th... -0.277778  escapism, an inclination to retreat from...
+2796         src0  oewn-00891076-v  1.555556  0.726483  9.0       guarantee                  promise to do or accomplish            [guarantee to free the prisoners]  0.518519       guarantee, promise to do or accomplish
+4719         src0  oewn-04642461-n  1.250000  1.035098  8.0        activity  the trait of being active; moving or act...    [the level of activity declines with age]  0.416667  activity, the trait of being active; mov...
+5400         src0  oewn-00591299-v  1.250000  1.281740  8.0           catch  grasp with the mind or develop an unders...  [did you catch that allusion?, We caught...  0.416667  catch, grasp with the mind or develop an...
+5429         src0  oewn-00814485-a  1.750000  1.164965  8.0           eager  having or showing keen interest or inten...  [eager to learn, eager to travel abroad,...  0.583333  eager, having or showing keen interest o...
+7942  src0_negLem  oewn-00782933-a  0.625000  0.916125  8.0  not indistinct  easy to perceive; especially clearly out...  [a distinct flavor, a distinct odor of t...  0.208333  not indistinct, easy to perceive; especi...
+8142  src0_negLem  oewn-02101168-a  0.625000  0.916125  8.0    not insecure                     free from danger or risk  [secure from harm, his fortune was secur...  0.208333       not insecure, free from danger or risk
+8824  ant0_negLem  oewn-02486512-v  0.000000  1.732051  7.0  not legitimise                      declare illegal; outlaw      [Marijuana is criminalized in the U.S.]  0.000000      not legitimise, declare illegal; outlaw
+#+end_example
+:END:
+** Explode examples in df4
+#+begin_src jupyter-python :async yes
+df4b = df4.copy()
+log0.info(f"raw: {df4b.shape = }")
+df4b = df4b.explode(column=["examples"])
+df4b["text"] = df4b.examples
+log0.info(f"exp: {df4b.shape = }")
+disp_df(df4b.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df4b.shape = (9089, 9)
+I: exp: df4b.shape = (17311, 10)
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT                               lemmas                                   definition                                     examples    target                                         text
+46    src0  oewn-04686906-n  0.125000  0.640870  8.0                [visage, countenance]   the appearance conveyed by a person's face                       a pleasant countenance  0.041667                       a pleasant countenance
+2068  src0  oewn-02235691-s  1.125000  1.246423  8.0                  [technical, expert]  of or relating to or requiring special k...                           technical language  0.375000                           technical language
+2306  src0  oewn-00523831-v  0.000000  0.000000  7.0  [receive, get, incur, obtain, find]     receive a specified treatment (abstract)  I got nothing but trouble for my good in...  0.000000  I got nothing but trouble for my good in...
+3942  src0  oewn-00313654-s -0.714286  1.704336  7.0                 [reckless, heedless]          characterized by careless unconcern         reckless squandering of public funds -0.238095         reckless squandering of public funds
+4510  src0  oewn-01961388-v -0.142857  0.377964  7.0                          [sit, ride]  sit and travel on the back of animal, us...                       She never sat a horse! -0.047619                       She never sat a horse!
+4640  src0  oewn-01632091-v -0.125000  1.642081  8.0                                [set]                               apply or start                       set fire to a building -0.041667                       set fire to a building
+6734  src0  oewn-02078305-v  0.666667  1.000000  9.0                 [elude, evade, bilk]        escape, either physically or mentally                  The thief eluded the police  0.222222                  The thief eluded the police
+7247  ant2  oewn-00635278-a -1.125000       NaN  NaN                   [incorrect, wrong]  not correct; not in conformity with fact...           found themselves on the wrong road -0.375000           found themselves on the wrong road
+#+end_example
+:END:
+** Explode lemmas in df6
+#+begin_src jupyter-python :async yes
+df6a = df6.copy()
+log0.info(f"raw: {df6a.shape = }")
+df6a = df6a.explode(column=["lemmas"])
+df6a["text"] = df6a.lemmas + ", " + df6a.definition
+log0.info(f"exp: {df6a.shape = }")
+disp_df(df6a.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df6a.shape = (9089, 9)
+I: exp: df6a.shape = (18490, 10)
+#+end_example
+#+begin_example
+             TYPE              id0      MEAN       STD   CNT       lemmas                                   definition                                     examples    target                                         text
+2188         src0  oewn-02108248-s -1.000000  1.290994   7.0        petty                   inferior in rank or status        [a lowly corporal, petty officialdom] -0.333333            petty, inferior in rank or status
+2308         src0  oewn-00074163-r  0.250000  0.707107   8.0    primarily                            for the most part     [he is mainly interested in butterflies]  0.083333                 primarily, for the most part
+3014         src0  oewn-02547977-v -0.111111  0.927961   9.0     abide by  act in accordance with someone's rules, ...  [He complied with my instructions, You m... -0.037037  abide by, act in accordance with someone...
+3427         src0  oewn-00120604-v  0.142857  0.690066   7.0         have  cause to move; cause to be in a certain ...  [He got his squad on the ball, This let ...  0.047619  have, cause to move; cause to be in a ce...
+4633         src0  oewn-00241051-n  1.750000  0.886405   8.0   foundation  the act of starting something for the fi...  [she looked forward to her initiation as...  0.583333  foundation, the act of starting somethin...
+6349         src0  oewn-02386868-v  1.000000  1.069045   8.0       assume  take on titles, offices, duties, respons...  [When will the new President assume offi...  0.333333  assume, take on titles, offices, duties,...
+7430  src0_negLem  oewn-01531310-v  1.300000  0.948683  10.0  not deposit          remove or force out from a position  [The dentist dislodged the piece of food...  0.433333  not deposit, remove or force out from a ...
+8358  ant0_negLem  oewn-01394303-a -0.250000  0.462910   8.0    not large  limited or below average in number or qu...  [a little dining room, a little house, a... -0.083333  not large, limited or below average in n...
+#+end_example
+:END:
+** Explode examples in df6
+#+begin_src jupyter-python :async yes
+df6b = df6a.copy()  # WARN: CAUTION: taking df6a NOT df6
+log0.info(f"raw: {df6b.shape = }")
+df6b = df6b.explode(column=["examples"])
+df6b["text"] = df6b.lemmas + "; " + df6b.definition + "; " + df6b.examples
+log0.info(f"exp: {df6b.shape = }")
+disp_df(df6b.sample(n=8).sort_index())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: raw: df6b.shape = (18490, 10)
+I: exp: df6b.shape = (41313, 10)
+#+end_example
+#+begin_example
+      TYPE              id0      MEAN       STD  CNT       lemmas                                   definition                                 examples    target                                         text
+800   src0  oewn-02006442-v  0.111111  1.833333  9.0         fire        drive out or away by or as if by fire                  The soldiers were fired  0.037037  fire; drive out or away by or as if by f...
+1619  src0  oewn-00305748-s  1.000000  1.264911  6.0        rough             violently agitated and turbulent  the fierce thunders roar me their music  0.333333  rough; violently agitated and turbulent;...
+2622  src0  oewn-00005041-v  0.857143  1.214986  7.0      inspire                                draw in (air)                            Inhale deeply  0.285714        inspire; draw in (air); Inhale deeply
+2829  src0  oewn-01644397-v  2.777778  0.440959  9.0   accomplish                                put in effect       execute the decision of the people  0.925926  accomplish; put in effect; execute the d...
+3148  src0  oewn-04647089-n  0.250000  2.121320  8.0        rigor                          excessive sternness                  the rigors of boot camp  0.083333  rigor; excessive sternness; the rigors o...
+4078  src0  oewn-02473075-s -1.111111  1.269296  9.0  questioning                  marked by or given to doubt                     a skeptical attitude -0.370370  questioning; marked by or given to doubt...
+5829  src0  oewn-04652076-n  1.625000  1.302470  8.0         zeal                           prompt willingness        readiness to continue discussions  0.541667  zeal; prompt willingness; readiness to c...
+5948  src0  oewn-01622528-s -0.125000  0.353553  8.0     manifest  clearly revealed to the mind or the sens...    it is plain that he is no reactionary -0.041667  manifest; clearly revealed to the mind o...
+#+end_example
+:END:
+** Concatenate
+#+begin_src jupyter-python :async yes
+cols0 = ["text", "target"]
+df1x = df1a[cols0]
+df2x = pd.concat([df2a[cols0], df2b[cols0]]).reset_index(drop=True)
+df4x = pd.concat([df4a[cols0], df4b[cols0]]).reset_index(drop=True)
+df6x = pd.concat([df6a[cols0], df6b[cols0]]).reset_index(drop=True)
+
+log0.info(f"{df1x.shape = }")
+log0.info(f"{df2x.shape = }")
+log0.info(f"{df4x.shape = }")
+log0.info(f"{df6x.shape = }")
+disp_df(df1x.sample(n=8).sort_index(), max_colwidth=111)
+disp_df(df2x.sample(n=8).sort_index(), max_colwidth=111)
+disp_df(df4x.sample(n=8).sort_index(), max_colwidth=111)
+disp_df(df6x.sample(n=8).sort_index(), max_colwidth=111)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+#+begin_example
+I: df1x.shape = (12812, 2)
+I: df2x.shape = (27625, 2)
+I: df4x.shape = (35801, 2)
+I: df6x.shape = (59803, 2)
+#+end_example
+#+begin_example
+                                                                   text    target
+1858                             Who's running for treasurer this year?  0.416667
+3312                                                a great work of art  0.458333
+3388                                                      a sharp knife  0.208333
+3634                         she fell to pieces after she lost her work -0.190476
+3881                                           brads are headless nails -0.041667
+4398  deductible losses on sales or exchanges of property are allowable  0.125000
+5440                      The police car pursued the suspected attacker  0.523810
+5498                                                    popular fiction  0.111111
+#+end_example
+#+begin_example
+                                                                                                                 text    target
+2186                                                                                root, take root and begin to grow  0.266667
+3042                                                                                  first, serving to set in motion  0.285714
+3310   trade, the commercial exchange (buying and selling on domestic or international markets) of goods and services  0.037037
+4014                                                                                           only, and nothing more  0.000000
+12625                                                             employ, the state of being employed or having a job  0.074074
+16703                                                                                       an outstanding war record  0.407407
+23967                                                                          He spent the day drawing in the garden -0.083333
+25183                                                                           This adds a light note to the program  0.285714
+#+end_example
+#+begin_example
+                                                                       text    target
+509    big top, a canvas tent to house the audience at a circus performance -0.030303
+2238                      organizational, of or relating to an organization  0.185185
+8838                                       mystifying, of an obscure nature -0.041667
+16205                               not lasting, not permanent; not lasting -0.285714
+20678                                                  respiratory activity  0.222222
+23724                                   bold settlers on some foreign shore  0.666667
+28403                                                           gentle rain -0.458333
+29629                                      Social relations impose courtesy  0.541667
+#+end_example
+#+begin_example
+                                                                                                                 text    target
+9019                                                      superiority, displaying a sense of being better than others  0.208333
+14587                                                  pull through, continue in existence after (an adversity, etc.)  0.476190
+18850                                                      activate; put in motion or move to act; trigger a reaction  0.444444
+22564                                   rotter; a person who is deemed to be despicable or contemptible; kill the rat -0.714286
+33579                                                        wise; improperly forward or bold; don't be fresh with me  0.074074
+41189  tension; (psychology) a state of mental or emotional strain or suspense; he suffered from fatigue and emoti... -0.333333
+45651                                                                       seethe; boil vigorously; The water rolled  0.388889
+48211                                                 head; to go or travel towards; We were headed for the mountains  0.583333
+#+end_example
+:END:
+** Save DATASETS (CAUTION)
+#+begin_src jupyter-python :async yes :eval query
+import pathlib
+import csv
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+
+dir0 = "../../data/d0010_training-data/"
+dir0 = pathlib.Path(dir0)
+dir0.mkdir(mode=0o700, parents=True, exist_ok=True)
+assert dir0.exists(), f"The data directory dir0={str(dir0)} was not found!"
+
+
+now0 = []
+pfx0 = ["ft0x"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df1x.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df1x.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+
+now0 = []
+pfx0 = ["ft1x"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df2x.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df2x.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+
+now0 = []
+pfx0 = ["ft2x"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df4x.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df4x.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+
+now0 = []
+pfx0 = ["ft3x"]
+sfx0 = []
+
+bfn0 = dir0/"_".join(pfx0+now0+sfx0).replace(".", "_")
+
+xtn0 = ".pkl"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df6x.to_pickle(ofn0)
+
+xtn0 = ".csv"
+ofn0 = bfn0.with_suffix(xtn0)
+log0.info(f"saving: {ofn0}...")
+df6x.to_csv(ofn0, index=False, quoting=csv.QUOTE_NONNUMERIC)
+
+log0.info("DONE")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: saving: ../../data/d0010_training-data/ft0x.pkl...
+I: saving: ../../data/d0010_training-data/ft0x.csv...
+I: saving: ../../data/d0010_training-data/ft1x.pkl...
+I: saving: ../../data/d0010_training-data/ft1x.csv...
+I: saving: ../../data/d0010_training-data/ft2x.pkl...
+I: saving: ../../data/d0010_training-data/ft2x.csv...
+I: saving: ../../data/d0010_training-data/ft3x.pkl...
+I: saving: ../../data/d0010_training-data/ft3x.csv...
+I: DONE
+#+end_example
+
+** Checkups
+#+begin_src jupyter-python :async yes
+log0.info(f"{df0.target.mean() = }")
+log0.info(f"{df0.target.std() = }")
+log0.info(f"{df0.target.min() = }")
+log0.info(f"{df0.target.max() = }")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I: df0.target.mean() = 0.05918228939188339
+I: df0.target.std() = 0.3259159215888112
+I: df0.target.min() = -1.0
+I: df0.target.max() = 0.9583333333333334
+#+end_example

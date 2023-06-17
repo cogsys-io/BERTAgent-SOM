@@ -1,0 +1,231 @@
+#+title: S6001_train
+
+#+PROPERTY: header-args:jupyter-python  :tangle   no
+#+PROPERTY: header-args:jupyter-python  :tangle   yes
+
+#+PROPERTY: header-args:jupyter-python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:jupyter-python+ :eval     yes
+#+PROPERTY: header-args:jupyter-python+ :comments org
+#+PROPERTY: header-args:jupyter-python+ :results  raw drawer pp
+#+PROPERTY: header-args:jupyter-python+ :exports  both
+#+PROPERTY: header-args:jupyter-python+ :async    yes
+
+#+PROPERTY: header-args:jupyter-python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:jupyter-python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:jupyter-python+ :session  local_fast8 :kernel local_fast8
+
+#+LATEX_CMD:   xelatex
+#+LATEX_CLASS: article
+
+#+LATEX_CLASS_OPTIONS: [a4paper,10pt,onecolumn,oneside,openright]
+
+#+JIKO-CONFIG: use-minted
+#+JIKO-CONFIG: use-biblatex-apa7
+#+JIKO-CONFIG: use-hyperref-setup
+#+JIKO-CONFIG: use-threeparttable
+
+#+LATEX_HEADER_EXTRA: \IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+#+LATEX_HEADER_EXTRA: \IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+
+#+OPTIONS: author:nil
+#+OPTIONS: email:nil
+#+OPTIONS: date:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: ^:{}
+
+* Boilerplate
+** prod: Logger and Location
+#+begin_src jupyter-python :async yes :tangle yes
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0(write=True, stream_lvl="INFO", file_lvl="DEBUG")
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+#+end_src
+
+** prod: Auto reload
+#+begin_src jupyter-python :async yes
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+#+end_src
+
+* Imports
+** prod: NVM
+#+begin_src jupyter-python :async yes
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+#+end_src
+
+** prod: Basics
+#+begin_src jupyter-python :async yes
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+#+end_src
+
+** prod: Extra imports and settings
+#+begin_src jupyter-python :async yes
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+#+end_src
+
+* Extra Imports
+** prod: More extra imports and settings
+#+begin_src jupyter-python :async yes
+import numpy as np
+import pandas as pd
+from sklearn.utils import Bunch
+import torch
+import itertools
+import gc
+
+from transformers import AutoModelForSequenceClassification
+from transformers import AutoTokenizer
+from helpers import BERTAgentSentencesPredictor
+from helpers import compute_metrics
+from helpers import json_serializable_or_str_repr
+from helpers import train_bert_model
+
+log0.info(f"{torch.cuda.is_available()}")
+log0.info("DONE: more extra imports and settings")
+#+end_src
+
+* Process
+** prod: Metadata
+#+begin_src jupyter-python :async yes
+metadata = Bunch()
+
+metadata.data_dir = "../../data/d0010_training-data/"
+metadata.data_dir = pathlib.Path(metadata.data_dir)
+
+metadata.goldstd = "gs0x"  # GOLD STANDARD
+metadata.dataset = "tiny"  # TINY
+metadata.dataset = "temp"  # TEMP
+metadata.dataset = "ft4x"  # LEGACY
+metadata.dataset = "ft3x"  # EVERYTHING
+metadata.dataset = "ft2x"  # EXTENDED/AUGUMENTED
+metadata.dataset = "ft1x"  # SIMPLE
+metadata.dataset = "ft0x"  # EXAMPLES ONLY
+
+metadata.extn = ".pkl"
+
+metadata.testing = "both"
+metadata.testing = "gold"
+
+metadata.num_epochs = 12
+metadata.batch_size = 64
+metadata.random_state = 42
+metadata.seed = metadata.random_state
+metadata.max_length=128
+metadata.status = "TRIALS"
+metadata.status = "DEPLOY"
+
+metadata.model_name = "bert-base-uncased"
+metadata.model_name = "roberta-base"
+
+log0.info(f"METADATA:\n{textwrap.indent(srsly.yaml_dumps(json_serializable_or_str_repr(dict(metadata))), '   ')}")
+#+end_src
+
+** prod: Training in batches
+#+begin_src jupyter-python :async yes
+METADATA = Bunch(**{key: [val] for key, val in metadata.items()})
+
+METADATA.pop("dataset", None)
+# METADATA.dataset = ["temp", "tiny"]
+# METADATA.dataset = ["temp", "ft1x"]
+METADATA.dataset = ["ft0x"]
+METADATA.dataset = ["ft0x", "ft1x", "ft2x", "ft3x", "ft4x"]
+METADATA.dataset = ["ft1x", "ft2x", "ft3x"]
+
+METADATA.pop("model_name", None)
+METADATA.model_name = ["bert-base-uncased", "roberta-base"]
+
+METADATA = Bunch(**{key: sorted(list(set(val))) for key, val in METADATA.items()})
+
+log0.info(f"METADATA:\n{textwrap.indent(srsly.yaml_dumps(json_serializable_or_str_repr(dict(METADATA))), '   ')}")
+
+arg_names = list(METADATA.keys())
+arg_values = list(METADATA.values())
+
+for values in itertools.product(*arg_values):
+    arg_dict = Bunch(**dict(zip(arg_names, values)))
+    print(dict(**arg_dict))
+
+print("=" * 77)
+print(f"METADATA:\n{textwrap.indent(srsly.yaml_dumps(json_serializable_or_str_repr(dict(METADATA))), '   ')}")
+print("=" * 77)
+
+for values in itertools.product(*arg_values):
+    arg_dict = Bunch(**dict(zip(arg_names, values)))
+    print(dict(**arg_dict))
+
+    trainer, ds0, summary, dir0 = train_bert_model(
+        metadata=arg_dict,
+        compute_metrics=compute_metrics,
+        log0=log0,
+    )
+    try:
+        del trainer, ds0, summary, dir0
+    except NameError:
+        pass
+
+    gc.collect()
+    torch.cuda.empty_cache()
+
+#+end_src

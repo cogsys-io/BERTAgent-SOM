@@ -1,0 +1,194 @@
+% Created 2023-06-17 Sat 06:42
+% Intended LaTeX compiler: xelatex
+\documentclass[a4paper,10pt,onecolumn,oneside,openright]{article}
+\usepackage[no-math]{fontspec}
+\newfontfamily\cyrillicfont{CMU Serif}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Linux Libertine O}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Hack}
+\setmainfont[
+  Ligatures=TeX,
+  Extension=.otf,
+  BoldFont=cmunbx,
+  ItalicFont=cmunti,
+  BoldItalicFont=cmunbi,
+]{cmunrm}
+\usepackage[Latin,Cyrillics]{ucharclasses}
+\setTransitionsForCyrillics{\begingroup\cyrillicfont}{\endgroup}
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{latin}
+\setotherlanguage{greek}
+\setotherlanguage{russian}
+\setotherlanguage{polish}
+\setotherlanguage{german}
+\setotherlanguage{ukrainian}
+\newcommand{\RU}[1]{\foreignlanguage{russian}{#1}}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{tabularx}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \begin{tabular}{>{$}l<{$} @{} >{${}}c<{{}$} @{} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\newenvironment{conditions*}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \tabularx{\columnwidth}{>{$}l<{$} @{}>{${}}c<{{}$}@{} >{\raggedright\arraybackslash}X}}
+  {\endtabularx\par\vspace{\belowdisplayskip}}
+\usepackage[tableposition=t]{caption}
+\captionsetup[table]{skip=8pt}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+\usepackage[tableposition=t]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{fixltx2e}
+\usepackage[unicode]{hyperref}
+\usepackage{cleveref}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullRef}[1]{\nameCref{#1} \hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullREF}[1]{\nameCref{#1} \ref{#1}: \nameref*{#1}}
+\newcommand*{\FullREF}[1]{\nameCref{#1} \ref{#1} (\nameref*{#1})}
+\newcommand*{\eqnCref}[1]{\nameCref{#1} \ref{#1}}
+\newcommand*{\EqnCref}[1]{\nameCref{#1} \ref*{#1}}
+\newcommand{\citinf}{{\newline\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citfix}{{\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citsrc}{{\vadjust{\vspace{8pt}}\nolinebreak\hspace{\fill}\mbox{}\linebreak\hspace*{\fill}\textemdash\space}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{amscd}
+\usepackage{amstext}
+\usepackage{threeparttable}
+\AtBeginDocument{\hypersetup{pdfauthor={Jan Nikadon},pdftitle={\thetitle},pdfsubject={subject},pdfkeywords={keyword1,}{keyword2},}}
+\hypersetup{xetex,colorlinks=true,linktocpage=true,linkcolor=RoyalPurple,citecolor=RoyalPurple,filecolor=RoyalBlue,urlcolor=RoyalBlue,pagebackref=true,plainpages=false,pdfpagelabels=true,bookmarksnumbered=true,}
+\PassOptionsToPackage{dateabbrev=false,natbib=true,style=apa,backref=true,backrefstyle=two,dashed=false,hyperref=true,backend=biber,maxbibnames=99,firstinits=true,giveninits=false,uniquename=init,citetracker=true,parentracker=true,url=false,doi=true,}{biblatex}
+\usepackage{biblatex}
+\usepackage[newfloat]{minted}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{titling}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\definecolor{fuchsiapink}{rgb}{1.0, 0.47, 1.0}
+\definecolor{cream}{rgb}{1.00, 0.99, 0.82}
+\definecolor{champagne}{rgb}{0.97, 0.91, 0.81}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{blanchedalmond}{rgb}{1.0, 0.92, 0.8}
+\definecolor{brilliantlavender}{rgb}{0.96, 0.73, 1.0}
+\IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+\IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+\date{}
+\title{ICC}
+\begin{document}
+
+\maketitle
+
+
+\section{Info}
+\label{sec:org2c2eb7d}
+Procedure used here is based \textcite{MurakiEtAl2022pub}
+\begin{itemize}
+\item Muraki, E. J., Abdalla, S., Brysbaert, M., \& Pexman, P. M. (2022).
+Concreteness ratings for 62,000 English multiword expressions. Behavior
+Research Methods. \url{https://doi.org/10.3758/s13428-022-01912-6}
+\end{itemize}
+\section{Imports}
+\label{sec:org867fdf6}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(moments)
+library(tm)#Function to remove strings
+library(reshape2)#for data manipulation
+library(nlme)#for ICC
+library(multilevel)#for ICC
+library(arsenal)#for dataframe comparisons
+library(jtools)#for theme_apa function for plots
+library(apaTables)#for APA format tables
+library(fuzzyjoin)
+
+\end{minted}
+
+\section{GSD (sentences, gold standard)}
+\label{sec:org7e2ee1e}
+\subsection{Load data}
+\label{sec:org254e466}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+dir0 <- "../../data/u1001_gold_standard_nlp_bert/"
+if0 <- "long.csv"
+
+ratings_icc <- read_csv(file = file.path(dir0, if0))
+spec(ratings_icc)
+ratings_icc
+\end{minted}
+
+\begin{verbatim}
+indexing long.csv [========================================] 18.31GB/s, eta:  0s                                                                                                                   Rows: 9000 Columns: 3
+── Column specification ────────
+Delimiter: ","
+chr (1): PID
+dbl (2): SENT, EVAL
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+cols(
+  PID = col_character(),
+  SENT = col_double(),
+  EVAL = col_double()
+)
+# A tibble: 9,000 × 3
+   PID                       SENT  EVAL
+   <chr>                    <dbl> <dbl>
+ 1 6282ac6bddcf580b46bdef2d     1    -2
+ 2 5b737a81f80f680001b60f85     1    -2
+ 3 5997e57d6b939900012da0e2     1     0
+ 4 5ba8ba00d9c1080001fa4193     1     0
+ 5 6110ce792276c9f74115dbd2     1     0
+ 6 56220229ed6e5a0005c7fac1     1     1
+ 7 5e346dedaf532102529ce9da     1    -1
+ 8 5edbaae1b9f9f68349ce80f3     1    -2
+ 9 63f779120de2ae5b2620ce9b     1     0
+10 63ed42100168a762350b416f     1     1
+# ℹ 8,990 more rows
+# ℹ Use `print(n = ...)` to see more rows
+\end{verbatim}
+
+\subsection{ICC}
+\label{sec:org8e596f8}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{r}
+#Calculate ICC based on function from psychometric package but customized optimizer (see Brysbaert et al. 2019 for method description)
+#Run multilevel model with optimizer set to optim
+attach(ratings_icc)
+mod <- lme(EVAL ~ 1, random = ~1 | SENT, na.action = na.omit, control = lmeControl(opt = "optim"))
+detach(ratings_icc)
+#Extract intercept variance
+t0 <- as.numeric(VarCorr(mod)[1,1])
+#Extract residual variance
+sig2 <- as.numeric(VarCorr(mod)[2,1])
+#Calculate ICC based on intercept and residual variance
+icc1 <- t0/(t0 + sig2)
+#Calculate mean ICC across all group ICCs
+# icc2 <- mean(GmeanRel(mod)$MeanRel)
+icc2 <- mean(gmeanrel(mod)$MeanRel)
+paste(icc1)
+paste(icc2)
+\end{minted}
+
+\begin{verbatim}
+[1] "0.720399837021778"
+[1] "0.987221876053856"
+\end{verbatim}
+
+\section*{References}
+\label{sec:orgcb882a2}
+\addcontentsline{toc}{section}{References}
+
+\printbibliography[heading=none]
+\end{document}

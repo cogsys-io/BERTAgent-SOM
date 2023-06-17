@@ -1,0 +1,301 @@
+% Created 2023-06-05 Mon 04:22
+% Intended LaTeX compiler: xelatex
+\documentclass[a4paper,10pt,onecolumn,oneside,openright]{article}
+\usepackage[no-math]{fontspec}
+\newfontfamily\cyrillicfont{CMU Serif}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Linux Libertine O}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Hack}
+\setmainfont[
+  Ligatures=TeX,
+  Extension=.otf,
+  BoldFont=cmunbx,
+  ItalicFont=cmunti,
+  BoldItalicFont=cmunbi,
+]{cmunrm}
+\usepackage[Latin,Cyrillics]{ucharclasses}
+\setTransitionsForCyrillics{\begingroup\cyrillicfont}{\endgroup}
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{latin}
+\setotherlanguage{greek}
+\setotherlanguage{russian}
+\setotherlanguage{polish}
+\setotherlanguage{german}
+\setotherlanguage{ukrainian}
+\newcommand{\RU}[1]{\foreignlanguage{russian}{#1}}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{tabularx}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \begin{tabular}{>{$}l<{$} @{} >{${}}c<{{}$} @{} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\newenvironment{conditions*}
+  {\par\vspace{\abovedisplayskip}\noindent
+   \tabularx{\columnwidth}{>{$}l<{$} @{}>{${}}c<{{}$}@{} >{\raggedright\arraybackslash}X}}
+  {\endtabularx\par\vspace{\belowdisplayskip}}
+\usepackage[tableposition=t]{caption}
+\captionsetup[table]{skip=8pt}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+\usepackage[tableposition=t]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsfonts}
+\usepackage{soul}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{fixltx2e}
+\usepackage[unicode]{hyperref}
+\usepackage{cleveref}
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullRef}[1]{\nameCref{#1} \hyperref[{#1}]{\ref*{#1} \nameref*{#1}}}
+\newcommand*{\fullREF}[1]{\nameCref{#1} \ref{#1}: \nameref*{#1}}
+\newcommand*{\FullREF}[1]{\nameCref{#1} \ref{#1} (\nameref*{#1})}
+\newcommand*{\eqnCref}[1]{\nameCref{#1} \ref{#1}}
+\newcommand*{\EqnCref}[1]{\nameCref{#1} \ref*{#1}}
+\newcommand{\citinf}{{\newline\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citfix}{{\hspace*{\fill}}\textasteriskcentered}
+\newcommand{\citsrc}{{\vadjust{\vspace{8pt}}\nolinebreak\hspace{\fill}\mbox{}\linebreak\hspace*{\fill}\textemdash\space}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{amscd}
+\usepackage{amstext}
+\usepackage{threeparttable}
+\AtBeginDocument{\hypersetup{pdfauthor={Jan Nikadon},pdftitle={\thetitle},pdfsubject={subject},pdfkeywords={keyword1,}{keyword2},}}
+\hypersetup{xetex,colorlinks=true,linktocpage=true,linkcolor=RoyalPurple,citecolor=RoyalPurple,filecolor=RoyalBlue,urlcolor=RoyalBlue,pagebackref=true,plainpages=false,pdfpagelabels=true,bookmarksnumbered=true,}
+\PassOptionsToPackage{dateabbrev=false,natbib=true,style=apa,backref=true,backrefstyle=two,dashed=false,hyperref=true,backend=biber,maxbibnames=99,firstinits=true,giveninits=false,uniquename=init,citetracker=true,parentracker=true,url=false,doi=true,}{biblatex}
+\usepackage{biblatex}
+\usepackage[newfloat]{minted}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{titling}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\definecolor{fuchsiapink}{rgb}{1.0, 0.47, 1.0}
+\definecolor{cream}{rgb}{1.00, 0.99, 0.82}
+\definecolor{champagne}{rgb}{0.97, 0.91, 0.81}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{blanchedalmond}{rgb}{1.0, 0.92, 0.8}
+\definecolor{brilliantlavender}{rgb}{0.96, 0.73, 1.0}
+\IfFileExists{~/bib_cat/ref.bib}{\addbibresource{~/bib_cat/ref.bib}}{}
+\IfFileExists{main.bib}{\addbibresource{main.bib}}{}
+\date{}
+\title{S6001\_train}
+\begin{document}
+
+\maketitle
+
+\section{Boilerplate}
+\label{sec:orgd570195}
+\subsection{prod: Logger and Location}
+\label{sec:org2b64c1f}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import nvm
+import srsly
+import pathlib
+logZ = nvm.Log0(write=True, stream_lvl="INFO", file_lvl="DEBUG")
+log0 = logZ.logger
+locations = """
+stardust7:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+buka2:
+  jiko: cc/dev/c2023a/c0501_bertagent_devel/code/c0001_stage_04/
+"""
+locations = srsly.yaml_loads(locations)
+log0.info(f"{nvm.chdir(locations)}")
+\end{minted}
+
+\subsection{prod: Auto reload}
+\label{sec:org5ddb20a}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+\end{minted}
+
+\section{Imports}
+\label{sec:org73d7e8e}
+\subsection{prod: NVM}
+\label{sec:orgdc0bedd}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from nvm import disp_df
+from nvm import repr_df
+from nvm import rdf
+from nvm import ddf
+from nvm import clean_str
+from nvm.aux_str import CLEAN_STR_MAPPINGS_LARGE as maps0
+from nvm.aux_str import REGEX_ABC_DASH_XYZ_ASTERISK as re0
+from nvm.aux_pandas import fix_column_names
+\end{minted}
+
+\subsection{prod: Basics}
+\label{sec:orgca93a70}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import os
+import pathlib
+import numpy as np
+import pandas as pd
+import re
+import json
+import yaml
+import srsly
+import uuid
+import random
+import numbers
+from collections import OrderedDict
+from contextlib import ExitStack
+import warnings
+# warnings.warn("\nwarning")
+from hashlib import md5
+import humanfriendly as hf
+import time
+import datetime as dt
+from pytz import timezone as tz
+tz0 = tz("Europe/Berlin")
+from glob import glob
+from tqdm import tqdm
+import logging
+log0.info("DONE: basic imports")
+\end{minted}
+
+\subsection{prod: Extra imports and settings}
+\label{sec:org4e14664}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+from contexttimer import Timer
+import textwrap
+
+HOME = pathlib.Path.home()
+
+tqdm.pandas()
+
+import matplotlib
+from matplotlib import pyplot as plt
+# import seaborn as sns
+# import plotly.graph_objects as go
+# import plotly.express as px
+
+# get_ipython().run_line_magic("matplotlib", "qt")
+# get_ipython().run_line_magic("matplotlib", "inline")
+
+with Timer() as elapsed:
+    time.sleep(0.001)
+
+log0.info(hf.format_timespan(elapsed.elapsed))
+
+log0.info("DONE: extra imports and settings")
+\end{minted}
+
+\section{Extra Imports}
+\label{sec:orgde563f5}
+\subsection{prod: More extra imports and settings}
+\label{sec:org66cfa91}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+import numpy as np
+import pandas as pd
+from sklearn.utils import Bunch
+import torch
+import itertools
+import gc
+
+from transformers import AutoModelForSequenceClassification
+from transformers import AutoTokenizer
+from helpers import BERTAgentSentencesPredictor
+from helpers import compute_metrics
+from helpers import json_serializable_or_str_repr
+from helpers import train_bert_model
+
+log0.info(f"{torch.cuda.is_available()}")
+log0.info("DONE: more extra imports and settings")
+\end{minted}
+
+\section{Process}
+\label{sec:org075ed3e}
+\subsection{prod: Metadata}
+\label{sec:org742379d}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+metadata = Bunch()
+
+metadata.data_dir = "../../data/d0010_training-data/"
+metadata.data_dir = pathlib.Path(metadata.data_dir)
+
+metadata.goldstd = "gs0x"  # GOLD STANDARD
+metadata.dataset = "tiny"  # TINY
+metadata.dataset = "temp"  # TEMP
+metadata.dataset = "ft4x"  # LEGACY
+metadata.dataset = "ft3x"  # EVERYTHING
+metadata.dataset = "ft2x"  # EXTENDED/AUGUMENTED
+metadata.dataset = "ft1x"  # SIMPLE
+metadata.dataset = "ft0x"  # EXAMPLES ONLY
+
+metadata.extn = ".pkl"
+
+metadata.testing = "both"
+metadata.testing = "gold"
+
+metadata.num_epochs = 12
+metadata.batch_size = 64
+metadata.random_state = 42
+metadata.seed = metadata.random_state
+metadata.max_length=128
+metadata.status = "TRIALS"
+metadata.status = "DEPLOY"
+
+metadata.model_name = "bert-base-uncased"
+metadata.model_name = "roberta-base"
+
+log0.info(f"METADATA:\n{textwrap.indent(srsly.yaml_dumps(json_serializable_or_str_repr(dict(metadata))), '   ')}")
+\end{minted}
+
+\subsection{prod: Training in batches}
+\label{sec:org273f8de}
+\begin{minted}[framerule=0.5pt,fontsize=\small,mathescape=,bgcolor=blanchedalmond!80,samepage=,xrightmargin=0.0cm,xleftmargin=0.0cm,linenos=]{python}
+METADATA = Bunch(**{key: [val] for key, val in metadata.items()})
+
+METADATA.pop("dataset", None)
+# METADATA.dataset = ["temp", "tiny"]
+# METADATA.dataset = ["temp", "ft1x"]
+METADATA.dataset = ["ft0x"]
+METADATA.dataset = ["ft0x", "ft1x", "ft2x", "ft3x", "ft4x"]
+METADATA.dataset = ["ft1x", "ft2x", "ft3x"]
+
+METADATA.pop("model_name", None)
+METADATA.model_name = ["bert-base-uncased", "roberta-base"]
+
+METADATA = Bunch(**{key: sorted(list(set(val))) for key, val in METADATA.items()})
+
+log0.info(f"METADATA:\n{textwrap.indent(srsly.yaml_dumps(json_serializable_or_str_repr(dict(METADATA))), '   ')}")
+
+arg_names = list(METADATA.keys())
+arg_values = list(METADATA.values())
+
+for values in itertools.product(*arg_values):
+    arg_dict = Bunch(**dict(zip(arg_names, values)))
+    print(dict(**arg_dict))
+
+print("=" * 77)
+print(f"METADATA:\n{textwrap.indent(srsly.yaml_dumps(json_serializable_or_str_repr(dict(METADATA))), '   ')}")
+print("=" * 77)
+
+for values in itertools.product(*arg_values):
+    arg_dict = Bunch(**dict(zip(arg_names, values)))
+    print(dict(**arg_dict))
+
+    trainer, ds0, summary, dir0 = train_bert_model(
+        metadata=arg_dict,
+        compute_metrics=compute_metrics,
+        log0=log0,
+    )
+    try:
+        del trainer, ds0, summary, dir0
+    except NameError:
+        pass
+
+    gc.collect()
+    torch.cuda.empty_cache()
+
+\end{minted}
+\end{document}
