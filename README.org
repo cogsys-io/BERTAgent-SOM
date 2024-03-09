@@ -6,13 +6,16 @@
 - BERTAgent is a tool to quantify semantic agency in textual data that relies on [[https://huggingface.co/docs/transformers/model_doc/roberta][RoBERTa]].
 - BERTAgent can be installed from https://pypi.org/project/bertagent/.
 - Package documentation and tutorial are available at https://bertagent.readthedocs.io/.
+* Info
+Please do not hesitate to contact the corresponding author (JN) in case you require any
+additional information or data or if any data is not yes included in this repository.
 * Shortcuts
 ** Evaluated Synsets
 - [[./data/d0008_synsets-evaluated]]
-- file:./data/d0008_synsets-evaluated
+- [[./data/d0008_synsets-evaluated]]
 ** Training Data
 *** Base
-- file:data/d0010_training-data
+- [[file:data/d0010_training-data]]
 *** More Nuanced Forms of Negation
 ** Gold Standard Agency evaluation
-- file:./data/d0042_gold-standard
+- [[file:./data/d0042_gold-standard]]
