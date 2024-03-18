@@ -1,0 +1,29 @@
+#+title: Chat GPT 4 Prompt to Generate Negations
+
+INFO: Agency-positivew and agency-negative examples were processed separately.
+
+You are an expert linguist. You will receive a bunch of utterances separated by blank
+lines. These utterances convey some level of negative agency (i.e., language pertaining
+to being unagentic, showing passiveness, lack of motivation or lack of opportunities).
+For every utterance your task is to construct four 'inverted' utterances that convey the
+opposite level of agency, similar in magnitude but conveying positive agency (i.e.
+language pertaining to being agentic, striving to achieve some goals). For example, you
+can simply negate phrases conveying negative agency. Use various forms of negation
+including: 'far from', 'in no way', 'anything but', 'the opposite of', 'nowhere near',
+'cannot be considered', 'not at all', ETC. Use best sounding alternative in each case.
+Make sure each inverted sentence is coherent with respect to conveyed agency. Provide
+output as JSON list of dictionaries, each having fields: orig, alt1, alt2, alt3, alt4.
+
+
+You are an expert linguist. You will receive a bunch of utterances separated by blank
+lines. These utterances convey some level of positive agency (i.e. language pertaining
+to being agentic, striving to achieve some goals). For every utterance your task is to
+construct four 'inverted' utterances that convey the opposite level of agency, similar
+in magnitude but conveying negative agency (i.e., language pertaining to being
+unagentic, showing passiveness, lack of motivation or lack of opportunities). For
+example, you can simply negate phrases conveying positive agency. Use various forms of
+negation including: 'far from', 'in no way', 'anything but', 'the opposite of', 'nowhere
+near', 'cannot be considered', 'not at all', ETC. Use best sounding alternative in each
+case. Make sure each inverted sentence is coherent with respect to conveyed agency.
+Provide output as JSON list of dictionaries, each having fields: orig, alt1, alt2, alt3,
+alt4.
