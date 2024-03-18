@@ -17,5 +17,6 @@ additional information or data or if any data is not yes included in this reposi
 *** Base
 - [[file:data/d0010_training-data]]
 *** More Nuanced Forms of Negation
+- [[file:data/d0010_training-data/negations-0001]]
 ** Gold Standard Agency evaluation
 - [[file:./data/d0042_gold-standard]]
