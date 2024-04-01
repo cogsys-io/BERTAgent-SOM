@@ -20,7 +20,10 @@ additional information or data or if any data is not yes included in this reposi
 - [[file:data/d0010_training-data/negations-0001]]
 ** Gold Standard Agency evaluation
 - [[file:./data/d0042_gold-standard]]
-* Additional study
+** Additional study
 - Convergence on the 20-newsgroup dataset
   - this study was not included in the main manuscript, although for reference we
-    include it in SOM [[file:./code/c0002-valid-study-x1/BERTAgent-Additional-Study-Convergence-on-the-20-newsgroup-dataset.pdf][PDF]]
+    include it in SOM, please see
+    [[file:./code/c0002-valid-study-x1/BERTAgent-Additional-Study-Convergence-on-the-20-newsgroup-dataset.pdf][(pdf)]]
+    and
+    [[file:./code/c0002-valid-study-x1][(code)]].
