@@ -11,8 +11,8 @@ Please do not hesitate to contact the corresponding author (JN) in case you requ
 additional information or data or if any data is not yes included in this repository.
 * Shortcuts
 ** Evaluated Synsets
-- [[./data/d0008_synsets-evaluated]]
-- [[./data/d0008_synsets-evaluated]]
+- [[file:./data/d0008_synsets-evaluated]]
+- [[file:./data/d0008_synsets-evaluated]]
 ** Training Data
 *** Base
 - [[file:data/d0010_training-data]]
@@ -20,3 +20,7 @@ additional information or data or if any data is not yes included in this reposi
 - [[file:data/d0010_training-data/negations-0001]]
 ** Gold Standard Agency evaluation
 - [[file:./data/d0042_gold-standard]]
+* Additional study
+- Convergence on the 20-newsgroup dataset
+  - this study was not included in the main manuscript, although for reference we
+    include it in SOM [[file:./code/c0002-valid-study-x1/BERTAgent-Additional-Study-Convergence-on-the-20-newsgroup-dataset.pdf][PDF]]
