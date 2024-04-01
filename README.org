@@ -1,5 +1,23 @@
 #+title: BERTAgent SOM
 
+#+PROPERTY: header-args:python  :tangle   no
+#+PROPERTY: header-args:python  :tangle   yes
+
+#+PROPERTY: header-args:python+ :shebang  "#!/usr/bin/env ipython\n# -*- coding: utf-8 -*-\n\n"
+#+PROPERTY: header-args:python+ :eval     yes
+#+PROPERTY: header-args:python+ :comments org
+#+PROPERTY: header-args:python+ :results  raw drawer pp
+#+PROPERTY: header-args:python+ :results  raw drawer
+#+PROPERTY: header-args:python+ :exports  both
+#+PROPERTY: header-args:python+ :async    yes
+
+#+PROPERTY: header-args:python+ :session  python3 :kernel python3
+#+PROPERTY: header-args:python+ :session  remote_fast8_jiko_at_buka2 :kernel remote_fast8_jiko_at_buka2
+#+PROPERTY: header-args:python+ :session  local_py3p11 :kernel local_py3p11
+#+PROPERTY: header-args:python+ :session  local_py3p11v2 :kernel local_py3p11v2
+#+PROPERTY: header-args:python+ :session  local_fast4 :kernel local_fast4
+#+PROPERTY: header-args:python+ :session  local_bertagent2 :kernel local_bertagent2
+
 
 * Synopsis
 - This repository contains supplementary online material (SOM) for the development and validation of BERTAgent as described in [DOI].
@@ -9,6 +27,343 @@
 * Info
 Please do not hesitate to contact the corresponding author (JN) in case you require any
 additional information or data or if any data is not yes included in this repository.
+* Quick Start
+** Process a list of sentences
+First, we need to import and initialize BERTAgent.
+#+begin_src python :async yes
+>>> from bertagent import BERTAgent
+>>> ba0 = BERTAgent()
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+Then we need to provide example sentences as a list of strings.
+#+begin_src python :async yes
+>>> sents = [
+>>>    ...:     "hardly working individual",
+>>>    ...:     "hard working individual",
+>>>    ...:     "striving to achieve my goals",
+>>>    ...:     "struggling to achieve my goals",
+>>>    ...:     "struggling to survive",
+>>>    ...:     "unable to survive",
+>>>    ...:     "this car runs on gasoline with lead",
+>>>    ...:     "this car runs on gasoline and it will lead us",
+>>>    ...:     "this politician runs for office and he will lead us",
+>>>    ...: ]
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+We get the linguistic agency evaluated for each utterance by running the predict method. bertagent.BERTAgent.predict()
+
+Check the documentation for more advanced usage.
+#+begin_src python :async yes
+>>> vals = ba0.predict(sents)
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+Print results
+#+begin_src python :async yes
+>>> for item in zip(sents, vals):
+>>>     print(f"  {item[0]!r} : {item[1]:.2f}")
+#
+#  'hardly working individual' : -0.57
+#  'hard working individual' : 0.44
+#  'striving to achieve my goals' : 0.73
+#  'struggling to achieve my goals' : -0.67
+#  'struggling to survive' : -0.52
+#  'unable to survive' : -0.57
+#  'this car runs on gasoline with lead' : -0.03
+#  'this car runs on gasoline and it will lead us' : 0.09
+#  'this politician runs for office and he will lead us' : 0.58
+#
+# NOTE: exact values may differ slightly from the above
+# depending on the BERTAgent model and version used.
+#+end_src
+
+#+RESULTS:
+:results:
+#+begin_example
+  'hardly working individual' : -0.70
+  'hard working individual' : 0.80
+  'striving to achieve my goals' : 0.78
+  'struggling to achieve my goals' : -0.57
+  'struggling to survive' : -0.63
+  'unable to survive' : -0.57
+  'this car runs on gasoline with lead' : -0.05
+  'this car runs on gasoline and it will lead us' : 0.14
+  'this politician runs for office and he will lead us' : 0.68
+#+end_example
+:end:
+
+** Process a texts in pandas dataframe
+NB: Here we use =EXAMPLE_SENTENCES= data that is provided with =BERTAgent=. The code below
+provides an example use of BERTAgent that can be uses as a template to analyze any other
+textual data provided by user. Importantly BERTAgent should be used to quantify agency
+in short utterances (preferably a single sentence). This is why we need to provide
+BERTAgnet with a list of sentences. If the user has longer texts they can be
+“chunkified” using brute force approach or (prefferabely) using natural language
+processing libraries such as SpaCy for more information.
+
+Imports
+#+begin_src python :async yes
+>>> import pathlib
+>>> import pandas as pd
+>>> from tqdm import tqdm
+>>> from bertagent import BERTAgent
+>>> from bertagent import EXAMPLE_SENTENCES as sents
+>>> tqdm.pandas()
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+Load BERTAgent
+#+begin_src python :async yes
+>>> ba0 = BERTAgent()
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+Prepare dataframe.
+#+begin_src python :async yes
+>>> df0 = pd.DataFrame(dict(text=sents))
+>>> with pd.option_context("display.max_colwidth", 88):
+>>>     print(df0)
+#+end_src
+
+#+RESULTS:
+:results:
+#+begin_example
+                                                  text
+0                      He is a hard working individual
+1                     She is a hard working individual
+2                    He is a hardly working individual
+3                   She is a hardly working individual
+4                          This thing was made of lead
+5                        This is a car, it runs on gas
+6                  This is a Jane, she runs for office
+7                         Striving to achieve my goals
+8                       Struggling to achieve my goals
+9                                  Striving to make it
+10                               Struggling to make it
+11                               Struggling to survive
+12                      Well planned and well executed
+13                                Coordinated activity
+14                              Uncoordinated activity
+15                            Not coordinated activity
+16               Everything is messy and uncoordinated
+17                                 A bad decisionmaker
+18                           A marvelous decisionmaker
+19                                 They are submissive
+20                              They submitted a paper
+21                            They submitted a request
+22                         They requested a submission
+23                                      We are winners
+24                                       We are losers
+25                                Lazy and unmotivated
+26                                   I want to give up
+27                                       lost all hope
+28                                   We'll lose anyway
+29                                           motivated
+30                                    We are motivated
+31                                  We are unmotivated
+32                                We are not motivated
+33                                  I'm not motivated.
+34                            I'm in no way motivated.
+35                             I'm way more motivated.
+36                                I'm quite motivated.
+37                                      I'm motivated.
+38                           I'm absolutely motivated.
+39                                       I'm not lazy.
+40                                 I'm in no way lazy.
+41                                I'm not at all lazy.
+42                              I'm anything but lazy.
+43  I'm one of the least lazy people you'll ever meet.
+44                   We should give up and say nothing
+45                                         We must win
+46                 We will lead our way out of trouble
+47                        We must fight for our rights
+48      We should take control and assert our position
+49                              We should take control
+#+end_example
+:end:
+
+Extract sentences from text.
+#+begin_src python :async yes
+>>> # df0["sents"] = df0.text.str.split(".") # NOTE: This is not an optimal method to get sentences from real data!
+>>> df0["sents"] = df0.text.apply(lambda x: [x])
+>>> with pd.option_context("display.max_colwidth", 88), pd.option_context("display.width", 234):
+>>>     print(df0)
+#+end_src
+
+#+RESULTS:
+:results:
+#+begin_example
+                                                  text                                                 sents
+0                      He is a hard working individual                     [He is a hard working individual]
+1                     She is a hard working individual                    [She is a hard working individual]
+2                    He is a hardly working individual                   [He is a hardly working individual]
+3                   She is a hardly working individual                  [She is a hardly working individual]
+4                          This thing was made of lead                         [This thing was made of lead]
+5                        This is a car, it runs on gas                       [This is a car, it runs on gas]
+6                  This is a Jane, she runs for office                 [This is a Jane, she runs for office]
+7                         Striving to achieve my goals                        [Striving to achieve my goals]
+8                       Struggling to achieve my goals                      [Struggling to achieve my goals]
+9                                  Striving to make it                                 [Striving to make it]
+10                               Struggling to make it                               [Struggling to make it]
+11                               Struggling to survive                               [Struggling to survive]
+12                      Well planned and well executed                      [Well planned and well executed]
+13                                Coordinated activity                                [Coordinated activity]
+14                              Uncoordinated activity                              [Uncoordinated activity]
+15                            Not coordinated activity                            [Not coordinated activity]
+16               Everything is messy and uncoordinated               [Everything is messy and uncoordinated]
+17                                 A bad decisionmaker                                 [A bad decisionmaker]
+18                           A marvelous decisionmaker                           [A marvelous decisionmaker]
+19                                 They are submissive                                 [They are submissive]
+20                              They submitted a paper                              [They submitted a paper]
+21                            They submitted a request                            [They submitted a request]
+22                         They requested a submission                         [They requested a submission]
+23                                      We are winners                                      [We are winners]
+24                                       We are losers                                       [We are losers]
+25                                Lazy and unmotivated                                [Lazy and unmotivated]
+26                                   I want to give up                                   [I want to give up]
+27                                       lost all hope                                       [lost all hope]
+28                                   We'll lose anyway                                   [We'll lose anyway]
+29                                           motivated                                           [motivated]
+30                                    We are motivated                                    [We are motivated]
+31                                  We are unmotivated                                  [We are unmotivated]
+32                                We are not motivated                                [We are not motivated]
+33                                  I'm not motivated.                                  [I'm not motivated.]
+34                            I'm in no way motivated.                            [I'm in no way motivated.]
+35                             I'm way more motivated.                             [I'm way more motivated.]
+36                                I'm quite motivated.                                [I'm quite motivated.]
+37                                      I'm motivated.                                      [I'm motivated.]
+38                           I'm absolutely motivated.                           [I'm absolutely motivated.]
+39                                       I'm not lazy.                                       [I'm not lazy.]
+40                                 I'm in no way lazy.                                 [I'm in no way lazy.]
+41                                I'm not at all lazy.                                [I'm not at all lazy.]
+42                              I'm anything but lazy.                              [I'm anything but lazy.]
+43  I'm one of the least lazy people you'll ever meet.  [I'm one of the least lazy people you'll ever meet.]
+44                   We should give up and say nothing                   [We should give up and say nothing]
+45                                         We must win                                         [We must win]
+46                 We will lead our way out of trouble                 [We will lead our way out of trouble]
+47                        We must fight for our rights                        [We must fight for our rights]
+48      We should take control and assert our position      [We should take control and assert our position]
+49                              We should take control                              [We should take control]
+#+end_example
+:end:
+
+Evaluate agency
+#+begin_src python :async yes
+>>> model_id = "ba0"
+>>> df0[model_id] = df0.sents.progress_apply(ba0.predict)
+#+end_src
+
+#+RESULTS:
+:results:
+#+begin_example
+100% 50/50 [00:00<00:00, 82.27it/s]
+#+end_example
+:end:
+
+Compute more specific indices of agency (tot = total = sum af all values for all
+sentences, pos = only positive, neg = only negative, abs = sum of absolute values)
+#+begin_src python :async yes
+>>> df0["BATot"] = df0[model_id].apply(ba0.tot)
+>>> df0["BAPos"] = df0[model_id].apply(ba0.pos)
+>>> df0["BANeg"] = df0[model_id].apply(ba0.neg)
+>>> df0["BAAbs"] = df0[model_id].apply(ba0.abs)
+>>>
+>>> cols0 = [
+>>>     "sents",
+>>>     "ba0",
+>>>     "BATot",
+>>>     "BAPos",
+>>>     "BANeg",
+>>>     "BAAbs",
+>>> ]
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+Check output
+#+begin_src python :async yes
+>>> df0[cols0].to_csv("test8.csv", sep="|", index=False)
+>>> with pd.option_context("display.max_colwidth", 88), pd.option_context("display.width", 234):
+>>>     print(df0[cols0])
+
+#+end_src
+
+#+RESULTS:
+:results:
+#+begin_example
+                                                   sents                     ba0     BATot     BAPos     BANeg     BAAbs
+0                      [He is a hard working individual]     [0.834844172000885]  0.834844  0.834844  0.000000  0.834844
+1                     [She is a hard working individual]    [0.8311626315116882]  0.831163  0.831163  0.000000  0.831163
+2                    [He is a hardly working individual]   [-0.7512761950492859] -0.751276  0.000000  0.751276  0.751276
+3                   [She is a hardly working individual]   [-0.7480563521385193] -0.748056  0.000000  0.748056  0.748056
+4                          [This thing was made of lead]  [-0.04152987524867058] -0.041530  0.000000  0.041530  0.041530
+5                        [This is a car, it runs on gas]  [0.010952064767479897]  0.010952  0.010952  0.000000  0.010952
+6                  [This is a Jane, she runs for office]   [0.47615623474121094]  0.476156  0.476156  0.000000  0.476156
+7                         [Striving to achieve my goals]    [0.7910134196281433]  0.791013  0.791013  0.000000  0.791013
+8                       [Struggling to achieve my goals]   [-0.5179262757301331] -0.517926  0.000000  0.517926  0.517926
+9                                  [Striving to make it]   [0.17955778539180756]  0.179558  0.179558  0.000000  0.179558
+10                               [Struggling to make it]   [-0.5897794365882874] -0.589779  0.000000  0.589779  0.589779
+11                               [Struggling to survive]   [-0.5231249928474426] -0.523125  0.000000  0.523125  0.523125
+12                      [Well planned and well executed]    [0.5231040120124817]  0.523104  0.523104  0.000000  0.523104
+13                                [Coordinated activity]    [0.3914478123188019]  0.391448  0.391448  0.000000  0.391448
+14                              [Uncoordinated activity]   [-0.5816221833229065] -0.581622  0.000000  0.581622  0.581622
+15                            [Not coordinated activity]   [-0.6838584542274475] -0.683858  0.000000  0.683858  0.683858
+16               [Everything is messy and uncoordinated]   [-0.5637636780738831] -0.563764  0.000000  0.563764  0.563764
+17                                 [A bad decisionmaker]   [-0.5132681131362915] -0.513268  0.000000  0.513268  0.513268
+18                           [A marvelous decisionmaker]    [0.5751892328262329]  0.575189  0.575189  0.000000  0.575189
+19                                 [They are submissive]    [-0.734616219997406] -0.734616  0.000000  0.734616  0.734616
+20                              [They submitted a paper]   [0.08138810843229294]  0.081388  0.081388  0.000000  0.081388
+21                            [They submitted a request]   [0.09037621319293976]  0.090376  0.090376  0.000000  0.090376
+22                         [They requested a submission]   [0.13651056587696075]  0.136511  0.136511  0.000000  0.136511
+23                                      [We are winners]    [0.7248249650001526]  0.724825  0.724825  0.000000  0.724825
+24                                       [We are losers]  [-0.49365749955177307] -0.493657  0.000000  0.493657  0.493657
+25                                [Lazy and unmotivated]    [-0.882014811038971] -0.882015  0.000000  0.882015  0.882015
+26                                   [I want to give up]    [-0.580040693283081] -0.580041  0.000000  0.580041  0.580041
+27                                       [lost all hope]   [-0.6323032379150391] -0.632303  0.000000  0.632303  0.632303
+28                                   [We'll lose anyway]   [-0.5246437788009644] -0.524644  0.000000  0.524644  0.524644
+29                                           [motivated]    [0.9013325572013855]  0.901333  0.901333  0.000000  0.901333
+30                                    [We are motivated]    [0.8991060853004456]  0.899106  0.899106  0.000000  0.899106
+31                                  [We are unmotivated]   [-0.7915956974029541] -0.791596  0.000000  0.791596  0.791596
+32                                [We are not motivated]   [-0.8700465559959412] -0.870047  0.000000  0.870047  0.870047
+33                                  [I'm not motivated.]   [-0.8782944083213806] -0.878294  0.000000  0.878294  0.878294
+34                            [I'm in no way motivated.]   [-0.8720644116401672] -0.872064  0.000000  0.872064  0.872064
+35                             [I'm way more motivated.]    [0.6943018436431885]  0.694302  0.694302  0.000000  0.694302
+36                                [I'm quite motivated.]    [0.8737969994544983]  0.873797  0.873797  0.000000  0.873797
+37                                      [I'm motivated.]    [0.8885112404823303]  0.888511  0.888511  0.000000  0.888511
+38                           [I'm absolutely motivated.]    [0.9132643938064575]  0.913264  0.913264  0.000000  0.913264
+39                                       [I'm not lazy.]    [0.8388864994049072]  0.838886  0.838886  0.000000  0.838886
+40                                 [I'm in no way lazy.]    [0.8629356026649475]  0.862936  0.862936  0.000000  0.862936
+41                                [I'm not at all lazy.]    [0.8377652764320374]  0.837765  0.837765  0.000000  0.837765
+42                              [I'm anything but lazy.]    [0.8639457821846008]  0.863946  0.863946  0.000000  0.863946
+43  [I'm one of the least lazy people you'll ever meet.]    [0.1913502961397171]  0.191350  0.191350  0.000000  0.191350
+44                   [We should give up and say nothing]   [-0.4861551523208618] -0.486155  0.000000  0.486155  0.486155
+45                                         [We must win]    [0.6842873096466064]  0.684287  0.684287  0.000000  0.684287
+46                 [We will lead our way out of trouble]   [0.42371222376823425]  0.423712  0.423712  0.000000  0.423712
+47                        [We must fight for our rights]   [0.26205408573150635]  0.262054  0.262054  0.000000  0.262054
+48      [We should take control and assert our position]    [0.5294323563575745]  0.529432  0.529432  0.000000  0.529432
+49                              [We should take control]    [0.5173604488372803]  0.517360  0.517360  0.000000  0.517360
+#+end_example
+:end:
+
 * Shortcuts
 ** Evaluated Synsets (Merged with Textual Data)
 - [[file:./data/d0009_synsets-merged]]
