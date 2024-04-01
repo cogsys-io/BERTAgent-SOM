@@ -10,9 +10,8 @@
 Please do not hesitate to contact the corresponding author (JN) in case you require any
 additional information or data or if any data is not yes included in this repository.
 * Shortcuts
-** Evaluated Synsets
-- [[file:./data/d0008_synsets-evaluated]]
-- [[file:./data/d0008_synsets-evaluated]]
+** Evaluated Synsets (Merged with Textual Data)
+- [[file:./data/d0009_synsets-merged]]
 ** Training Data
 *** Base
 - [[file:data/d0010_training-data]]
